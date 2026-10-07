@@ -1,0 +1,1816 @@
+<title>Level UP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: game HUD. Left = character sheet (sticky on desktop), right = skill tracks + session log. Stacks on phones. */
+:root {
+  --bg: #e9edf5;
+  --panel: #ffffff;
+  --panel-2: #dfe5f0;
+  --ink: #151a2c;
+  --muted: #586180;
+  --line: #c9d1e1;
+  --xp: #9a6604;
+  --xp-fill: #e2a521;
+  --xp-hi: #f5cc62;
+  --rest: #2a66d9;
+  --good: #1b7f53;
+  --danger: #bf3b28;
+  --shadow: 0 1px 0 rgba(21,26,44,.06), 0 6px 18px -10px rgba(21,26,44,.25);
+  --f-display: "Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f111b; --panel: #171a28; --panel-2: #212539; --ink: #e8ebf6; --muted: #8f97b8; --line: #2b3050;
+    --xp: #f2c14e; --xp-fill: #e3a72c; --xp-hi: #ffd977; --rest: #73a6ff; --good: #4fc58d; --danger: #f17a66;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 24px -12px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f111b; --panel: #171a28; --panel-2: #212539; --ink: #e8ebf6; --muted: #8f97b8; --line: #2b3050;
+  --xp: #f2c14e; --xp-fill: #e3a72c; --xp-hi: #ffd977; --rest: #73a6ff; --good: #4fc58d; --danger: #f17a66;
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 24px -12px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; padding: 0 16px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 18px 48px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--rest); outline-offset: 2px; }
+.px { font-family: var(--f-display); letter-spacing: .01em; }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+
+/* top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-family: var(--f-display); font-size: 28px; font-weight: 700; }
+.brand h1 b { color: var(--xp); font-weight: 700; }
+.brand span { color: var(--muted); font-size: 13px; }
+.pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); white-space: nowrap; }
+.pill.warn { color: var(--danger); border-color: var(--danger); }
+.banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border: 1px dashed var(--rest); color: var(--ink); border-radius: 8px; margin-bottom: 16px; font-size: 14px; background: var(--panel); }
+
+/* buttons */
+.btn { border: 2px solid var(--ink); background: var(--panel); padding: 8px 14px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:hover { background: var(--panel-2); }
+.btn.primary { background: var(--xp-fill); color: #1b1404; border-color: var(--xp-fill); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); }
+.btn.primary:hover { background: var(--xp-hi); }
+.btn.ghost { border-color: var(--line); }
+.btn.small { padding: 4px 10px; font-size: 13px; border-width: 1px; }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--rest); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* layout */
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.sheet { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); padding: 18px; display: grid; gap: 16px; }
+@media (max-width: 820px) { .sheet { position: static; } }
+
+/* character sheet */
+.who { display: flex; gap: 14px; align-items: center; }
+.emblem { width: 76px; height: 76px; flex: none; display: grid; place-items: center; font-family: var(--f-display); font-size: 40px; font-weight: 700; color: #1b1404; background: linear-gradient(160deg, var(--xp-hi), var(--xp-fill)); clip-path: polygon(0 8px, 8px 8px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)); }
+.who-text { min-width: 0; }
+.hero-name { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; overflow-wrap: anywhere; }
+.class-title { font-family: var(--f-display); color: var(--xp); font-size: 18px; }
+.paths { font-size: 13px; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+.stat b { display: block; font-family: var(--f-display); font-size: 24px; line-height: 1.1; font-weight: 700; }
+.stat span { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.meter-label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 4px; }
+.meter-label strong { font-weight: 600; }
+.rest-bar { height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.rest-bar i { display: block; height: 100%; background: var(--rest); border-radius: 4px; }
+.pips { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; padding-left: 2px; }
+.pips i { width: 9px; height: 9px; border: 1.5px solid var(--xp); transform: rotate(45deg); border-radius: 1px; }
+.pips i.on { background: var(--xp-fill); border-color: var(--xp-fill); }
+.keys-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.keys-count { font-family: var(--f-display); font-size: 22px; font-weight: 700; color: var(--xp); }
+
+/* training scene */
+.train { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; padding: 18px; margin-bottom: 20px; border: 2px solid var(--xp-fill); align-items: center; }
+@media (max-width: 640px) { .train { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; height: 200px; border-radius: 10px; overflow: hidden; display: grid; place-items: end center; background: radial-gradient(circle at 50% 85%, color-mix(in srgb, var(--xp-fill) 28%, var(--panel-2)), var(--panel-2) 70%); }
+.chibi { width: 160px; height: 172px; display: block; margin-bottom: 4px; }
+.chibi .ol { stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.chibi .hero { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 1.2s ease-in-out infinite; }
+.chibi.run .hero { animation-duration: .42s; }
+.chibi.float .hero { animation: float 3s ease-in-out infinite; }
+.chibi .legA, .chibi .legB { transform-box: fill-box; transform-origin: 50% 0; }
+.chibi.run .legA { animation: legs .42s ease-in-out infinite; }
+.chibi.run .legB { animation: legs .42s ease-in-out infinite reverse; }
+.chibi .eye { transform-box: fill-box; transform-origin: center; animation: eyeblink 4s infinite; }
+.chibi .strum { animation: strum .5s ease-in-out infinite; }
+.chibi .swing { transform-box: fill-box; transform-origin: 15% 90%; animation: swing .7s ease-in-out infinite; }
+.chibi .sweep { transform-box: fill-box; transform-origin: 30% 5%; animation: sweep .9s ease-in-out infinite; }
+.chibi .flip { transform-box: fill-box; transform-origin: 0 50%; animation: flip 2.6s ease-in-out infinite; }
+.chibi .glow { animation: glow .8s steps(2) infinite; }
+.chibi .pulse { transform-box: fill-box; transform-origin: center; animation: pulse 2.6s ease-in-out infinite; }
+.chibi .tap { animation: strum .3s ease-in-out infinite; }
+.chibi .tap2 { animation: strum .3s ease-in-out infinite reverse; }
+@keyframes bob { 50% { transform: translateY(-3px); } }
+@keyframes float { 50% { transform: translateY(-8px); } }
+@keyframes legs { 0%, 100% { transform: rotate(-22deg); } 50% { transform: rotate(22deg); } }
+@keyframes eyeblink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+@keyframes strum { 50% { transform: translateY(6px); } }
+@keyframes swing { 0%, 100% { transform: rotate(-35deg); } 50% { transform: rotate(20deg); } }
+@keyframes sweep { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } }
+@keyframes flip { 0%, 60% { transform: scaleX(1); } 80%, 100% { transform: scaleX(-1); } }
+@keyframes glow { 50% { opacity: .45; } }
+@keyframes pulse { 0%, 100% { transform: scale(.9); opacity: .35; } 50% { transform: scale(1.08); opacity: .7; } }
+.sparks { position: absolute; inset: 0; pointer-events: none; }
+.sparks i { position: absolute; bottom: 8px; width: 6px; height: 6px; background: var(--xp-fill); opacity: 0; animation: rise 2.6s linear infinite; }
+@keyframes rise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-160px); opacity: 0; } }
+.stage .ring { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px; border: 4px solid var(--xp-hi); border-radius: 50%; opacity: 0; pointer-events: none; }
+.stage .lvpop { position: absolute; top: 10px; left: 0; right: 0; text-align: center; font-family: var(--f-display); font-size: 22px; font-weight: 700; color: var(--xp); opacity: 0; }
+.stage.burst .ring { animation: ring 1.1s ease-out; }
+.stage.burst .lvpop { animation: pop 1.8s ease-out; }
+@keyframes ring { 0% { opacity: 1; transform: scale(.5); } 100% { opacity: 0; transform: scale(6); } }
+@keyframes pop { 0% { opacity: 0; transform: translateY(10px); } 20%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-10px); } }
+.train-info { display: grid; gap: 12px; min-width: 0; }
+.train-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.train-head h2 { font-family: var(--f-display); font-size: 20px; }
+.train-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.live-xp { font-family: var(--f-display); font-size: 22px; color: var(--xp); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .chibi *, .sparks i, .stage.burst .ring, .stage.burst .lvpop { animation: none !important; } .stage.burst .lvpop { opacity: 1; } }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; gap: 2px; }
+.seg button { border: 0; background: none; border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tag { font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+.tag.lesson { color: var(--good); border: 1px solid var(--good); }
+.tag.rest { color: var(--rest); border: 1px solid var(--rest); }
+.hint { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+/* timer card */
+.timer { border: 2px solid var(--xp-fill); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; background: color-mix(in srgb, var(--xp-fill) 10%, var(--panel)); }
+.timer-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.timer-clock { font-family: var(--f-display); font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.timer-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); margin-right: 6px; animation: blink 1.2s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+/* skills */
+.col { display: grid; gap: 20px; min-width: 0; }
+.section-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.section-head h2 { font-family: var(--f-display); font-size: 20px; font-weight: 700; }
+.skills { display: grid; gap: 10px; }
+.skill { padding: 14px 16px; }
+.skill-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.skill-main { min-width: 0; cursor: pointer; background: none; border: 0; padding: 0; text-align: left; display: grid; gap: 6px; }
+.skill-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.skill-title h3 { font-size: 17px; font-weight: 700; }
+.lv { font-family: var(--f-display); font-size: 17px; color: var(--xp); font-weight: 700; }
+.tier { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.badge { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+.badge.vet { border-color: var(--rest); color: var(--rest); }
+.badge.star { border-color: var(--xp); color: var(--xp); }
+.xp { position: relative; height: 16px; background: var(--panel-2); border: 2px solid var(--ink); border-radius: 3px; overflow: hidden; }
+.xp i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(180deg, var(--xp-hi), var(--xp-fill) 60%, var(--xp)); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.xp::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), color-mix(in srgb, var(--ink) 35%, transparent) calc(10% - 2px) 10%); pointer-events: none; }
+.xp-text { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+.play { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--ink); background: var(--panel); display: grid; place-items: center; }
+.play:hover:not(:disabled) { background: var(--xp-fill); border-color: var(--xp-fill); color: #1b1404; }
+.play svg { width: 20px; height: 20px; }
+.play.on { background: var(--danger); border-color: var(--danger); color: #fff; }
+.play:disabled { opacity: .35; cursor: not-allowed; }
+
+.detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 14px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.quick span { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.facts { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+.facts b { font-weight: 700; }
+.tip { border-left: 3px solid var(--xp-fill); padding: 6px 0 6px 12px; }
+.tip.old { border-left-color: var(--line); }
+.tip small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.tip p { margin: 2px 0 0; max-width: 62ch; }
+.lock { font-size: 13px; color: var(--muted); }
+.ms { display: flex; gap: 6px; flex-wrap: wrap; }
+.ms span { font-size: 12px; padding: 2px 8px; border-radius: 4px; border: 1px dashed var(--line); color: var(--muted); font-variant-numeric: tabular-nums; }
+.ms span.got { border: 1px solid var(--xp); color: var(--xp); font-weight: 700; }
+.detail-foot { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+
+/* sessions */
+.log { padding: 6px 16px; }
+.log-row { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.log-row:last-child { border-bottom: 0; }
+.log-row .when { color: var(--muted); font-size: 13px; }
+.log-row .what { min-width: 0; overflow-wrap: anywhere; }
+.log-row .what em { color: var(--muted); font-style: normal; font-size: 13px; }
+.log-row .gold { color: var(--xp); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.x { border: 0; background: none; color: var(--muted); padding: 4px 6px; border-radius: 4px; font-size: 13px; }
+.x:hover { color: var(--danger); background: var(--panel-2); }
+@media (max-width: 520px) { .log-row { grid-template-columns: minmax(0, 1fr) auto auto; } .log-row .when { grid-column: 1 / -1; padding-bottom: 0; margin-bottom: -6px; } }
+.empty-log { padding: 16px 0; color: var(--muted); font-size: 14px; }
+
+.rules { padding: 16px 18px; font-size: 14px; }
+.rules h2 { font-family: var(--f-display); font-size: 18px; margin-bottom: 8px; }
+.rules ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.rules table { border-collapse: collapse; margin: 6px 0 12px; font-size: 13px; }
+.rules td, .rules th { padding: 3px 14px 3px 0; text-align: left; font-variant-numeric: tabular-nums; }
+.rules th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* onboarding */
+.onboard { max-width: 680px; margin: 0 auto; padding: 24px; display: grid; gap: 22px; }
+.onboard h2 { font-family: var(--f-display); font-size: 30px; }
+.onboard p { margin: 0; max-width: 60ch; }
+.field { display: grid; gap: 6px; }
+.field label, .lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.input { border: 2px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--panel); width: 100%; min-width: 0; }
+.input:focus { border-color: var(--rest); outline: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 2px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 14px; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.picked { display: grid; gap: 8px; }
+.picked-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: center; }
+.picked-row span { font-weight: 600; overflow-wrap: anywhere; }
+.custom-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px auto; gap: 8px; }
+@media (max-width: 520px) { .custom-row { grid-template-columns: minmax(0, 1fr); } .picked-row { grid-template-columns: minmax(0, 1fr) 120px; } }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* dialog */
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.cat { text-align: left; border: 2px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.cat b { font-size: 14px; }
+.cat small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat:hover { border-color: var(--muted); }
+.cat[aria-pressed="true"] { border-color: var(--xp-fill); background: color-mix(in srgb, var(--xp-fill) 12%, var(--panel)); }
+.cat .count { color: var(--xp); font-weight: 700; font-size: 12px; }
+.chip:disabled { opacity: .4; cursor: not-allowed; }
+.custom-row.two { grid-template-columns: minmax(0, 1fr) auto; }
+.group { display: grid; gap: 10px; }
+.group-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-top: 6px; }
+.group:first-child .group-head { margin-top: 0; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); padding: 0; width: min(560px, calc(100vw - 32px)); box-shadow: 0 30px 60px -20px rgba(0,0,0,.5); }
+dialog::backdrop { background: rgba(10, 12, 22, .55); }
+.dlg { padding: 20px; display: grid; gap: 16px; }
+.dlg h2 { font-family: var(--f-display); font-size: 22px; }
+.dlg-foot { display: flex; justify-content: flex-end; gap: 8px; }
+.err { color: var(--danger); font-size: 13px; min-height: 1em; }
+
+/* home-screen widget preview */
+.wall { border-radius: 14px; padding: 18px; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--rest) 55%, var(--panel-2)), color-mix(in srgb, var(--xp-fill) 35%, var(--panel-2))); }
+.wdg { background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(10px); border-radius: 22px; padding: 14px; box-shadow: 0 8px 22px -12px rgba(0,0,0,.45); display: grid; gap: 10px; color: var(--ink); }
+.wdg.sm { width: 158px; height: 158px; grid-template-rows: auto 1fr auto; }
+.wdg.md { width: min(338px, 100%); min-height: 158px; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 14px; }
+.wdg .emblem { width: 46px; height: 46px; font-size: 24px; }
+.wdg.md .emblem { width: 64px; height: 64px; font-size: 32px; }
+.wdg-lv { font-family: var(--f-display); font-size: 26px; font-weight: 700; line-height: 1; }
+.wdg-lv small { font-size: 12px; color: var(--muted); font-family: var(--f-body); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+.wdg-class { font-family: var(--f-display); color: var(--xp); font-size: 15px; }
+.wdg-skill { font-size: 12.5px; display: flex; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
+.wdg-skill b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wdg .xp { height: 10px; border-width: 1.5px; }
+.wdg-go { border: 0; border-radius: 999px; padding: 8px 10px; font-weight: 700; font-size: 13px; background: var(--xp-fill); color: #1b1404; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+.wdg-go svg { width: 14px; height: 14px; }
+.wdg-go.on { background: var(--danger); color: #fff; }
+.wdg-meta { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+.wdg-right { min-width: 0; display: grid; gap: 8px; }
+.wdg-span { grid-column: 1 / -1; }
+
+.start-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 460px) { .start-opts { grid-template-columns: 1fr; } }
+.start-opt { text-align: left; border: 2px solid var(--line); background: var(--panel); border-radius: 10px; padding: 14px; display: grid; gap: 4px; }
+.start-opt:hover { border-color: var(--xp-fill); background: color-mix(in srgb, var(--xp-fill) 10%, var(--panel)); }
+.start-opt b { font-size: 16px; }
+.start-opt span { font-size: 13px; color: var(--muted); }
+.type-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.type-badge.lesson { color: var(--good); border-color: var(--good); }
+.wdg-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+/* veteran emblem: tier colors are fixed metals and read on both themes */
+.vet { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 1px 8px 1px 6px; border-radius: 999px; border: 1.5px solid currentColor; letter-spacing: .02em; }
+.vet::before { content: ""; width: 8px; height: 8px; background: currentColor; transform: rotate(45deg); border-radius: 1px; }
+.vet.t0 { color: #b06a2c; } .vet.t1 { color: #8a94a6; } .vet.t2 { color: var(--xp); } .vet.t3 { color: #2f9e96; } .vet.t4 { color: var(--rest); }
+.vet-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.vet-edit input { width: 110px; }
+
+.tip-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tip-refresh { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12px; font-weight: 600; flex: none; }
+.tip-refresh:hover { color: var(--ink); border-color: var(--muted); }
+.tip-lib { font-size: 13.5px; }
+.tip-lib summary { cursor: pointer; font-weight: 600; color: var(--rest); }
+.lib-tier { margin-top: 10px; }
+.lib-tier ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; max-width: 62ch; }
+.lib-tier.locked { opacity: .7; }
+.tip-vote { display: flex; gap: 4px; align-items: center; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tip-vote .x { font-size: 12px; padding: 2px 6px; }
+.top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.set-card { padding: 16px; display: grid; gap: 10px; }
+.set-card h3 { font-size: 16px; }
+.note { border-radius: 8px; padding: 10px 12px; font-size: 13.5px; border: 1px solid var(--line); background: var(--panel-2); }
+.note.good { border-color: var(--good); } .note.warn { border-color: var(--xp); } .note.bad { border-color: var(--danger); }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--ink); border-radius: 50%; animation: spinr .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+@keyframes spinr { to { transform: rotate(360deg); } }
+.backup-box { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12px; word-break: break-all; }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); overflow-x: auto; }
+.tab { border: 0; background: none; padding: 8px 14px; font-weight: 700; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--xp-fill); }
+.tab .cnt { font-size: 12px; color: var(--xp); margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+/* stats */
+.power { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.power b { font-family: var(--f-display); font-size: 24px; color: var(--xp); }
+.statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 13px; margin-top: 6px; }
+.statgrid div { display: flex; justify-content: space-between; gap: 6px; }
+.statgrid span { color: var(--muted); }
+.statgrid b { font-variant-numeric: tabular-nums; }
+.statgrid i { font-style: normal; color: var(--good); font-size: 12px; font-weight: 600; }
+
+/* gear */
+.gear-skill { padding: 14px 16px; display: grid; gap: 10px; }
+.gear-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.gear-head h3 { font-size: 16px; }
+.gear-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.item { border: 1.5px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 3px; align-content: start; background: var(--panel); min-width: 0; }
+.item.locked { opacity: .55; border-style: dashed; }
+.item.equipped { border-color: var(--xp-fill); background: color-mix(in srgb, var(--xp-fill) 12%, var(--panel)); }
+.item b { font-size: 14px; overflow-wrap: anywhere; }
+.item .eff { font-size: 12.5px; color: var(--good); font-weight: 600; }
+.item .req { font-size: 12px; color: var(--muted); }
+.item .btn { margin-top: 6px; }
+.trophies { display: flex; flex-wrap: wrap; gap: 8px; }
+.trophy { border: 1px solid var(--xp); color: var(--xp); border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight: 600; }
+
+/* dungeons */
+.dun { padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.dun.locked { opacity: .55; }
+.dun h3 { font-family: var(--f-display); font-size: 19px; }
+.dun-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 2px; }
+.dun-meta b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.chance.good { color: var(--good); } .chance.mid { color: var(--xp); } .chance.bad { color: var(--danger); }
+.runlog { padding: 16px; display: grid; gap: 10px; border: 2px solid var(--xp-fill); }
+.runlog h3 { font-family: var(--f-display); font-size: 20px; }
+.enc { display: flex; gap: 10px; align-items: baseline; font-size: 14px; animation: up .3s ease-out; }
+.enc .stat-chip { font-size: 11px; font-weight: 700; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.result { font-family: var(--f-display); font-size: 24px; }
+.result.win { color: var(--good); } .result.lose { color: var(--danger); }
+.run-hist { font-size: 13px; display: grid; gap: 4px; }
+.run-hist div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding: 6px 0; }
+.run-hist div:last-child { border-bottom: 0; }
+
+/* toasts */
+.toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: grid; gap: 8px; z-index: 50; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+.toast { background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: 14px; box-shadow: var(--shadow); animation: up .3s ease-out; }
+.toast.ding { background: linear-gradient(160deg, var(--xp-hi), var(--xp-fill)); color: #1b1404; text-align: center; padding: 14px; }
+.toast.ding b { display: block; font-family: var(--f-display); font-size: 30px; line-height: 1; letter-spacing: .04em; }
+@keyframes up { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .toast, .live-dot { animation: none; } .xp i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Level <b>UP</b></h1><span id="build-tag">Prototype</span></div>
+    <div class="top-actions"><button class="btn small ghost" data-act="feedback">Send feedback</button><span class="pill" id="save-pill">Loading…</span></div>
+  </header>
+  <div id="app"><div class="panel onboard"><p class="muted">Loading your hero…</p></div></div>
+</div>
+
+<dialog id="dlg-log">
+  <form class="dlg" id="form-log" method="dialog">
+    <h2>Log practice</h2>
+    <div class="field"><label for="log-skill">Skill</label><select class="input" id="log-skill"></select></div>
+    <div class="field">
+      <span class="lbl">How long</span>
+      <div class="chips" id="log-mins">
+        <button type="button" class="chip" data-min="10">10m</button>
+        <button type="button" class="chip" data-min="15">15m</button>
+        <button type="button" class="chip" data-min="20">20m</button>
+        <button type="button" class="chip" data-min="30">30m</button>
+        <button type="button" class="chip" data-min="45">45m</button>
+        <button type="button" class="chip" data-min="60">1h</button>
+      </div>
+      <input class="input" id="log-custom" type="number" min="1" max="720" inputmode="numeric" placeholder="Or type minutes">
+    </div>
+    <div class="field">
+      <span class="lbl">Type</span>
+      <div class="chips" id="log-type">
+        <button type="button" class="chip" data-type="solo" aria-pressed="true">Solo practice</button>
+        <button type="button" class="chip" data-type="lesson">Class or lesson · 1.5× XP</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">When</span>
+      <div class="chips" id="log-day">
+        <button type="button" class="chip" data-ago="0" aria-pressed="true">Today</button>
+        <button type="button" class="chip" data-ago="1">Yesterday</button>
+        <button type="button" class="chip" data-ago="2">2 days ago</button>
+      </div>
+    </div>
+    <div class="field"><label for="log-note">Note (optional)</label><input class="input" id="log-note" maxlength="120" placeholder="e.g. learned the F barre chord"></div>
+    <div class="err" id="log-err"></div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary">Log it</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-add">
+  <form class="dlg" id="form-add" method="dialog">
+    <h2>Add a skill</h2>
+    <div id="add-body" style="display:grid;gap:16px"></div>
+    <div class="err" id="add-err"></div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary">Add skill</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-fb">
+  <form class="dlg" id="form-fb" method="dialog">
+    <h2 id="fb-title">Send feedback</h2>
+    <p class="muted" id="fb-sub" style="margin:0"></p>
+    <div class="field" id="fb-kind-wrap"><span class="lbl">About</span>
+      <div class="chips" id="fb-kind">
+        <button type="button" class="chip" data-kind="idea" aria-pressed="true">Idea</button>
+        <button type="button" class="chip" data-kind="bug">Something's broken</button>
+        <button type="button" class="chip" data-kind="balance">Balance (XP, gold, keys)</button>
+        <button type="button" class="chip" data-kind="other">Other</button>
+      </div>
+    </div>
+    <div class="field" id="fb-tier-wrap"><label for="fb-tier">For which tier</label><select class="input" id="fb-tier"></select></div>
+    <div class="field"><label for="fb-text" id="fb-label">Your message</label><textarea class="input" id="fb-text" rows="4" maxlength="600" style="resize:vertical"></textarea></div>
+    <div class="err" id="fb-err"></div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="fb-send">Send</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-start">
+  <div class="dlg">
+    <h2 id="start-title">Start training</h2>
+    <p class="muted" style="margin:0">Choose the session type. It stays fixed until you stop.</p>
+    <div class="start-opts">
+      <button type="button" class="start-opt" data-act="start-go" data-type="solo"><b>Solo practice</b><span>On your own. 1 XP per minute.</span></button>
+      <button type="button" class="start-opt" data-act="start-go" data-type="lesson"><b>Class or lesson</b><span>With a teacher or course. 1.5 XP per minute.</span></button>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button></div>
+  </div>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Game rules ----------
+  const MIN_PER_LV = 6;                 // minutes for level L = 6 * L^2  (Lv1 = 6 min, Lv10 = 10 h, Lv100 = 1,000 h)
+  const MAX_LV = 100;
+  const MASTERY_STEP = 60000;           // 1,000 hours per mastery star past Lv 100
+  const LEGEND_MIN = 600000;            // 10,000 hours
+  const LESSON_MULT = 1.5;              // a class or lesson earns 1.5x XP
+  // ---------- Hero stats, gear and dungeons ----------
+  const STATS = {
+    music:  { name: "Harmony",   desc: "Songs that strengthen your party" },
+    body:   { name: "Might",     desc: "Raw strength and stamina" },
+    mind:   { name: "Wisdom",    desc: "Riddles, runes and lore" },
+    craft:  { name: "Craft",     desc: "Building and repairing" },
+    tech:   { name: "Ingenuity", desc: "Traps, gadgets and mechanisms" },
+    spirit: { name: "Focus",     desc: "Calm, perception and resolve" },
+    life:   { name: "Fortune",   desc: "+1% dungeon gold per point (max +50%)" }
+  };
+  // Gear unlocks by the skill's in-app level, costs gold, and one item per skill can be equipped.
+  // Bonuses stay small next to skill levels, so practice stays the main source of power.
+  const GEAR_TIERS = [
+    { lv: 5, bonus: 2, price: 60 }, { lv: 15, bonus: 4, price: 180 }, { lv: 30, bonus: 7, price: 450 },
+    { lv: 50, bonus: 12, price: 1000 }, { lv: 75, bonus: 18, price: 2000 }, { lv: 100, bonus: 25, price: 4000 }
+  ];
+  const GEAR_BY_CAT = {
+    instrument: ["Worn {s}", "Student {s}", "Tuned {s}", "Concert {s}", "Masterwork {s}", "Legendary {s}"],
+    language: ["{s} Phrasebook", "{s} Flashcard Deck", "Traveler's Journal", "{s} Lexicon", "Interpreter's Earpiece", "Polyglot's Circlet"],
+    health: ["Sweatband", "{s} Gear Bag", "Pro {s} Kit", "Champion's Cloak", "Iron Will Amulet", "Mantle of Vigor"],
+    cooking: ["Apron", "Chef's Knife", "Cast-Iron Skillet", "Copper Pans", "Chef's Toque", "Golden Ladle"],
+    trade: ["Work Gloves", "Tool Belt", "{s} Toolkit", "Journeyman's Apron", "Master's Tools", "Forgemaster's Hammer"],
+    art: ["Sketchbook", "Quality {s} Kit", "Studio Easel", "Artisan's Smock", "Master's Brush", "Muse's Quill"],
+    tech: ["Rubber Duck", "Mechanical Keyboard", "Dual Monitors", "Hoodie of Focus", "Debugger's Lens", "Arcane Terminal"],
+    study: ["Library Card", "Reading Glasses", "Scholar's Satchel", "Study Lamp", "Sage's Robe", "Tome of Ages"],
+    life: ["Label Maker", "Weekly Planner", "Tidy Toolkit", "Steward's Keyring", "Smart Blazer", "Golden Keyring"]
+  };
+  const GEAR_BY_SKILL = {
+    "Guitar": ["Worn Acoustic", "Electric Six-String", "Custom Hollowbody", "Stage Six-String", "Masterwork Archtop", "Mythic Axe"],
+    "Singing": ["Lucky Scarf", "Practice Mic", "Vocal Coach's Notes", "Velvet Stage Mic", "Golden Microphone", "Voice of Legends"],
+    "Drums": ["Practice Pad", "Hickory Sticks", "Starter Kit", "Brass Cymbals", "Thunder Kit", "Drums of the Storm"],
+    "Running": ["Training Headband", "Trail Sneakers", "Featherweight Racers", "Marathon Medal", "Wind-Runner Boots", "Winged Boots"],
+    "Strength training": ["Lifting Gloves", "Chalk Pouch", "Leather Belt", "Iron Kettlebell", "Titan Barbell", "Atlas Gauntlets"],
+    "Yoga": ["Yoga Mat", "Cork Block", "Flow Wraps", "Balance Anklet", "Serpent Sash", "Lotus Crown"],
+    "Meditation": ["Cushion", "Incense Burner", "Prayer Beads", "Calm Robe", "Lotus Pendant", "Halo of Stillness"],
+    "Baking": ["Flour-Dusted Apron", "Rolling Pin", "Stand Mixer", "Stone Oven Peel", "Pastry Chef's Toque", "Golden Whisk"],
+    "Photography": ["Disposable Camera", "Starter Lens", "Prime Lens", "Steady Tripod", "Pro Camera Rig", "Eye of the Hawk"],
+    "Writing": ["Pocket Notebook", "Fountain Pen", "Writer's Desk", "Editor's Monocle", "First Edition", "Muse's Quill"],
+    "Chess": ["Travel Chess Set", "Club Badge", "Tournament Clock", "Grandmaster's Board", "Strategist's Cloak", "King's Crown"],
+    "Budgeting": ["Coin Purse", "Ledger Book", "Calculator Watch", "Trader's Business Suit", "Banker's Signet", "Golden Ledger"],
+    "Coding": ["Rubber Duck", "Mechanical Keyboard", "Dual Monitors", "Hoodie of Focus", "Debugger's Lens", "Arcane Terminal"]
+  };
+  const DUNGEONS = [
+    { id: "cellar",  name: "Goblin Cellar",      rec: 5,   gold: [20, 40],   trophy: "Goblin's Lucky Tooth" },
+    { id: "ruins",   name: "Mossy Ruins",        rec: 20,  gold: [45, 80],   trophy: "Moss-Covered Crown" },
+    { id: "library", name: "Whispering Library", rec: 45,  gold: [90, 150],  trophy: "Silent Bookmark" },
+    { id: "forge",   name: "Ember Forge",        rec: 90,  gold: [160, 260], trophy: "Ember Core" },
+    { id: "citadel", name: "Sky Citadel",        rec: 160, gold: [280, 420], trophy: "Cloud-Silk Banner" },
+    { id: "spire",   name: "The Endless Spire",  rec: 260, gold: [450, 700], trophy: "Shard of Forever" }
+  ];
+  const ENCOUNTERS = {
+    music:  ["You played a rousing tune and the party fought harder.", "Your melody lulled the guards to sleep."],
+    body:   ["You smashed through the barricade.", "You outran the rolling boulder."],
+    mind:   ["You solved the door's ancient riddle.", "You read the warning runes just in time."],
+    craft:  ["You rebuilt the broken bridge.", "You forged a key from scrap metal."],
+    tech:   ["You disarmed the pressure-plate trap.", "You rewired the clockwork golem."],
+    spirit: ["You stayed calm and spotted the hidden passage.", "You resisted the curse's whispers."],
+    life:   ["You found a forgotten coin purse.", "You sorted the chaos of the treasure room."]
+  };
+  const SHARDS_PER_KEY = 10;            // 1 minute of practice = 1 key shard; 10 shards = 1 dungeon key
+  const DAILY_SHARD_CAP = 150;          // up to 15 keys per day
+  const MAX_ENTRY = 720;                // one entry can't exceed 12 h
+  const REST_PER_DAY = 30, REST_CAP = 180;
+  const MILESTONES = [60, 600, 1500, 3000, 6000, 15000, 30000, 60000];
+
+  const TIERS = [
+    { min: 0, name: "Novice" }, { min: 5, name: "Apprentice" }, { min: 15, name: "Journeyman" },
+    { min: 30, name: "Adept" }, { min: 50, name: "Expert" }, { min: 75, name: "Master" }, { min: 100, name: "Grandmaster" }
+  ];
+
+  // Paths drive your class. Every skill belongs to one path.
+  const PATHS = {
+    music:  { label: "Music",  cls: "Bard" },
+    body:   { label: "Body",   cls: "Warrior" },
+    mind:   { label: "Mind",   cls: "Scholar" },
+    craft:  { label: "Craft",  cls: "Artisan" },
+    tech:   { label: "Tech",   cls: "Artificer" },
+    spirit: { label: "Spirit", cls: "Monk" },
+    life:   { label: "Life",   cls: "Steward" }
+  };
+  const HYBRIDS = {
+    "body+music": "Skald", "mind+music": "Loremaster", "craft+music": "Troubadour", "music+tech": "Synth Mage",
+    "music+spirit": "Cantor", "body+mind": "Battlemage", "body+craft": "Smith", "body+tech": "Vanguard",
+    "body+spirit": "Paladin", "craft+mind": "Alchemist", "mind+tech": "Wizard", "mind+spirit": "Sage",
+    "craft+tech": "Tinker", "craft+spirit": "Druid", "spirit+tech": "Oracle",
+    "life+music": "Minstrel", "body+life": "Guardian", "life+mind": "Archivist", "craft+life": "Homesteader",
+    "life+tech": "Engineer", "life+spirit": "Hermit"
+  };
+
+  // Categories are what you're trying to do; skills inside them are the specific tracks you level.
+  // Each category sets the default path and tip set for skills you add yourself.
+  const CATEGORIES = [
+    { id: "instrument", label: "Play an instrument", path: "music", tips: "instrument", noun: "instrument",
+      skills: [["Guitar", { tips: "guitar" }], ["Piano"], ["Bass"], ["Drums"], ["Ukulele"], ["Violin"], ["Saxophone"], ["Tuba"], ["Singing"]] },
+    { id: "language", label: "Learn a language", path: "mind", tips: "language", noun: "language",
+      skills: [["Spanish"], ["French"], ["Japanese"], ["German"], ["Italian"], ["Korean"], ["Mandarin"], ["Portuguese"], ["Sign language"]] },
+    { id: "health", label: "Health goals", path: "body", tips: "fitness", noun: "goal",
+      skills: [["Running", { tips: "running" }], ["Strength training", { tips: "strength" }], ["Cycling"], ["Swimming"], ["Martial arts"], ["Climbing"],
+               ["Yoga", { path: "spirit", tips: "wellness" }], ["Meditation", { path: "spirit", tips: "wellness" }], ["Journaling", { path: "spirit", tips: "wellness" }]] },
+    { id: "cooking", label: "Cook & bake", path: "craft", tips: "cooking", noun: "style",
+      skills: [["Everyday cooking"], ["Baking"], ["Knife skills"], ["Grilling & BBQ"], ["Pastry"], ["World cuisines"]] },
+    { id: "trade", label: "Learn a trade", path: "craft", tips: "trade", noun: "trade",
+      skills: [["Woodworking"], ["Welding"], ["Electrical"], ["Plumbing"], ["Auto repair"], ["Sewing"]] },
+    { id: "art", label: "Make art", path: "craft", tips: "generic", noun: "art form",
+      skills: [["Drawing", { tips: "drawing" }], ["Painting", { tips: "drawing" }], ["Photography"], ["Pottery"], ["Writing", { path: "mind" }]] },
+    { id: "tech", label: "Code & tech", path: "tech", tips: "coding", noun: "skill",
+      skills: [["Coding"], ["Game development"], ["3D modeling"], ["Video editing"], ["Electronics", { tips: "generic" }]] },
+    { id: "study", label: "Study & strategy", path: "mind", tips: "generic", noun: "subject",
+      skills: [["Reading"], ["Math"], ["Chess"], ["History"], ["Public speaking"]] },
+    { id: "life", label: "Life skills", path: "life", tips: "life", noun: "skill",
+      skills: [["Organizing"], ["Cleaning"], ["Budgeting"], ["Gardening", { path: "craft" }], ["Home repair"], ["Time management"]] }
+  ];
+  const catById = id => CATEGORIES.find(c => c.id === id) || CATEGORIES.find(c => c.id === "life");
+  const PRESETS = CATEGORIES.flatMap(c => c.skills.map(([name, o = {}]) => ({ name, catId: c.id, cat: o.path || c.path, tips: o.tips || c.tips })));
+  const PATH_HOME = { music: "instrument", body: "health", mind: "study", craft: "art", tech: "tech", spirit: "health", life: "life" };
+
+  // One tip per tier: Novice, Apprentice, Journeyman, Adept, Expert, Master, Grandmaster
+  // Tip library: one set per skill, 7 tiers (Novice to Grandmaster), several tips per tier.
+  // Reviewed for accuracy; safety tips come first for trades and sports. Category sets cover custom skills.
+  const TIP_DATA = {"sets": {"art": [["Make something small every day. Volume builds skill.", "Keep a sketchbook or folder of everything you make.", "Don't wait for perfect materials. Start with what you have."], ["Pick one specific thing to improve each session.", "Study work you admire and ask what makes it effective.", "Use references. Even professionals rely on them."], ["Learn the basics of composition, like balance and focal point.", "Finish pieces even when they're not going well.", "Share your work with a supportive group for feedback."], ["Copy a master's work to study their decisions.", "Try a new medium or technique to stretch yourself.", "Set a small project with a deadline."], ["Work in a series. Several pieces on one theme reveal your voice.", "Ask for honest critique from experienced artists.", "Compare your recent work to pieces from months ago."], ["Develop your own style by combining influences.", "Show your work in public, online or in person.", "Teach a technique to deepen your understanding."], ["Take on an ambitious, long-term project.", "Mentor a beginner.", "Keep experimenting so your work keeps growing."]], "drawing": [["Draw basic shapes like boxes, spheres and cylinders. Most objects are built from them.", "Draw from life, not just photos, to train your eye."], ["Do 30-second gesture drawings to catch movement before detail.", "Draw lightly at first, then darken lines you're sure about."], ["Squint at your reference to see light and shadow as a few simple shapes.", "Practice one- and two-point perspective."], ["Copy a master's drawing. Copying teaches decisions you wouldn't think to make.", "Study basic anatomy if you draw people."], ["Draw from memory, then check the reference.", "Work on a full illustration with background and lighting."], ["Develop a consistent personal style.", "Fill a sketchbook on a single theme."], ["Work in a series. Ten pieces on one theme reveal your own voice.", "Teach a beginner to draw basic forms."]], "painting": [["Start with a limited palette of a few colors plus white.", "Clean your brushes thoroughly after every session."], ["Learn to mix colors rather than buying every tube.", "Block in big shapes first, then add detail."], ["Work out values, light versus dark, before worrying about color.", "Paint small studies before big canvases."], ["Learn about warm and cool colors and how they push and pull space.", "In oils, follow 'fat over lean': later layers should contain more oil than earlier ones to prevent cracking."], ["Paint the same subject in different lighting.", "Study how master painters handled edges, hard and soft."], ["Develop a series with a consistent theme.", "Experiment with texture, glazing and other techniques."], ["Exhibit your work in a show or online gallery.", "Teach a color-mixing workshop."]], "photography": [["Learn the exposure triangle: aperture, shutter speed and ISO.", "Hold the camera steady and squeeze the shutter gently."], ["Use the rule of thirds as a starting guide, not a strict law.", "Shoot during golden hour, just after sunrise or before sunset, for soft light."], ["Learn to read your camera's histogram to check exposure.", "Shoot in RAW if your camera allows it, for more editing flexibility."], ["Practice manual mode until it feels natural.", "Learn basic editing: exposure, white balance and cropping."], ["Shoot a themed project over several weeks.", "Study photographers you admire and analyze their composition."], ["Develop a consistent editing style.", "Learn to work with off-camera light."], ["Publish a portfolio or photo book.", "Teach someone the basics of exposure."]], "pottery": [["Wedge your clay to remove air bubbles before throwing.", "Keep your hands and the clay wet, but not soaking, on the wheel."], ["Centering is the foundation. Practice it until it feels steady.", "Start with simple cylinders before bowls and vases."], ["Keep wall thickness even so pieces dry and fire evenly.", "Let pieces dry slowly to prevent cracking."], ["Learn trimming to shape the foot of your pieces.", "Try handbuilding techniques like coil and slab."], ["Learn about glazes and test them on tiles first.", "Throw sets of matching pieces to build consistency."], ["Experiment with different clay bodies and firing temperatures.", "Develop your own forms and surfaces."], ["Exhibit or sell a collection of your work.", "Teach someone to center clay."]], "writing": [["Write a little every day, even 10 minutes.", "Read widely. Reading teaches you what good writing sounds like."], ["Finish a first draft before editing. Drafts are supposed to be rough.", "Cut words that don't add meaning."], ["Read your work aloud to catch awkward sentences.", "Use specific, concrete details instead of vague descriptions."], ["Get feedback from a writing group or trusted reader.", "Study the structure of stories or essays you admire."], ["Revise in passes: big structure first, then sentences.", "Try a form you don't usually write, like poetry or a personal essay."], ["Submit work to publications or contests.", "Develop a recognizable voice."], ["Finish a long project, like a novel or collection.", "Mentor a newer writer."]], "cooking": [["Read the whole recipe first and set out every ingredient before you turn on the heat.", "Wash your hands and keep raw meat separate from ready-to-eat food.", "Taste as you cook, not only at the end."], ["Season gradually: add a little salt, taste, and adjust.", "Let the pan heat up before adding food for better browning.", "Don't crowd the pan. Food steams instead of browning when it's packed in."], ["Master one heat skill at a time: a hard sear, a gentle simmer, a quick sauté.", "Use a meat thermometer instead of guessing doneness.", "Learn to make a simple pan sauce from the browned bits left after searing."], ["Cook a favorite dish without the recipe, then compare it to the original.", "Learn to balance a dish with a splash of acid, like lemon juice or vinegar.", "Plan and cook a full meal so everything finishes at the same time."], ["Learn the classic French mother sauces. Many sauces branch from them.", "Make your own stock and taste the difference.", "Try cooking from a cuisine you've never tried before."], ["Build dishes around balance: salt, fat, acid and heat.", "Develop your own versions of classic recipes.", "Cook for a group and manage timing like a restaurant line."], ["Invent a dish and write the recipe clearly enough for someone else to make.", "Teach someone to cook a dish you know well.", "Host a dinner with a menu you designed yourself."]], "baking": [["Weigh ingredients with a kitchen scale. It's far more accurate than cups.", "Preheat the oven fully before baking."], ["Use room-temperature butter and eggs when a recipe calls for creaming.", "Measure flour by weight, or spoon it into the cup and level it. Scooping packs in too much."], ["Get an oven thermometer. Many ovens run hotter or colder than the dial says.", "Avoid opening the oven door too early, especially for cakes."], ["Learn the difference between baking soda and baking powder. Soda needs an acid in the recipe to work.", "Bake a simple bread and learn to tell when dough is properly kneaded."], ["Try a sourdough starter or a long, cold fermentation for more flavor.", "Learn to adjust recipes for altitude or different pan sizes."], ["Practice laminated doughs like croissants.", "Study the role of each ingredient so you can troubleshoot recipes."], ["Develop your own signature recipe.", "Teach a friend to bake a loaf of bread."]], "knife-skills": [["Use the claw grip: curl your fingertips under so your knuckles guide the blade.", "Put a damp towel under your cutting board so it doesn't slide."], ["A sharp knife is safer than a dull one because it needs less force and slips less.", "Hold the knife with a pinch grip on the blade, just in front of the handle."], ["Learn to dice an onion efficiently, keeping the root end attached.", "Practice a rocking motion with a chef's knife for fast chopping."], ["Learn the difference between honing, which realigns the edge, and sharpening, which removes metal.", "Practice consistent cuts like brunoise and julienne."], ["Learn to break down a whole chicken.", "Practice filleting fish with a flexible knife."], ["Learn to sharpen on a whetstone at a consistent angle.", "Work on speed only after your cuts are consistently even."], ["Teach someone the claw grip and basic cuts.", "Build a small, well-maintained knife kit that suits your cooking."]], "grilling-bbq": [["Set up two heat zones, one hot and one cooler, so you can move food around.", "Clean and oil the grates before cooking."], ["Use a meat thermometer. Safe minimums: poultry 165°F (74°C), ground beef 160°F (71°C), and whole cuts of beef or pork 145°F (63°C) with a 3-minute rest.", "Keep the lid closed as much as possible to hold the temperature steady."], ["Let meat rest after grilling so juices settle.", "Learn indirect grilling for thicker cuts."], ["Try low-and-slow smoking for cuts like pork shoulder.", "Learn to manage charcoal or wood for steady temperatures."], ["Experiment with dry rubs, marinades and brines.", "Keep a log of cook times and temperatures to learn your grill."], ["Tackle a long cook like brisket.", "Learn to grill vegetables and fish as well as meat."], ["Host a cookout and manage multiple dishes at once.", "Develop your own signature rub or sauce."]], "pastry": [["Keep butter cold for flaky pastry dough.", "Measure precisely. Pastry is less forgiving than cooking."], ["Rest dough in the fridge before rolling so it's easier to handle and shrinks less.", "Use a light touch. Overworking dough makes it tough."], ["Blind-bake tart shells with weights to keep them flat.", "Learn to make a basic pastry cream."], ["Learn choux pastry for éclairs and cream puffs.", "Practice piping with a pastry bag."], ["Work on laminated doughs like puff pastry.", "Learn to temper chocolate for a glossy finish."], ["Design a plated dessert with different textures.", "Study classic French pâtisserie techniques."], ["Create a signature pastry of your own.", "Teach a friend to make a simple tart."]], "world-cuisines": [["Pick one cuisine to explore first and learn its key ingredients.", "Find a trusted cookbook or creator from that cuisine."], ["Stock the pantry staples for your chosen cuisine.", "Learn a simple everyday dish from it before festive ones."], ["Learn the core techniques of that cuisine, like stir-frying or slow braising.", "Visit local markets for authentic ingredients."], ["Learn about regional variations within the cuisine.", "Cook a full traditional meal with several dishes."], ["Explore a second cuisine and compare techniques.", "Learn the history and culture behind the dishes."], ["Cook with someone from the culture to learn hands-on.", "Adapt dishes to local ingredients while respecting tradition."], ["Host a dinner featuring a cuisine you've studied.", "Teach a dish to friends and share its story."]], "fitness": [["Start smaller than you think. Three short sessions a week beat one heroic one.", "Warm up for a few minutes before working hard.", "If you have a health condition or haven't exercised in a long time, check with a doctor before starting."], ["Learn proper form before adding intensity.", "Mild soreness is normal. Sharp or joint pain is a signal to stop.", "Schedule your sessions like appointments so they happen."], ["Track your sessions so you can see progress and spot plateaus.", "Mix in some variety so you train different muscles and avoid burnout.", "Sleep and food fuel your progress as much as the workouts do."], ["Follow a structured plan for 8 to 12 weeks before judging it.", "Increase one thing at a time: duration, intensity or frequency.", "Find a partner or class to keep you accountable."], ["Schedule easier recovery weeks. Your body adapts during rest.", "Train your weak points on purpose.", "Learn to tell the difference between being tired and being injured."], ["Set a measurable performance goal and build a plan toward it.", "Consider working with a coach to refine technique.", "Review your training log every few months and adjust."], ["Pick a big goal event, like a race, meet or climb, and build toward it.", "Help a beginner get started safely.", "Keep training enjoyable so it lasts for decades."]], "running": [["Start with run/walk intervals, like 1 minute running and 2 walking.", "Run at a pace where you could still talk in short sentences."], ["Most runs should feel easy. Speed comes later.", "Get fitted for running shoes at a specialty store if you can."], ["Increase weekly distance gradually. The popular '10% rule' is a rough guide, not a law.", "Add a longer, slow run once a week to build endurance."], ["Add one session of strides or intervals each week and keep the rest easy.", "Add a little strength training to support your legs and hips."], ["Plan a training block toward a race, with a lighter taper in the final week or two.", "Practice race-day fueling and gear during long training runs, not on race day."], ["Track recovery like sleep and how your legs feel. Progress needs rest as much as mileage.", "Run varied terrain like hills and trails to build strength."], ["Pace a friend through their first race.", "Pick a goal race that excites you and train for it over months."]], "strength-training": [["Learn form with light weight first: squat, hinge, push and pull.", "Warm up with lighter sets of the exercise you're about to do."], ["Use progressive overload: add a little weight or one rep over time.", "Control the weight on the way down instead of dropping it."], ["Log every workout so you can spot a plateau early.", "Use a spotter or safety bars for heavy bench presses and squats."], ["Run a structured program for 8 to 12 weeks before judging it.", "Make sure you're eating enough protein to support muscle growth."], ["Plan lighter deload weeks to manage built-up fatigue.", "Film heavy lifts from the side to catch form breaking down."], ["Bring up weak points with targeted accessory work.", "Learn to adjust training based on how recovered you feel each day."], ["Coach a beginner through their first lifts with good form.", "Set a long-term strength goal and plan it in training blocks."]], "cycling": [["Always wear a helmet, and check your brakes before every ride.", "Set your saddle height so your leg is almost straight at the bottom of the pedal stroke."], ["Do an ABC check before rides: air in tires, brakes and chain.", "Shift gears before you hit a hill, not halfway up."], ["Practice keeping a steady, smooth pedal rhythm. Many road cyclists aim for roughly 80 to 90 pedal turns a minute.", "Learn to fix a flat tire before you need to."], ["Add one longer ride each week to build endurance.", "Learn to ride safely in a group, holding a steady line."], ["Add interval sessions to build power.", "Consider a professional bike fit if you ride long distances."], ["Learn basic bike maintenance like cleaning and lubing the chain.", "Plan a long event ride and train toward it."], ["Lead a group ride for newer cyclists.", "Take on a multi-day tour or a big climbing challenge."]], "swimming": [["Swim where there's a lifeguard, and never swim alone in open water.", "Practice breathing out steadily underwater, then breathing in when your face turns to the side."], ["Practice kicking with a kickboard to build leg strength.", "Keep your body long and flat in the water to reduce drag."], ["Learn bilateral breathing, breathing to both sides, for a balanced stroke.", "Use drills like catch-up freestyle to improve your stroke."], ["Learn a second stroke, like backstroke or breaststroke.", "Practice flip turns or open turns to keep laps flowing."], ["Swim structured sets with rest intervals instead of just swimming laps.", "Ask a coach to watch your stroke and give feedback."], ["Learn butterfly or work toward all four strokes.", "Try open-water swimming with a group and proper safety support."], ["Enter a swim meet or open-water event.", "Help a beginner get comfortable in the water."]], "martial-arts": [["Learn at a reputable school with qualified instructors.", "Focus on basic stances and footwork before advanced techniques."], ["Train with control. Your partner is helping you learn, not an opponent.", "In grappling, tap early when caught in a hold. It prevents injury."], ["Drill fundamentals slowly until they feel natural.", "Learn how to fall safely before sparring or throwing."], ["Start sparring or rolling with control under supervision.", "Add conditioning and flexibility work outside class."], ["Study your sparring rounds to find patterns in your mistakes.", "Train with partners of different sizes and styles."], ["Help teach techniques to newer students.", "Prepare for a grading or competition with a focused plan."], ["Develop a personal approach built on the fundamentals.", "Mentor junior students and lead parts of class."]], "climbing": [["Take an intro class at a climbing gym to learn the basics safely.", "Before every climb, check your partner's harness and knot, and have them check yours."], ["Use your legs more than your arms. Push with your feet.", "Learn to fall safely in bouldering, landing on your feet and rolling back."], ["Practice precise footwork: place your feet quietly and deliberately.", "Rest by straightening your arms and hanging from your skeleton."], ["Learn to read a route before you climb it.", "Add some antagonist training like push-ups to keep shoulders balanced."], ["Work on projects slightly above your level over several sessions.", "Learn lead climbing from a qualified instructor before trying it."], ["Take outdoor climbing courses before climbing outside, including how to assess anchors and rock.", "Train finger strength gradually to avoid tendon injuries."], ["Mentor a new climber in safe gym practices.", "Plan an outdoor climbing trip with experienced partners."]], "wellness": [["Start with five minutes. Consistency matters more than length.", "Practice at the same time and place each day so the habit runs on autopilot.", "There's no perfect way to start. Just begin."], ["Try a guided session from a teacher or app to learn new techniques.", "Notice how you feel before and after each session.", "Keep your practice space simple and comfortable."], ["When your attention wanders, come back without judging it. Coming back is the practice.", "Gradually lengthen sessions by a few minutes.", "Try practicing at a different time of day to see what suits you."], ["Try one longer session, or a half-day retreat.", "Explore a different style or tradition to deepen your practice.", "Bring the practice into ordinary moments, like walking or waiting in line."], ["Join a group or class to practice with others.", "Read about the history and ideas behind your practice.", "Keep a simple log of what helps and what doesn't."], ["Take a multi-day retreat or longer course.", "Share what you've learned with a friend who's curious.", "Notice how the practice affects your relationships and work."], ["Help someone else start their own practice.", "Make the practice a lifelong habit rather than a goal.", "Keep learning from experienced teachers."]], "yoga": [["Start with a beginner class taught by a qualified instructor.", "Never force a pose into pain. Mild stretch is fine, sharp pain isn't."], ["Use props like blocks and straps. They help you find good alignment.", "Link movement with your breath, moving on the inhale or exhale."], ["Learn the core standing poses well, like Mountain, Warrior and Downward Dog.", "Practice regularly, even short sessions at home."], ["Explore different styles like Hatha, Vinyasa or Yin to find what suits you.", "Work on balance poses to build stability and focus."], ["Learn to modify poses for your own body instead of copying others.", "Try a longer class or workshop to deepen your practice."], ["Build a home practice you sequence yourself.", "Study the breathing and meditation side of yoga, too."], ["Share a basic sequence with a friend.", "Consider teacher training if you want to go deeper."]], "meditation": [["Start with five minutes of focusing on your breath.", "Sit comfortably. A chair works just as well as the floor."], ["Use a guided meditation app or recording when starting out.", "When your mind wanders, gently return to the breath. That's the practice."], ["Try body scans, moving attention slowly from head to toe.", "Meditate at the same time each day to build the habit."], ["Explore loving-kindness or other styles of meditation.", "Gradually extend sessions to 15 or 20 minutes."], ["Practice mindfulness during daily tasks like eating or walking.", "Join a group sitting or meditation class."], ["Attend a retreat led by experienced teachers.", "Read classic texts on meditation to understand its roots."], ["Help a friend start meditating.", "Make meditation part of your daily life, not just a session."]], "journaling": [["Write a few lines each day. Length doesn't matter.", "Date every entry so you can look back later."], ["Use prompts when you're stuck, like 'What went well today?'", "Write for yourself. It doesn't need to be polished."], ["Try different formats: lists, letters, or bullet journaling.", "Note what you're grateful for a few times a week."], ["Reread entries from a month ago and notice patterns.", "Use journaling to think through decisions."], ["Set a monthly reflection where you review goals and progress.", "Keep separate sections or notebooks for different purposes."], ["Write longer reflective pieces on big life events.", "Combine journaling with other practices like meditation."], ["Keep journaling as a lifelong habit.", "Share the habit with a friend who's curious."]], "language": [["Learn the most common words first. A few hundred cover a large share of everyday conversation.", "Learn greetings and survival phrases so you can use the language from day one.", "Learn how the sounds work early, before bad pronunciation habits set in."], ["Use spaced-repetition flashcards a little every day instead of cramming.", "Learn words in short phrases, not alone, so you also learn how they're used.", "Label things around your home in the language."], ["Rewatch a show you know, with audio and subtitles in the language.", "Keep a short daily journal in the language, even three sentences.", "Learn the most common verb patterns and practice them out loud."], ["Find a conversation partner or tutor. Speaking is where many learners stall.", "Switch your phone or a game to the language for a week.", "Listen to podcasts made for learners at your level."], ["Read a full novel or long article series. Only look up words that keep coming back.", "Practice explaining something complicated, like your job, in the language.", "Watch content made for native speakers without subtitles."], ["Shadow native audio: repeat each sentence right after the speaker to polish rhythm and accent.", "Learn idioms and slang from real conversations, not just textbooks.", "Write something longer, like a letter or story, and get it corrected."], ["Narrate your day in your head in the language.", "Help a newer learner. Explaining grammar shows you what you've mastered.", "Consume news, books and shows in the language as your normal routine."]], "sign-language": [["Learn the fingerspelling alphabet for your sign language.", "Sign languages differ by country. ASL and British Sign Language, for example, are separate languages."], ["Practice receptive skills by watching signers in videos, not just signing yourself.", "Facial expressions carry grammar in many sign languages, like marking questions. Practice them, too."], ["Learn classes from Deaf instructors when you can. They teach the language and its culture.", "Practice signing in front of a mirror or record yourself to check your handshapes."], ["Attend Deaf community events where signing is welcome, and be respectful as a learner.", "Learn how signers use the space in front of them to track people and places."], ["Practice storytelling in sign, using role shift to show different characters.", "Watch fast natural signing and try to follow full conversations."], ["Learn regional variations and slang from community members.", "Practice interpreting short spoken passages into sign."], ["Help newer learners with fingerspelling and receptive practice.", "If you're interested, look into formal interpreter training and certification."]], "life": [["Start with one small area, like a single drawer or shelf.", "Use the two-minute rule: if it takes under two minutes, do it now.", "Pick one habit to work on at a time."], ["Build a short weekly reset routine and keep it the same each week.", "Write things down instead of keeping them in your head.", "Celebrate small wins."], ["Give everything a home. Clutter is mostly things without a place.", "Batch similar tasks together.", "Review what's working each month."], ["Automate what you can: recurring bills, shopping lists, reminders.", "Plan your week before it starts.", "Learn from people who do this well."], ["Review your systems every few months and drop what you don't use.", "Build routines that work even on bad days.", "Share chores fairly with your household."], ["Teach your systems to family or roommates.", "Plan ahead for big life events.", "Keep refining instead of starting over."], ["Help someone else set up their system.", "Make your systems simple enough to last for years.", "Keep improving a little at a time."]], "organizing": [["Start with one drawer or shelf, not a whole room.", "Sort items into keep, donate and discard."], ["Give everything a home close to where you use it.", "Label containers so everyone knows where things go."], ["Store frequently used items at eye level.", "Use the 'one in, one out' rule for new items."], ["Declutter each room on a regular schedule.", "Organize digital files with clear folder names."], ["Set up systems for paperwork and important documents.", "Review storage seasonally."], ["Help a friend organize a space.", "Design systems that are easy to maintain."], ["Keep your whole home organized with simple routines.", "Teach your family your organizing system."]], "cleaning": [["Clean from top to bottom so dust falls onto areas you haven't cleaned yet.", "Never mix bleach with ammonia or acidic cleaners. It can release toxic gas."], ["Let cleaners sit for the time on the label before wiping.", "Do a quick 10-minute tidy each day."], ["Build a weekly cleaning schedule by room.", "Clean as you cook to avoid a big mess later."], ["Deep-clean one area each week on a rotation.", "Use microfiber cloths for dusting and streak-free glass."], ["Learn to treat common stains quickly.", "Keep supplies in each area where you need them."], ["Create a seasonal deep-cleaning checklist.", "Teach household members the routine."], ["Keep your home clean with minimal effort through habits.", "Help someone set up a cleaning routine."]], "budgeting": [["Track every expense for one month to see where money goes.", "List your fixed bills and their due dates."], ["Pick a simple budgeting method and try it for a few months. The 50/30/20 split is one popular starting point.", "Review subscriptions and cancel ones you don't use."], ["Start an emergency fund, even a small one.", "Set up automatic transfers to savings."], ["Plan for irregular expenses like car repairs or gifts.", "Review your budget monthly and adjust."], ["Learn the basics of interest and how debt grows.", "Set specific savings goals with timelines."], ["Learn general investing concepts from reputable sources.", "Consider talking to a licensed financial professional for big decisions."], ["Help a friend build their first budget.", "Keep refining your money habits over time."]], "gardening": [["Start small with a few easy plants.", "Learn your climate zone so you choose plants that suit it."], ["Water deeply and less often to grow strong roots.", "Check how much sun each spot gets before planting."], ["Add compost to improve your soil.", "Mulch to keep moisture in and weeds down."], ["Get a soil test to learn what your soil needs.", "Learn to spot common pests early."], ["Plan your garden with crop rotation in mind.", "Start plants from seed."], ["Try companion planting and succession planting.", "Save seeds from your best plants."], ["Design a garden that produces through several seasons.", "Share plants and knowledge with neighbors."]], "home-repair": [["Learn where your water shutoff, gas shutoff and breaker panel are.", "Build a basic toolkit: hammer, screwdrivers, tape measure, level and pliers."], ["Use a stud finder before hanging heavy items.", "Patch small drywall holes with spackle and sand smooth."], ["Learn to caulk tubs and windows neatly.", "Fix squeaky doors and loose cabinet hinges."], ["Learn to replace a faucet aerator or showerhead.", "Keep a log of home maintenance tasks."], ["Learn to paint a room with clean edges.", "Know when a job needs a licensed pro, like electrical, gas or structural work."], ["Plan a seasonal maintenance checklist.", "Take on a larger project like installing shelves or tile."], ["Help a neighbor with a repair.", "Keep your home in good shape with regular maintenance."]], "time-management": [["Write down every task so your head is free to focus.", "Pick the one most important task each day."], ["Try working in focused blocks, like 25 minutes with a 5-minute break.", "Turn off notifications during focus time."], ["Block time on your calendar for important work.", "Group similar tasks together."], ["Do a weekly review of tasks and priorities.", "Learn to say no to things that don't fit your goals."], ["Track how you actually spend your time for a week.", "Plan your week around your energy levels."], ["Delegate tasks others can do.", "Set quarterly goals and break them into weekly steps."], ["Help someone set up a planning system.", "Keep your system simple and adjust it as life changes."]], "generic": [["Short daily sessions beat one long weekly one. Ten minutes counts.", "Start with the basics before advanced techniques.", "Focus on enjoying the process early on."], ["Pick one specific thing to improve in each session.", "Find a good beginner resource and work through it.", "Practice at the same time each day."], ["Find someone a little ahead of you and notice what they do differently.", "Track your progress so you can see it.", "Push slightly past your comfort zone."], ["Record or save your work so you can compare it later.", "Get feedback from someone experienced.", "Take on a project with a clear goal."], ["Spend part of each session on your weakest area. That's deliberate practice.", "Study the work of experts.", "Set a challenging long-term goal."], ["Take on a project bigger than you think you can finish.", "Refine your own style or approach.", "Share your progress with a community."], ["Teach what you know. It locks it in and shows you the gaps.", "Mentor someone starting out.", "Keep learning for the long haul."]], "instrument": [["Learn to hold the instrument comfortably and play one clean note before chasing songs.", "Practice in short daily sessions. Fifteen focused minutes beats an hour once a week.", "Learn the names of the notes your instrument plays so lessons and tabs make sense."], ["Practice with a metronome at a tempo where you make no mistakes, then speed up gradually.", "Learn the major scale in a couple of keys. A lot of melodies are built from it.", "Warm up before you play songs, even if it's just a minute of slow scales."], ["Learn one full song start to finish, including the bar you keep skipping.", "Isolate the hardest two bars and loop them slowly instead of replaying the whole piece.", "Learn basic chord building: a major chord is the 1st, 3rd and 5th notes of the major scale."], ["Play along with recordings to build timing and feel.", "Start learning to read music or charts if you haven't. It opens up far more material.", "Practice dynamics on purpose: play a phrase very quietly, then loudly, keeping it even."], ["Record yourself and listen back a day later with fresh ears.", "Learn a piece in a style you don't usually play. It exposes new techniques.", "Play with other musicians. Staying together teaches more about timing than solo practice."], ["Transcribe a passage by ear and compare it to the written version.", "Perform for an audience, even a small one. Nerves are a skill you can train.", "Work on tone as a goal in itself, not just correct notes."], ["Teach a beginner. Explaining technique exposes habits you've stopped noticing.", "Compose or arrange your own piece using what you've learned.", "Keep a few long-term goal pieces that stretch you for months."]], "guitar": [["Start with E minor and G major. They're easy shapes and appear in countless songs.", "Press strings just behind the fret, not on top of it, for a clean sound with less pressure."], ["Practice switching between two chords for one minute straight. Clean changes matter more than speed.", "Learn to tune by ear against a tuner app, then check how close you got."], ["Learn the A minor pentatonic scale in its first position at the 5th fret. It's the backbone of many rock and blues solos.", "Start practicing the F barre chord a little each day. It's hard for everyone at first."], ["Learn the CAGED system to see each chord in five places on the neck.", "Practice bends to pitch: play the target note first, then bend up to match it."], ["Transcribe a solo by ear. It trains your ear faster than reading tabs.", "Learn the notes on the low E and A strings so you can find any root note quickly."], ["Record yourself and listen for timing first, tone second.", "Learn modes by hearing them over a drone, not by memorizing shapes alone."], ["Teach someone. Explaining technique exposes the habits you've stopped noticing.", "Develop a signature phrase or tone you could recognize as your own."]], "piano": [["Learn finger numbers: thumbs are 1 and pinkies are 5 on both hands.", "Find middle C and learn the white keys around it by name."], ["Practice hands separately until each feels easy, then put them together slowly.", "Keep fingers gently curved, as if holding a ball, to play evenly."], ["Learn the C major scale with correct fingering, passing the thumb under smoothly.", "Learn to read the treble and bass clefs together, a few notes at a time."], ["Start using the sustain pedal, lifting and pressing it right after each chord change so chords don't blur.", "Learn the major and minor scales in all keys, a few each week."], ["Practice voicing: let the melody sing out over a softer accompaniment.", "Learn a piece from a different era, like Baroque or Romantic, to stretch your technique."], ["Record yourself to check evenness in fast runs and the balance between hands.", "Study a piece's harmony so you can memorize it by structure, not just muscle memory."], ["Prepare a short recital program and perform it from memory.", "Teach a beginner their first song. It sharpens your own fundamentals."]], "bass": [["Start by playing root notes on beat one of each chord in a simple song.", "Use your fretting hand's fingertips and keep your thumb behind the neck."], ["Lock in with the kick drum. Bass and drums together make the groove.", "Alternate your index and middle fingers when plucking for an even sound."], ["Mute strings you're not playing with both hands to avoid ringing notes.", "Learn simple walking lines using root, fifth and octave."], ["Learn the major and minor arpeggios across the neck.", "Practice with a metronome clicking only on beats 2 and 4 to strengthen your internal time."], ["Transcribe bass lines from songs you love and notice how they support the chords.", "Experiment with slap or pick technique to widen your tone options."], ["Learn to read bass clef or chord charts so you can sit in with other musicians.", "Work on playing behind, on, or ahead of the beat on purpose."], ["Write your own bass lines for chord progressions you haven't heard before.", "Teach a drummer or guitarist how your parts lock together."]], "drums": [["Learn a basic rock beat: kick on 1 and 3, snare on 2 and 4, hi-hat on eighth notes.", "Wear ear protection. Drums are loud enough to damage hearing over time."], ["Practice the single stroke roll and double stroke roll on a practice pad.", "Let the stick rebound off the head instead of pressing into it."], ["Learn the paradiddle and use it around the kit.", "Practice fills that end cleanly on beat one of the next bar."], ["Work through all 40 standard rudiments, a few at a time.", "Practice with a metronome at slow tempos. Steady and slow is harder than fast."], ["Learn grooves from different styles like funk, jazz, and Latin.", "Record yourself playing along to songs and check if you're rushing fills."], ["Work on dynamics: play ghost notes softly so accents stand out.", "Practice odd time signatures like 5/4 and 7/8."], ["Play with a band regularly and learn to support the song, not just show off.", "Develop your own fills and grooves that musicians would recognize as yours."]], "ukulele": [["Standard tuning is G-C-E-A, with the G string tuned higher than the C on most ukuleles.", "Learn C, A minor, F and G. Those four chords cover lots of songs."], ["Practice a simple down-down-up-up-down-up strum until it feels automatic.", "Keep your strumming hand moving even on beats where you don't hit the strings."], ["Learn to switch chords without stopping your strum.", "Try fingerpicking simple patterns with thumb and first two fingers."], ["Learn barre chords like B flat to unlock more keys.", "Try a chord-melody arrangement where you play the tune and harmony together."], ["Learn the notes on the fretboard so you can find melodies by ear.", "Experiment with chucks and percussive strums for rhythm variety."], ["Learn songs in a low-G tuning to hear a fuller range.", "Arrange a song from another instrument for ukulele."], ["Perform a full set of songs for friends or an open mic.", "Teach someone their first four chords."]], "violin": [["Learn the open strings: G, D, A and E, from lowest to highest.", "Work on a relaxed bow hold before worrying about notes."], ["Keep the bow parallel to the bridge and practice long, straight strokes on open strings.", "Beginners often use tape on the fingerboard to mark finger positions. That's normal while your ear develops."], ["Practice scales slowly with a drone note to train your intonation.", "Learn to tune with the fine tuners first, then the pegs with help."], ["Learn third position to reach higher notes on each string.", "Start working on vibrato slowly with a teacher's guidance."], ["Practice shifting between positions slowly, listening for the target note.", "Study bowing techniques like spiccato and martelé."], ["Record yourself to catch intonation drift in fast passages.", "Play chamber music with others to build ensemble listening."], ["Prepare a full concerto movement or recital piece.", "Teach a beginner bow hold and posture."]], "saxophone": [["Many beginners start with a softer reed, around strength 2 to 2.5, before moving up.", "Learn a steady embouchure: lower lip slightly over the bottom teeth, corners firm."], ["Play long tones every session to build a steady, full sound.", "Learn the octave key to jump between low and middle registers smoothly."], ["Learn your first major scales and practice them slowly.", "Use a tuner while playing long tones to check pitch."], ["Practice overtones to strengthen your air support and control.", "Start learning simple jazz standards and their melodies."], ["Transcribe solos by ear from recordings you admire.", "Work on articulation like slap tongue or ghosted notes."], ["Learn to improvise over common chord progressions such as a ii–V–I.", "Explore altissimo notes above the normal range with a teacher."], ["Develop a recognizable personal tone.", "Play in a band or combo and practice blending your sound."]], "tuba": [["Buzz your lips on the mouthpiece alone before playing the full instrument.", "Breathe deeply and relaxed. The tuba needs a lot of steady air."], ["Play long tones every day to build steady air and tone.", "Learn your first few valve combinations and the notes they make."], ["Practice lip slurs between notes using the same valve combination.", "Learn to read bass clef fluently."], ["Work on your low register while keeping the tone full, not flabby.", "Practice scales across the instrument's range."], ["Play in an ensemble and practice keeping the group in time.", "Work on articulation so low notes speak clearly."], ["Learn solo repertoire written for tuba.", "Record yourself to check pitch in your extreme registers."], ["Perform a solo piece in public.", "Teach a new brass player how to buzz and breathe."]], "singing": [["Warm up gently before singing, with hums or lip trills.", "Stop if your voice hurts or feels strained. Pushing through pain can cause damage."], ["Practice breathing low and steady so your shoulders don't rise when you inhale.", "Sing along with a piano or app to check your pitch."], ["Learn sirens: glide smoothly from low to high notes and back.", "Record yourself. Your voice sounds different from inside your head."], ["Learn to blend smoothly between your chest voice and head voice.", "Work on clear vowels. They carry tone more than consonants."], ["Sing harmony parts to train your ear.", "Learn a song in another language to stretch your diction."], ["Prepare a set and perform it for an audience.", "Work with a vocal coach to refine your technique and stamina."], ["Develop a recognizable personal style and interpretation.", "Teach someone how to warm up properly."]], "study": [["Study in short focused blocks with breaks.", "Remove distractions like your phone during study time.", "Start with an overview of the topic before diving into details."], ["Test yourself instead of just rereading. Recalling information strengthens memory.", "Space out your review over several days.", "Explain what you learned in your own words."], ["Take notes that summarize ideas, not copies of the text.", "Mix related topics in one session to see connections.", "Use a variety of sources."], ["Teach a concept to someone else to check your understanding.", "Work through harder material slowly and repeatedly.", "Join a study group or discussion."], ["Apply what you learn to a real project or problem.", "Read critically and question sources.", "Track what you've learned over time."], ["Go deep into one area and become the go-to person for it.", "Read primary sources and advanced texts.", "Write about what you've learned."], ["Mentor others in your subject.", "Contribute your own ideas to discussions in the field.", "Keep learning as a lifelong habit."]], "reading": [["Read at the same time each day to build the habit.", "Start with books you're genuinely curious about."], ["Keep a book with you for spare moments.", "It's fine to quit a book you don't enjoy."], ["Take brief notes or highlight key ideas.", "Summarize each chapter in a sentence or two."], ["Read across genres and subjects.", "Discuss books with friends or a book club."], ["Read challenging classics slowly and with notes.", "Compare books on the same topic."], ["Write reviews or reflections on what you read.", "Reread favorite books and notice new details."], ["Recommend books thoughtfully to others.", "Build a personal library of books that shaped you."]], "math": [["Work through problems yourself instead of only reading solutions.", "Review the basics you're shaky on before moving forward."], ["Show your work so you can find where mistakes happen.", "Practice a little every day instead of cramming."], ["Focus on understanding why a method works, not just the steps.", "Check answers by estimating first."], ["Explain a solution to someone else.", "Mix problem types so you learn to choose the right method."], ["Tackle problems that take several sessions to solve.", "Read proofs carefully and try to reconstruct them."], ["Study a new branch of math that interests you.", "Try competition-style or challenge problems."], ["Tutor someone in math.", "Explore open problems or research-level topics."]], "chess": [["Learn how every piece moves, including castling and en passant.", "Learn basic checkmates like king and queen against a lone king."], ["Follow opening principles: control the center, develop your pieces, castle early.", "Before each move, check what your opponent's last move threatens."], ["Solve tactics puzzles daily to spot forks, pins and skewers.", "Review your losses to find the mistakes."], ["Learn basic endgames like king and pawn endings.", "Play longer games where you have time to think."], ["Study annotated master games.", "Build a small, consistent opening repertoire."], ["Calculate variations deeply before moving in critical positions.", "Play in tournaments to test yourself."], ["Coach a beginner.", "Study the games of a world champion in depth."]], "history": [["Start with a broad overview of a period before details.", "Use timelines to place events in order."], ["Learn the difference between primary sources from the time and secondary sources about it.", "Ask why events happened when they did."], ["Read several perspectives on the same event.", "Visit museums or historic sites."], ["Read primary sources from the period you're studying.", "Notice how historians disagree and why."], ["Write a short essay on a historical question.", "Study how geography and economics shaped events."], ["Research a topic in depth using primary sources.", "Connect historical patterns to current events, carefully."], ["Share your research through talks or writing.", "Mentor someone starting to study history."]], "public-speaking": [["Practice out loud, not just in your head.", "Know your opening lines well. A strong start calms nerves."], ["Record yourself and watch it back.", "Pause instead of using filler words like 'um.'"], ["Structure talks with a clear beginning, middle and end.", "Practice in front of a friend or small group."], ["Know your audience and tailor your message.", "Use stories to make points memorable."], ["Join a speaking group, like a Toastmasters club.", "Practice handling questions and interruptions calmly."], ["Speak without reading from notes.", "Work on vocal variety: pace, volume and pitch."], ["Give a talk to a large audience.", "Coach someone preparing their first speech."]], "tech": [["Follow a beginner tutorial all the way through before starting your own project.", "Learn the keyboard shortcuts for the tools you use most.", "Save your work often and keep backups."], ["Build a tiny project you'd actually use.", "When stuck, search the exact error message.", "Keep notes on what you learn so you can find it later."], ["Learn version control or another way to track changes.", "Read official documentation, not just tutorials.", "Break big problems into small steps."], ["Study how experienced people structure their projects.", "Join a community or forum for your area.", "Build something slightly beyond your current skill."], ["Get feedback on your work from someone more experienced.", "Learn to debug systematically instead of guessing.", "Finish and share a complete project."], ["Contribute to a community project or help others online.", "Learn the fundamentals beneath the tools you use.", "Plan a larger project with milestones."], ["Mentor someone who's starting out.", "Build something that other people rely on.", "Keep learning as tools change."]], "coding": [["Type examples out instead of pasting them. Your fingers learn the syntax too.", "Learn one language well before jumping to another."], ["Build a tiny project you'd actually use, like a dice roller or a to-do list.", "Read error messages carefully. They usually point to the problem."], ["Learn Git basics and commit small changes often, with clear messages.", "Learn to use a debugger instead of only print statements."], ["Read the source of an open-source project you use.", "Learn basic data structures like arrays, maps and sets."], ["Write a test that reproduces a bug before fixing it, so it can't sneak back.", "Ask for code reviews and learn from the feedback."], ["Measure performance before optimizing. The slow part is rarely where you'd guess.", "Learn a second language in a different style, like functional programming."], ["Write for the person reading your code next year, including future you.", "Mentor a beginner or contribute to open source."]], "game-development": [["Start by recreating a simple classic like Pong.", "Pick one engine and stick with it while you learn."], ["Keep scope tiny. Finished small games teach more than unfinished big ones.", "Learn your engine's basics: scenes, objects and input."], ["Make a game in a weekend game jam.", "Playtest with someone else and watch without explaining."], ["Learn basic game feel: responsive controls, feedback and juice.", "Use version control for your projects."], ["Finish and publish a small game online.", "Study games you love and break down why they're fun."], ["Learn optimization and profiling in your engine.", "Work with others on art, sound or design."], ["Release a polished game with a full start-to-finish experience.", "Share postmortems of what you learned."]], "3d-modeling": [["Learn to navigate the viewport smoothly: orbit, pan and zoom.", "Start with simple objects like a mug or a chair."], ["Use reference images from several angles.", "Learn the basic modeling tools: extrude, loop cut and bevel."], ["Aim for clean topology, using mostly four-sided faces.", "Model in low detail first, then add detail."], ["Learn UV unwrapping and basic texturing.", "Learn basic lighting and rendering."], ["Model a full scene with several objects.", "Study professional models to see how they're built."], ["Learn sculpting or procedural techniques.", "Optimize models for their purpose, like games or film."], ["Build a portfolio of finished pieces.", "Teach a beginner the basics of the viewport."]], "video-editing": [["Organize footage into folders or bins before you start cutting.", "Learn the keyboard shortcuts for cut, trim and playback."], ["Cut out anything that doesn't serve the story.", "Good audio matters as much as good video."], ["Learn J and L cuts, where audio leads or trails the picture.", "Cut on action to make transitions feel smooth."], ["Color correct for consistency before adding a creative grade.", "Learn basic audio mixing and leveling."], ["Edit a short film or video with a clear structure.", "Study editing in films you admire."], ["Learn motion graphics or advanced effects.", "Develop a recognizable editing style."], ["Edit a longer project from start to finish.", "Teach someone to organize and cut footage."]], "electronics": [["Start with low-voltage, battery-powered projects. Leave mains wiring to qualified people.", "Learn Ohm's law: voltage equals current times resistance."], ["Always use a current-limiting resistor with an LED.", "Build circuits on a breadboard before soldering."], ["Learn to use a multimeter to measure voltage, current and resistance.", "Learn to solder in a ventilated area, and wash your hands afterward."], ["Learn to read schematics.", "Try a microcontroller board like Arduino for simple projects."], ["Design and build a small project from your own schematic.", "Learn to read component datasheets."], ["Design a printed circuit board for a project.", "Learn basic debugging with an oscilloscope."], ["Build a complex project combining hardware and code.", "Teach someone to solder safely."]], "trade": [["Learn the safety gear and rules for every tool before anything else.", "Keep your workspace clean and well lit.", "Read the manual for each tool you use."], ["Measure twice, cut once. Slow, accurate work beats fast rework.", "Learn the names and uses of the basic hand tools.", "Practice on scrap material before your real project."], ["Finish a small project start to finish, even if it's simple.", "Learn how to keep your tools clean and sharp.", "Ask experienced people to look at your work."], ["Take a class or find a mentor in your trade.", "Learn the relevant codes or standards for your work.", "Keep a notebook of techniques and measurements."], ["Take on a project with a real deadline or a real customer.", "Learn to estimate time and materials before starting.", "Study common failure points and how to avoid them."], ["Keep a log of mistakes and fixes. It becomes your best reference.", "Learn when a job needs a licensed professional.", "Refine your work for both function and finish."], ["Mentor an apprentice. Teaching keeps your standards sharp.", "Consider formal certification if it fits your goals.", "Take on a showcase project that uses all your skills."]], "woodworking": [["Wear eye and hearing protection, and keep fingers away from blades.", "Learn to read wood grain direction before cutting or planing."], ["Measure from the same reference edge each time to avoid adding up errors.", "Keep chisels and plane blades sharp. Dull tools need more force and slip."], ["Use push sticks on the table saw and never reach over a moving blade.", "Learn a few basic joints, like butt, dado and rabbet."], ["Check for square at every step of assembly.", "Learn about wood movement: boards expand and shrink with humidity."], ["Learn traditional joinery like mortise-and-tenon and dovetails.", "Wear a dust mask or use dust collection. Fine wood dust is harmful to breathe."], ["Experiment with finishes and test them on scrap first.", "Design your own furniture with sketches and a cut list."], ["Build a heirloom piece that uses your best joinery.", "Teach a beginner to use hand tools safely."]], "welding": [["Learn in a class with proper supervision before welding on your own.", "Always wear a welding helmet, gloves, and flame-resistant clothing. Arc light can burn your eyes and skin."], ["Weld in a well-ventilated area. Welding fumes are harmful to breathe.", "Clean metal thoroughly before welding. Rust and paint cause weak, dirty welds."], ["Practice running straight, consistent beads on flat scrap metal.", "Keep a fire extinguisher nearby and clear flammables from your area."], ["Learn the differences between MIG, TIG and stick welding.", "Practice different joint types, like butt, lap and T-joints."], ["Practice welding in different positions, like horizontal and vertical.", "Learn to read welding symbols on drawings."], ["Cut and inspect test welds to check penetration.", "Learn to weld different metals, like aluminum and stainless."], ["Consider a recognized welding certification if you want to weld professionally.", "Build a project that requires precise fitting and welding."]], "electrical": [["Many places require permits or a licensed electrician for wiring work. Check your local rules first.", "Learn the basics of how circuits work before touching any wiring."], ["Always turn off power at the breaker before working, then confirm it's off with a voltage tester.", "Never assume a circuit is dead just because a switch is off."], ["Learn to safely replace a light switch or outlet with power off and verified.", "Use the correct wire gauge for the circuit."], ["Learn to read basic wiring diagrams.", "Understand what GFCI and AFCI protection do and where they're required."], ["Learn your local electrical code basics.", "Practice clean, secure connections and proper box fill."], ["Know when to call a licensed electrician, especially for panels or service upgrades.", "Learn to troubleshoot circuits with a multimeter."], ["Consider formal training if you want to work in the trade.", "Teach others the basics of electrical safety."]], "plumbing": [["Find your home's main water shutoff before you need it.", "Turn off the water supply before working on any fixture."], ["Wrap thread tape in the same direction the fitting tightens.", "Don't overtighten plastic fittings. They can crack."], ["Learn to fix a running toilet by replacing the flapper or fill valve.", "Learn to clear a clog with a plunger or drain snake before reaching for chemicals."], ["Learn basic pipe types like copper, PEX and PVC.", "Check for leaks after every repair."], ["Learn to replace a faucet or shower valve cartridge.", "Understand how drain venting works."], ["Learn local plumbing codes for your area.", "Know when to call a licensed plumber, especially for gas lines or main sewer work."], ["Take on a full fixture install from start to finish.", "Teach someone where their shutoff valves are."]], "auto-repair": [["Never work under a car supported only by a jack. Use jack stands on solid ground.", "Learn to check oil, coolant and tire pressure."], ["Chock the wheels before lifting a car.", "When disconnecting a battery, remove the negative terminal first and reconnect it last."], ["Learn to change your oil and filter.", "Tighten lug nuts in a star pattern to the torque in your manual."], ["Learn to replace brake pads with a repair manual for your vehicle.", "Use an OBD-II scanner to read engine fault codes on most modern cars."], ["Learn to diagnose common noises and leaks.", "Keep a maintenance log for your vehicle."], ["Work on more advanced repairs like suspension parts with proper tools.", "Know when a job needs a professional shop or specialized equipment."], ["Take on a restoration or major repair project.", "Teach someone basic car care."]], "sewing": [["Practice sewing straight lines on paper with an unthreaded machine.", "Learn to thread your machine and wind a bobbin."], ["Pre-wash fabric to pre-shrink it before cutting.", "Press seams with an iron as you go for a cleaner finish."], ["Learn to read a pattern and match its seam allowance.", "Change machine needles regularly. Dull needles cause skipped stitches."], ["Learn to sew zippers and buttonholes.", "Make a simple garment like a skirt or tote bag."], ["Learn to adjust patterns for fit.", "Try working with tricky fabrics like knits or silk."], ["Draft a simple pattern from your own measurements.", "Learn finishing techniques like French seams."], ["Design and sew a garment from scratch.", "Teach someone to use a sewing machine."]]}, "extras": {"japanese": [["Learn hiragana first, then katakana, before starting kanji."], ["Learn kanji gradually with their common words, not in isolation."], ["Pay attention to politeness levels: the same idea changes form depending on who you're speaking to."], ["Notice pitch accent in words. It can distinguish words that otherwise sound alike."]], "mandarin": [["Learn the four tones plus the neutral tone early. Tones change word meaning."], ["Learn pinyin well so you can look up and pronounce new words."], ["Learn measure words with nouns, since each noun takes a specific one."], ["Practice characters by their components. Many share common parts that hint at meaning or sound."]], "korean": [["Learn Hangul first. Its letters were designed to be learned quickly."], ["Learn how syllable blocks are built from individual letters."], ["Learn speech levels: endings change based on formality."], ["Learn common sound changes between words so spoken Korean is easier to follow."]], "spanish": [["Learn the difference between ser and estar early. Both mean 'to be' but are used differently."]], "french": [["Learn which final letters are usually silent. It makes reading aloud much easier."]], "german": [["Learn every noun with its article (der, die, das), since gender affects the rest of the sentence."]], "italian": [["Practice double consonants. Holding them a bit longer can change a word's meaning."]], "portuguese": [["Decide early whether you're learning Brazilian or European Portuguese. Pronunciation differs a lot."]]}};
+  const TIPS = Object.assign({}, TIP_DATA.sets);
+  Object.entries(TIP_DATA.extras).forEach(([lang, tiers]) => {
+    TIPS[lang] = TIPS.language.map((tier, i) => (tiers[i] || []).concat(tier));
+  });
+  const TIP_ALIASES = { "everyday-cooking": "cooking" };
+  const CAT_TIPS = { instrument: "instrument", language: "language", health: "fitness", cooking: "cooking", trade: "trade", art: "art", tech: "tech", study: "study", life: "life" };
+  const slugOf = n => String(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function tipSetKey(s) {
+    const sl = TIP_ALIASES[slugOf(s.name)] || slugOf(s.name);
+    if (TIPS[sl]) return sl;
+    if (s.catId === "health" && s.cat === "spirit") return "wellness";
+    if (CAT_TIPS[s.catId] && TIPS[CAT_TIPS[s.catId]]) return CAT_TIPS[s.catId];
+    return TIPS[s.tips] ? s.tips : "generic";
+  }
+
+  // ---------- Math helpers ----------
+  const lvFrom = m => Math.min(MAX_LV, Math.floor(Math.sqrt(Math.max(0, m) / MIN_PER_LV)));
+  const minFor = L => MIN_PER_LV * L * L;
+  const tierIdx = L => { let i = 0; TIERS.forEach((t, k) => { if (L >= t.min) i = k; }); return i; };
+  const stars = m => m < 2 * MASTERY_STEP ? 0 : Math.min(9, Math.floor(m / MASTERY_STEP) - 1);
+  const totalXp = s => s.earnedXp ?? s.earnedMin;   // levels come only from time logged in the app
+  // Veteran hours are past experience from before the app. They earn a badge only, never XP, levels or rewards.
+  const VET_TIERS = [{ h: 1, name: "Bronze" }, { h: 50, name: "Silver" }, { h: 250, name: "Gold" }, { h: 1000, name: "Platinum" }, { h: 5000, name: "Diamond" }];
+  function vetBadge(min, long) {
+    const h = (min || 0) / 60; if (h < 1) return "";
+    let i = 0; VET_TIERS.forEach((t, k) => { if (h >= t.h) i = k; });
+    return `<span class="vet t${i}" title="${fmtH(min)} of experience from before Level UP">${VET_TIERS[i].name} Veteran${long ? " · " + fmtH(min) : ""}</span>`;
+  }
+  function progress(m) {
+    const L = lvFrom(m);
+    if (L < MAX_LV) { const a = minFor(L), b = minFor(L + 1); return { L, have: m - a, need: b - a, pct: (m - a) / (b - a), next: "Lv " + (L + 1) }; }
+    if (m >= LEGEND_MIN) return { L, have: 1, need: 1, pct: 1, next: "Legend" };
+    const base = Math.max(minFor(MAX_LV), Math.floor(m / MASTERY_STEP) * MASTERY_STEP);
+    return { L, have: m - base, need: MASTERY_STEP, pct: (m - base) / MASTERY_STEP, next: "next mastery star" };
+  }
+  function fmt(min) {
+    min = Math.round(min);
+    if (min < 60) return min + "m";
+    const h = Math.floor(min / 60), r = min % 60;
+    return r ? `${h.toLocaleString()}h ${r}m` : `${h.toLocaleString()}h`;
+  }
+  const fmtXp = n => Math.round(n).toLocaleString();
+  const fmtH = min => (min / 60 >= 100 ? Math.round(min / 60).toLocaleString() : (Math.round(min / 6) / 10).toLocaleString()) + "h";
+  const pad = n => String(n).padStart(2, "0");
+  const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return dayKey(d); };
+  const dayNum = k => { const [y, m, d] = k.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  function dayLabel(k) {
+    const diff = dayNum(dayKey()) - dayNum(k);
+    if (diff === 0) return "Today"; if (diff === 1) return "Yesterday";
+    const [y, m, d] = k.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  // ---------- State ----------
+  const blank = () => ({ v: 1, heroName: "", skills: [], sessions: [], gold: 0, keyShards: 0, keysUsed: 0, owned: {}, equipped: {}, trophies: {}, runs: [], tipVotes: {}, submissions: [], restedPool: 0, lastSessionDay: null, timer: null });
+  let state = blank();
+  let sample = false;
+  let open = null;                 // expanded skill id
+  let editingName = false;
+  let editVet = null;
+  let tab = "train";
+  try { const t = localStorage.getItem("levelup.tab"); if (t === "gear" || t === "dungeons" || t === "settings") tab = t; } catch (e) {}
+  let confirm = null;              // { kind, id } for inline confirmations
+  let pick = new Map();            // onboarding selections: name -> {cat, tips, prior}
+
+  // ---------- Persistence ----------
+  const LS_KEY = "levelup.hero.v1";
+  let mode = "none", ref = null, dbh = null, saveTimer = null, chain = Promise.resolve();
+  const pill = document.getElementById("save-pill");
+  function setPill(text, warn) { pill.textContent = text; pill.classList.toggle("warn", !!warn); }
+
+  async function load() {
+    let db = null, user = null, id = null;
+    try {
+      if (window.claude && window.claude.use) {
+        db = await window.claude.use("db");
+        user = await window.claude.use("user");
+        id = user ? await user.id() : null;
+      }
+    } catch (e) { db = null; }
+    if (db && id) {
+      try {
+        ref = db.collection("data/users/" + id).doc("hero"); dbh = db;
+        const snap = await ref.get();
+        if (snap.exists) { state = Object.assign(blank(), snap.data()); migrate(); }
+        mode = "cloud"; setPill("Saved to your account");
+        return;
+      } catch (e) { ref = null; }
+    }
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) { state = Object.assign(blank(), JSON.parse(raw)); migrate(); } mode = "local"; setPill("Saved on this device"); }
+    catch (e) { mode = "none"; setPill("Not saving: storage is blocked here", true); }
+  }
+
+  // Saves go out right away (one at a time, newest state wins) so nothing is lost if the page
+  // reloads, for example when an update is published while the app is open.
+  let dirty = false, saving = false, failToastShown = false;
+  function persist() {
+    if (sample) return;
+    dirty = true;
+    if (mode !== "none") setPill("Saving…");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushSave, 0);
+  }
+  function flushSave() {
+    if (!dirty || saving) return;
+    dirty = false; saving = true;
+    const data = JSON.parse(JSON.stringify(state));
+    chain = chain.then(async () => {
+      if (mode === "cloud") {
+        try { await ref.set(data); if (!dirty) setPill("Saved to your account"); failToastShown = false; }
+        catch (e) {
+          dirty = true;
+          setPill("Couldn't save. Retrying when you make your next change.", true);
+          if (!failToastShown) { failToastShown = true; toast(`Couldn't save to your account${e && e.code ? " (" + esc(e.code) + ")" : ""}. Your progress is still on screen.`); }
+        }
+      } else if (mode === "local") {
+        try { localStorage.setItem(LS_KEY, JSON.stringify(data)); if (!dirty) setPill("Saved on this device"); }
+        catch (e) { setPill("Couldn't save on this device", true); }
+      }
+    }).finally(() => { saving = false; if (dirty) flushSave(); });
+  }
+  window.addEventListener("pagehide", flushSave);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushSave(); });
+
+  // Older saves had no category; place each skill in the best-matching one.
+  function migrate() {
+    state.skills.forEach(s => {
+      if (!PATHS[s.cat]) s.cat = "life";
+      if (s.earnedXp == null) s.earnedXp = s.earnedMin;
+      if (!s.catId || !CATEGORIES.some(c => c.id === s.catId)) {
+        const p = PRESETS.find(x => x.name.toLowerCase() === s.name.toLowerCase());
+        s.catId = p ? p.catId : (PATH_HOME[s.cat] || "life");
+      }
+    });
+    state.sessions.forEach(x => {
+      if (x.xp == null) x.xp = x.min;
+      if (!x.type) x.type = "solo";
+      if (x.rested == null) x.rested = 0;
+    });
+    if (state.sessions.some(x => x.shards == null)) {
+      const byDay = {};
+      [...state.sessions].sort((a, b) => a.ts - b.ts).forEach(x => {
+        if (x.shards == null) { const used = byDay[x.day] || 0; x.shards = Math.max(0, Math.min(x.min, DAILY_SHARD_CAP - used)); }
+        byDay[x.day] = (byDay[x.day] || 0) + x.shards;
+      });
+      state.keyShards = state.sessions.reduce((n, x) => n + x.shards, 0);
+    }
+    if (state.keyShards == null) state.keyShards = 0;
+    if (state.keysUsed == null) state.keysUsed = 0;
+    ["owned", "equipped", "trophies", "tipVotes"].forEach(k => { if (!state[k] || typeof state[k] !== "object") state[k] = {}; });
+    if (!Array.isArray(state.runs)) state.runs = [];
+    if (!Array.isArray(state.submissions)) state.submissions = [];
+  }
+
+  // ---------- Derived ----------
+  function restedNow() {
+    if (!state.lastSessionDay) return Math.min(REST_CAP, state.restedPool);
+    const idle = Math.max(0, dayNum(dayKey()) - dayNum(state.lastSessionDay) - 1);
+    return Math.min(REST_CAP, state.restedPool + idle * REST_PER_DAY);
+  }
+  function heroClass() {
+    const by = {};
+    state.skills.forEach(s => { by[s.cat] = (by[s.cat] || 0) + totalXp(s); });
+    const ranked = Object.entries(by).filter(([, m]) => m > 0).sort((a, b) => b[1] - a[1]);
+    if (!ranked.length) return { name: "Wanderer", paths: [] };
+    const [a, b] = ranked;
+    if (b && b[1] >= a[1] * 0.4) return { name: HYBRIDS[[a[0], b[0]].sort().join("+")], paths: [a[0], b[0]] };
+    return { name: PATHS[a[0]].cls, paths: [a[0]] };
+  }
+  // Dungeon keys: earned from real practice minutes only (never prior hours), capped per day.
+  const keysAvail = () => Math.floor(state.keyShards / SHARDS_PER_KEY) - state.keysUsed;
+  const shardRem = () => state.keyShards % SHARDS_PER_KEY;
+  const shardsOnDay = day => state.sessions.filter(x => x.day === day).reduce((n, x) => n + (x.shards || 0), 0);
+  const earnedLv = s => lvFrom(totalXp(s));
+  function gearFor(s) {
+    const names = GEAR_BY_SKILL[s.name] || GEAR_BY_CAT[s.catId] || GEAR_BY_CAT.life;
+    return GEAR_TIERS.map((t, i) => Object.assign({ id: s.id + ":" + i, tier: i, name: names[i].replace("{s}", s.name), skill: s }, t));
+  }
+  function equippedItem(s) { const id = state.equipped[s.id]; return id ? gearFor(s).find(g => g.id === id) : null; }
+  function heroStats() {
+    const base = {}, gear = {};
+    Object.keys(STATS).forEach(k => { base[k] = 0; gear[k] = 0; });
+    state.skills.forEach(s => { base[s.cat] += lvFrom(totalXp(s)); const it = equippedItem(s); if (it) gear[s.cat] += it.bonus; });
+    const total = {}; Object.keys(STATS).forEach(k => total[k] = base[k] + gear[k]);
+    return { base, gear, total, power: Object.values(total).reduce((a, b) => a + b, 0) };
+  }
+  const fortunePct = st => Math.min(50, st.total.life);
+  const chanceFor = (d, power) => Math.max(0.1, Math.min(0.97, 0.35 + 0.5 * (power / d.rec)));
+  const dungeonOpen = (d, power) => d.rec <= 5 || power >= d.rec * 0.5;
+
+  const pipsHTML = n => `<span class="pips" aria-label="${n} of 10 key shards">${Array.from({ length: SHARDS_PER_KEY - 1 }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
+
+  const totalLevel = () => state.skills.reduce((n, s) => n + lvFrom(totalXp(s)), 0);
+  const todayMin = () => state.sessions.filter(x => x.day === dayKey()).reduce((n, x) => n + x.min, 0);
+  const skillById = id => state.skills.find(s => s.id === id);
+
+  // ---------- Actions ----------
+  function addSkill(name, catId, cat, tips, priorMin) {
+    state.skills.push({ id: uid(), name, catId, cat, tips: tips || "generic", importedMin: Math.max(0, Math.round(priorMin || 0)), earnedMin: 0, earnedXp: 0, created: dayKey() });
+  }
+
+  function logMinutes(skillId, min, day, note, type) {
+    const s = skillById(skillId); if (!s) return;
+    min = Math.round(min);
+    type = type === "lesson" ? "lesson" : "solo";
+    const before = lvFrom(totalXp(s)), beforeTier = tierIdx(before), beforeStars = stars(totalXp(s));
+    const keysBefore = keysAvail();
+    const pool = restedNow();
+    const rested = Math.min(min, pool);                      // rested minutes earn double base XP
+    const xp = Math.round(min * (type === "lesson" ? LESSON_MULT : 1) + rested);
+    state.restedPool = pool - rested;
+    state.lastSessionDay = dayKey();
+    s.earnedMin += min;
+    s.earnedXp = (s.earnedXp ?? 0) + xp;
+    const shards = Math.max(0, Math.min(min, DAILY_SHARD_CAP - shardsOnDay(day)));
+    state.keyShards += shards;
+    state.sessions.unshift({ id: uid(), skillId, min, day, ts: Date.now(), xp, rested, type, shards, note: note || "" });
+    if (state.sessions.length > 400) state.sessions.length = 400;
+
+    const after = lvFrom(totalXp(s));
+    if (after > before) toast(`<b>DING!</b>${esc(s.name)} reached Lv ${after}`, "ding", 4200);
+    if (tierIdx(after) > beforeTier) toast(`New tier: ${TIERS[tierIdx(after)].name}. A new ${esc(s.name)} tip is unlocked.`);
+    if (stars(totalXp(s)) > beforeStars) toast(`Mastery star earned in ${esc(s.name)}.`);
+    const parts = [type === "lesson" ? "lesson 1.5×" : "", rested ? `${fmt(rested)} rested` : ""].filter(Boolean);
+    const newKeys = keysAvail() - keysBefore;
+    toast(`Logged ${fmt(min)} of ${esc(s.name)}: +${fmtXp(xp)} XP${parts.length ? " (" + parts.join(", ") + ")" : ""}, +${shards} shards` + (newKeys > 0 ? `, ${newKeys} new dungeon key${newKeys > 1 ? "s" : ""}` : "") + (shards < min ? ". Daily key limit reached; XP still counts" : "") + ".");
+    persist(); render();
+  }
+
+  function deleteSession(id) {
+    const i = state.sessions.findIndex(x => x.id === id); if (i < 0) return;
+    const x = state.sessions[i], s = skillById(x.skillId);
+    if (s) { s.earnedMin = Math.max(0, s.earnedMin - x.min); s.earnedXp = Math.max(0, (s.earnedXp ?? 0) - (x.xp ?? x.min)); }
+    if (x.rested) state.restedPool = Math.min(REST_CAP, state.restedPool + x.rested);
+    state.keyShards = Math.max(state.keysUsed * SHARDS_PER_KEY, state.keyShards - (x.shards || 0));
+    state.sessions.splice(i, 1);
+    toast("Session removed.");
+    persist(); render();
+  }
+
+  function buyItem(id) {
+    const [sid] = id.split(":"); const s = skillById(sid); if (!s) return;
+    const it = gearFor(s).find(g => g.id === id); if (!it || state.owned[id]) return;
+    if (earnedLv(s) < it.lv) { toast(`${esc(it.name)} needs ${esc(s.name)} Lv ${it.lv}.`); return; }
+    if (state.gold < it.price) { toast(`You need ${it.price - state.gold} more gold. Run a dungeon to earn it.`); return; }
+    state.gold -= it.price; state.owned[id] = true;
+    const cur = equippedItem(s);
+    if (!cur || cur.bonus < it.bonus) state.equipped[s.id] = id;
+    toast(`Bought ${esc(it.name)}${state.equipped[s.id] === id ? " and equipped it" : ""}. +${it.bonus} ${STATS[s.cat].name}.`);
+    persist(); render();
+  }
+  function equipItem(id) {
+    const [sid] = id.split(":"); if (!state.owned[id] || !skillById(sid)) return;
+    state.equipped[sid] = id; persist(); render();
+  }
+
+  let runView = null, runTimer = null;
+  function runDungeon(did) {
+    const d = DUNGEONS.find(x => x.id === did); if (!d || runView && runView.step < 4) return;
+    if (keysAvail() < 1) { toast("No keys yet. Practice 10 minutes to earn one."); return; }
+    const st = heroStats();
+    if (!dungeonOpen(d, st.power)) return;
+    const chance = chanceFor(d, st.power), win = Math.random() < chance;
+    const weights = Object.entries(st.total).filter(([, v]) => v > 0);
+    const pickStat = () => { if (!weights.length) return "body"; let r = Math.random() * weights.reduce((n, [, v]) => n + v, 0); for (const [k, v] of weights) { if ((r -= v) <= 0) return k; } return weights[0][0]; };
+    const encounters = [0, 1, 2].map(() => { const k = pickStat(); const lines = ENCOUNTERS[k]; return { stat: k, value: st.total[k], text: lines[Math.floor(Math.random() * lines.length)] }; });
+    const roll = d.gold[0] + Math.random() * (d.gold[1] - d.gold[0]);
+    const gold = Math.round((win ? roll : d.gold[0] * 0.3) * (1 + fortunePct(st) / 100));
+    const trophy = win && Math.random() < 0.1 ? d.trophy : null;
+    state.keysUsed += 1; state.gold += gold;
+    if (trophy) state.trophies[d.id] = (state.trophies[d.id] || 0) + 1;
+    state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, day: dayKey(), ts: Date.now() });
+    if (state.runs.length > 30) state.runs.length = 30;
+    persist();
+    runView = { d, win, gold, trophy, encounters, chance, fortune: fortunePct(st), step: 0 };
+    clearInterval(runTimer);
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { runView.step = 4; render(); return; }
+    render();
+    runTimer = setInterval(() => { runView.step += 1; render(); if (runView.step >= 4) clearInterval(runTimer); }, 750);
+  }
+
+  function removeSkill(id) {
+    const s = skillById(id);
+    state.skills = state.skills.filter(k => k.id !== id);
+    state.sessions = state.sessions.filter(x => x.skillId !== id);
+    if (state.timer && state.timer.skillId === id) state.timer = null;
+    if (open === id) open = null;
+    toast(`${esc(s ? s.name : "Skill")} removed.`);
+    persist(); render();
+  }
+
+  function startTimer(id, type) { state.timer = { skillId: id, startedAt: Date.now(), type: type === "lesson" ? "lesson" : "solo" }; persist(); render(); }
+  function stopTimer() {
+    const t = state.timer; if (!t) return;
+    const secs = (Date.now() - t.startedAt) / 1000;
+    state.timer = null;
+    if (secs < 60) { toast("Under a minute, so nothing was logged. Practice is counted in whole minutes."); persist(); render(); return; }
+    let min = Math.floor(secs / 60);
+    if (min > MAX_ENTRY) { min = MAX_ENTRY; toast("Timer ran past 12 hours, so it was capped at 12h. Edit with a manual log if needed."); }
+    logMinutes(t.skillId, min, dayKey(), "", t.type);
+  }
+
+  // ---------- Rendering ----------
+  const app = document.getElementById("app");
+  const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg>';
+  const STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect fill="currentColor" x="6" y="6" width="12" height="12" rx="1"/></svg>';
+
+  function render() {
+    if (!state.skills.length && !sample) { renderOnboarding(); return; }
+    const cls = heroClass();
+    const rested = restedNow();
+    const name = state.heroName || "Unnamed hero";
+    const earnedAll = state.skills.reduce((n, s) => n + s.earnedMin, 0);
+
+    app.innerHTML = `
+      ${sample ? `<div class="banner"><span>Example hero, not your data. Changes here aren't saved.</span><button class="btn small" data-act="leave-sample">Create my own hero</button></div>` : ""}
+      ${renderTraining()}
+      <div class="grid">
+        <aside class="panel sheet" aria-label="Character sheet">
+          <div class="who">
+            <div class="emblem" aria-hidden="true">${esc(cls.name[0])}</div>
+            <div class="who-text">
+              ${editingName
+                ? `<input class="input" id="name-input" maxlength="30" value="${esc(state.heroName)}" placeholder="Hero name" aria-label="Hero name">`
+                : `<div class="hero-name">${esc(name)} <button class="linkbtn" style="font-size:12px" data-act="edit-name">Rename</button></div>`}
+              <div class="class-title">${esc(cls.name)}</div>
+              <div class="paths">${cls.paths.length ? cls.paths.map(p => PATHS[p].label).join(" + ") + " path" : "Log time to discover your class"}</div>
+              ${(() => { const v = state.skills.filter(k => k.importedMin >= 60); return v.length ? `<div class="paths" style="margin-top:4px">${vetBadge(v.reduce((n, k) => n + k.importedMin, 0), true)}</div>` : ""; })()}
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><b class="num">${totalLevel()}</b><span>Total level</span></div>
+            <div class="stat"><b class="num">${fmtH(earnedAll)}</b><span>Practiced</span></div>
+            <div class="stat"><b class="num">${state.gold.toLocaleString()}</b><span>Gold</span></div>
+          </div>
+          ${(() => { const st = heroStats(); return `<div>
+            <div class="power"><strong>Hero power</strong><b class="num">${st.power}</b></div>
+            <div class="statgrid">${Object.entries(STATS).map(([k, v]) => `<div title="${esc(v.desc)}"><span>${v.name}</span><b>${st.total[k]}${st.gear[k] ? ` <i>+${st.gear[k]}</i>` : ""}</b></div>`).join("")}</div>
+            <div class="hint">Stats come from your skill levels in each path. Green numbers are gear bonuses.</div>
+          </div>`; })()}
+          <div>
+            <div class="meter-label"><strong>Rested XP</strong><span class="num">${rested ? "next " + fmt(rested) + " earns 2× XP" : "Not rested"}</span></div>
+            <div class="rest-bar"><i style="width:${(rested / REST_CAP) * 100}%"></i></div>
+            <div class="hint">Each day off adds 30 minutes of double XP, up to 3 hours, so missed days don't set you back. You never lose progress.</div>
+          </div>
+          <div>
+            <div class="meter-label"><strong>Dungeon keys</strong><span class="num muted">${shardRem()} / ${SHARDS_PER_KEY} shards</span></div>
+            <div class="keys-row"><span class="keys-count num">${keysAvail()} key${keysAvail() === 1 ? "" : "s"}</span>${pipsHTML(shardRem())}</div>
+            <div class="hint">Every minute of practice is a shard, and 10 shards make a key (up to 15 keys a day). Spend keys on dungeon runs to earn gold for gear.</div>
+          </div>
+          <div class="meter-label" style="margin:0"><span class="muted">Logged today</span><strong class="num">${fmt(todayMin())}</strong></div>
+          <button class="btn primary" data-act="open-log">Log practice</button>
+        </aside>
+
+        <div class="col">
+          <div class="tabs" role="tablist">
+            <button class="tab" role="tab" data-act="tab" data-tab="train" aria-selected="${tab === "train"}">Training</button>
+            <button class="tab" role="tab" data-act="tab" data-tab="gear" aria-selected="${tab === "gear"}">Gear<span class="cnt">${state.gold.toLocaleString()}g</span></button>
+            <button class="tab" role="tab" data-act="tab" data-tab="dungeons" aria-selected="${tab === "dungeons"}">Dungeons<span class="cnt">${keysAvail()} key${keysAvail() === 1 ? "" : "s"}</span></button>
+            <button class="tab" role="tab" data-act="tab" data-tab="settings" aria-selected="${tab === "settings"}">Settings</button>
+          </div>
+          ${tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
+          <section>
+            <div class="section-head"><h2>Home screen widget</h2><span class="muted" style="font-size:13px">Live preview · tap Quick start</span></div>
+            <div class="wall">${renderWidget("sm")}${renderWidget("md")}</div>
+          </section>
+          <section>
+            <div class="section-head"><h2>Skill tracks</h2><button class="btn small" data-act="open-add">+ Add skill</button></div>
+            <div class="skills">${CATEGORIES.map(c => {
+              const list = state.skills.filter(s => s.catId === c.id);
+              return list.length ? `<div class="group"><div class="group-head">${esc(c.label)}</div>${list.map(renderSkill).join("")}</div>` : "";
+            }).join("")}</div>
+          </section>
+          <section>
+            <div class="section-head"><h2>Recent sessions</h2></div>
+            <div class="panel log">${renderLog()}</div>
+          </section>
+          ${renderRules()}`}
+        </div>
+      </div>`;
+    if (editingName) { const el = document.getElementById("name-input"); el.focus(); el.select(); }
+  }
+
+  // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
+  const BUILD = "2026-10-07.1";
+  const APP_VERSION = "0.1.0";
+  const inClaude = !!(window.claude && window.claude.use);
+  const onWeb = location.protocol.indexOf("http") === 0 && !inClaude;
+  const Updater = {
+    prompt: null,
+    installed: (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true,
+    ios: /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+    status: "",
+    init() {
+      window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); Updater.prompt = e; if (tab === "settings") render(); });
+      window.addEventListener("appinstalled", () => { Updater.prompt = null; Updater.installed = true; toast("Installed. Level UP is on your home screen."); if (tab === "settings") render(); });
+      if (onWeb && "serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    },
+    label() { return Updater.prompt ? "Install on this phone" : "Check for updates"; },
+    say(html, cls) { Updater.status = `<div class="note ${cls || ""}">${html}</div>`; const el = document.getElementById("upd-status"); if (el) el.innerHTML = Updater.status; },
+    async go() {
+      if (Updater.prompt) {
+        const pr = Updater.prompt; Updater.prompt = null;
+        try { pr.prompt(); const r = await pr.userChoice; toast(r.outcome === "accepted" ? "Installing…" : "Install dismissed."); }
+        catch (e) { toast("Install isn't available in this browser."); }
+        render(); return;
+      }
+      Updater.update();
+    },
+    async update() {
+      if (!onWeb) return Updater.say("Updates work in the installed app or at the live web address. This preview always shows the newest version.", "warn");
+      Updater.say('<span class="spin"></span>Checking for a newer version…');
+      let latest = null;
+      try {
+        const r = await fetch("index.html?ts=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const m = (await r.text()).match(/const BUILD = "([^"]+)"/); latest = m ? m[1] : null;
+      } catch (e) { return Updater.say("Couldn't reach the server. You may be offline. The app keeps working either way.", "warn"); }
+      if (latest && latest === BUILD) {
+        try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) reg.update(); } catch (e) {}
+        return Updater.say(`You're on the latest version (build ${esc(BUILD)}).`, "good");
+      }
+      Updater.say(`<span class="spin"></span>New version ${esc(latest || "")} found. Installing…`, "good");
+      await Updater.hardRefresh();
+    },
+    async hardRefresh() {
+      try { flushSave(); await chain; } catch (e) {}
+      try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) { await reg.update(); if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" }); } } catch (e) {}
+      try { if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } } catch (e) {}
+      setTimeout(() => location.replace(location.pathname + "?u=" + Date.now()), 600);
+    }
+  };
+  Updater.init();
+  { const bt = document.getElementById("build-tag"); if (bt) bt.textContent = "Prototype · v" + APP_VERSION; }
+
+  // Backup code: the whole hero as text, so it can move between the Claude preview, a browser and the phone app.
+  const backupCode = () => "LVUP1:" + btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  function readBackup(code) {
+    const raw = String(code || "").trim().replace(/\s+/g, "");
+    if (!raw.startsWith("LVUP1:")) throw new Error("That doesn't look like a Level UP backup code. It should start with LVUP1:");
+    const data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(6)))));
+    if (!data || !Array.isArray(data.skills)) throw new Error("The backup code is incomplete. Copy the whole code and try again.");
+    return data;
+  }
+  let restoreOpen = false, restorePending = null;
+
+  function renderSettings() {
+    const where = inClaude ? "Claude preview" : Updater.installed ? "Installed on this device" : onWeb ? "Running in the browser" : "Local file";
+    const saveWhere = mode === "cloud" ? "your Claude account (this preview only)" : mode === "local" ? "this device" : "nowhere: storage is blocked here";
+    return `<section style="display:grid;gap:12px">
+      <div class="section-head" style="margin:0"><h2>Settings</h2></div>
+      <article class="panel set-card">
+        <h3>App version</h3>
+        <div class="train-row"><span><b>v${APP_VERSION}</b> <span class="muted">· build ${esc(BUILD)}</span></span><span class="muted" style="font-size:13px">${where}</span></div>
+        ${inClaude ? `<div class="note">To install Level UP on your phone, open <b>bzeitel25.github.io/LevelUP</b> on the phone.</div>` : `
+          <button class="btn primary" data-act="upd-go">${Updater.label()}</button>
+          ${!Updater.installed && !Updater.prompt && Updater.ios ? `<div class="note">On iPhone or iPad: open this page in Safari, tap the Share button, then <b>Add to Home Screen</b>.</div>` : ""}
+          ${!Updater.installed && !Updater.prompt && !Updater.ios && onWeb ? `<div class="note">If you don't see an install button, use your browser menu's <b>Install app</b> or <b>Add to Home screen</b>.</div>` : ""}`}
+        <div id="upd-status">${Updater.status}</div>
+        <div class="hint" style="margin:0">Updating pulls the newest build and reloads. Your hero is untouched. It's stored separately from the app file.</div>
+      </article>
+      <article class="panel set-card">
+        <h3>Backup and move your hero</h3>
+        <p class="hint" style="margin:0">Your hero is saved in ${saveWhere}. The Claude preview and the phone app keep separate saves, so use a backup code to move your hero between them.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" data-act="backup-copy" ${sample ? "disabled" : ""}>Copy backup code</button>
+          <button class="btn ghost" data-act="restore-open">Restore from a code</button>
+        </div>
+        ${restoreOpen ? `<div class="field"><label for="restore-input">Paste a backup code</label><textarea class="input backup-box" id="restore-input" rows="4" placeholder="LVUP1:…"></textarea></div>
+          ${restorePending ? `<div class="note warn">This replaces your current hero on this device with <b>${esc(restorePending.heroName || "Unnamed hero")}</b> (${restorePending.skills.length} skill${restorePending.skills.length === 1 ? "" : "s"}, ${(restorePending.sessions || []).length} sessions). <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small danger" data-act="restore-confirm">Replace my hero</button><button class="btn small ghost" data-act="restore-cancel">Cancel</button></div></div>`
+            : `<button class="btn small" data-act="restore-check">Check code</button>`}
+          <div class="err" id="restore-err"></div>` : ""}
+        <div id="backup-out"></div>
+      </article>
+      <article class="panel set-card">
+        <h3>Feedback</h3>
+        <p class="hint" style="margin:0">Ideas, bugs or balance problems all help shape the app.</p>
+        <div><button class="btn ghost" data-act="feedback">Send feedback</button></div>
+      </article>
+    </section>`;
+  }
+
+  // ---------- Gear tab ----------
+  function renderGear() {
+    const tro = DUNGEONS.filter(d => state.trophies[d.id]);
+    return `<section style="display:grid;gap:12px">
+      <div class="section-head" style="margin:0"><h2>Gear</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${state.gold.toLocaleString()}</b> gold</span></div>
+      <p class="hint" style="margin:0">Each skill unlocks gear as you level it. Buy it with dungeon gold. One item per skill can be equipped, and its bonus adds to that skill's stat.</p>
+      ${CATEGORIES.flatMap(c => state.skills.filter(s => s.catId === c.id)).map(s => {
+        const lv = earnedLv(s), eq = state.equipped[s.id];
+        return `<article class="panel gear-skill">
+          <div class="gear-head"><h3>${esc(s.name)}</h3><span class="muted" style="font-size:13px">Lv <b class="num">${lv}</b> · ${STATS[s.cat].name}</span></div>
+          <div class="gear-grid">${gearFor(s).map(it => {
+            const owned = !!state.owned[it.id], on = eq === it.id, unlocked = lv >= it.lv;
+            const cls = on ? "equipped" : unlocked || owned ? "" : "locked";
+            const action = on ? `<span class="req" style="color:var(--xp);font-weight:700">Equipped</span>`
+              : owned ? `<button class="btn small" data-act="equip" data-id="${it.id}">Equip</button>`
+              : unlocked ? `<button class="btn small ${state.gold >= it.price ? "primary" : ""}" data-act="buy" data-id="${it.id}" ${state.gold >= it.price ? "" : "disabled"}>Buy · ${it.price.toLocaleString()}g</button>`
+              : `<span class="req">Unlocks at Lv ${it.lv}</span>`;
+            return `<div class="item ${cls}"><b>${esc(it.name)}</b><span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>${!owned && unlocked ? `<span class="req">${state.gold >= it.price ? "Ready to buy" : `Need ${(it.price - state.gold).toLocaleString()} more gold`}</span>` : ""}${action}</div>`;
+          }).join("")}</div>
+        </article>`;
+      }).join("")}
+      <article class="panel gear-skill">
+        <div class="gear-head"><h3>Trophies</h3><span class="muted" style="font-size:13px">Rare dungeon drops</span></div>
+        ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">None yet. Each dungeon has a 1 in 10 chance to drop its trophy when you win.</p>`}
+      </article>
+    </section>`;
+  }
+
+  // ---------- Dungeons tab ----------
+  function renderDungeons() {
+    const st = heroStats(), keys = keysAvail(), busy = runView && runView.step < 4, fp = fortunePct(st);
+    return `<section style="display:grid;gap:12px">
+      <div class="section-head" style="margin:0"><h2>Dungeons</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${keys}</b> key${keys === 1 ? "" : "s"} · power <b class="num">${st.power}</b>${fp ? ` · Fortune +${fp}% gold` : ""}</span></div>
+      ${runView ? renderRun() : ""}
+      ${keys < 1 && !runView ? `<p class="hint" style="margin:0">You're out of keys. Every 10 minutes of practice earns one.</p>` : ""}
+      ${DUNGEONS.map(d => {
+        const open = dungeonOpen(d, st.power), ch = Math.round(chanceFor(d, st.power) * 100);
+        const cls = ch >= 70 ? "good" : ch >= 45 ? "mid" : "bad";
+        return `<article class="panel dun ${open ? "" : "locked"}">
+          <div><h3>${esc(d.name)}</h3>
+            <div class="dun-meta"><span>Suggested power <b>${d.rec}</b></span>${open ? `<span>Win chance <b class="chance ${cls}">${ch}%</b></span><span>Gold <b>${d.gold[0]}–${d.gold[1]}</b></span>` : `<span>Opens at power <b>${Math.ceil(d.rec * 0.5)}</b></span>`}</div></div>
+          ${open ? `<button class="btn ${keys ? "primary" : ""}" data-act="run" data-id="${d.id}" ${keys && !busy ? "" : "disabled"}>Run · 1 key</button>` : `<span class="muted" style="font-size:13px">Locked</span>`}
+        </article>`;
+      }).join("")}
+      ${state.runs.length ? `<div><div class="section-head"><h2 style="font-size:16px">Recent runs</h2></div><div class="panel run-hist" style="padding:6px 16px">${state.runs.slice(0, 6).map(r => {
+        const d = DUNGEONS.find(x => x.id === r.dungeon);
+        return `<div><span>${dayLabel(r.day)} · ${esc(d ? d.name : "Dungeon")}${r.trophy ? ` · <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</span><span class="num" style="color:${r.win ? "var(--good)" : "var(--muted)"}">${r.win ? "Cleared" : "Retreated"} · +${r.gold}g</span></div>`;
+      }).join("")}</div></div>` : ""}
+      <p class="hint" style="margin:0">A run plays out from your hero's stats. If you retreat you still keep some gold, and you never lose anything except the key.</p>
+    </section>`;
+  }
+  function renderRun() {
+    const r = runView, done = r.step >= 4;
+    return `<div class="panel runlog" aria-live="polite">
+      <h3>${esc(r.d.name)}</h3>
+      ${r.encounters.slice(0, Math.min(r.step, 3)).map(e => `<div class="enc"><span class="stat-chip">${STATS[e.stat].name} ${e.value}</span><span>${esc(e.text)}</span></div>`).join("")}
+      ${!done ? `<div class="muted" style="font-size:13px">Exploring…</div>` : `
+        <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
+        <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune ? ` <span class="muted">(includes Fortune +${r.fortune}%)</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
+    </div>`;
+  }
+
+  // ---------- Widget ----------
+  // Quick start picks the skill you practiced most recently (or your first skill).
+  function quickTarget() {
+    const last = state.sessions.find(x => skillById(x.skillId));
+    return last ? skillById(last.skillId) : state.skills[0];
+  }
+  function widgetSnapshot() {
+    const cls = heroClass(), t = state.timer, target = quickTarget();
+    const focus = t ? skillById(t.skillId) : target;
+    const p = focus ? progress(totalXp(focus)) : null;
+    return {
+      version: 1,
+      heroName: state.heroName || "Unnamed hero",
+      className: cls.name,
+      emblem: cls.name[0],
+      totalLevel: totalLevel(),
+      gold: state.gold,
+      keys: keysAvail(),
+      power: heroStats().power,
+      keyShards: shardRem(),
+      restedMinutes: restedNow(),
+      todayMinutes: todayMin(),
+      focusSkill: focus ? { id: focus.id, name: focus.name, level: p.L, tier: TIERS[tierIdx(p.L)].name, progress: +p.pct.toFixed(4), toNext: p.next } : null,
+      timer: t ? { skillId: t.skillId, startedAt: t.startedAt } : null,
+      quickStartSkillId: target ? target.id : null,
+      deepLinks: { chooseAndStart: "#quickstart", startSolo: "#quickstart-solo", startLesson: "#quickstart-lesson", stop: "#stop", log: "#log" }
+    };
+  }
+  function renderWidget(size) {
+    const w = widgetSnapshot(), f = w.focusSkill, on = !!w.timer;
+    const go = !f ? "" : on
+      ? `<button class="wdg-go on" data-act="stop-timer">${STOP}<span data-elapsed>${clock(Date.now() - w.timer.startedAt)}</span> · Stop</button>`
+      : size === "sm"
+        ? `<button class="wdg-go" data-act="start-timer" data-id="${w.quickStartSkillId}" aria-label="Start training ${esc(f.name)}">${PLAY}Start</button>`
+        : `<div class="wdg-pair"><button class="wdg-go" data-act="start-now" data-type="solo" data-id="${w.quickStartSkillId}" aria-label="Start solo practice of ${esc(f.name)}">${PLAY}Solo</button><button class="wdg-go" data-act="start-now" data-type="lesson" data-id="${w.quickStartSkillId}" aria-label="Start a lesson in ${esc(f.name)}">${PLAY}Lesson</button></div>`;
+    const bar = f ? `<div><div class="wdg-skill"><b>${esc(f.name)}</b><span class="num">Lv ${f.level}</span></div>
+      <div class="xp" aria-hidden="true"><i style="width:${(f.progress * 100).toFixed(1)}%"></i></div></div>` : "";
+    if (size === "sm") return `<div class="wdg sm" aria-label="Small widget preview">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="emblem" aria-hidden="true">${esc(w.emblem)}</div><div class="wdg-lv num" style="text-align:right"><small>Total</small>${w.totalLevel}</div></div>
+      ${bar}${go}</div>`;
+    return `<div class="wdg md" aria-label="Medium widget preview">
+      <div class="emblem" aria-hidden="true">${esc(w.emblem)}</div>
+      <div class="wdg-right">
+        <div><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.heroName)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="wdg-class">${esc(w.className)}</span><span class="wdg-lv num" style="font-size:20px">Lv ${w.totalLevel}</span></div></div>
+        ${bar}
+      </div>
+      <div class="wdg-span" style="display:grid;gap:8px">${go}
+        <div class="wdg-meta"><span>Today ${fmt(w.todayMinutes)}</span><span>${w.keys} key${w.keys === 1 ? "" : "s"} · ${w.keyShards}/10${w.restedMinutes ? " · Rested" : ""}</span></div></div>
+    </div>`;
+  }
+
+  // ---------- Training scene ----------
+  let liveLevel = null;
+  function project(t) {
+    const s = skillById(t.skillId);
+    const el = Math.max(0, (Date.now() - t.startedAt) / 60000);
+    const pool = restedNow(), rested = Math.min(el, pool);
+    const xp = el * (t.type === "lesson" ? LESSON_MULT : 1) + rested;
+    const shards = Math.max(0, Math.min(Math.floor(el), DAILY_SHARD_CAP - shardsOnDay(dayKey())));
+    const total = totalXp(s) + xp;
+    return { s, xp, rested: pool > 0 && rested < pool, p: progress(total), shards, keys: Math.floor((state.keyShards + shards) / SHARDS_PER_KEY) - state.keysUsed, rem: (state.keyShards + shards) % SHARDS_PER_KEY };
+  }
+
+  function chibiSVG(path) {
+    const line = 'class="ol"';
+    const legs = `<rect class="legA" x="66" y="124" width="12" height="26" rx="5" fill="#3d3a5c" ${line}/><rect class="legB" x="82" y="124" width="12" height="26" rx="5" fill="#3d3a5c" ${line}/>`;
+    const body = `<rect x="56" y="88" width="48" height="42" rx="15" fill="var(--xp-fill)" ${line}/><rect x="56" y="112" width="48" height="6" fill="#7a4a12" opacity=".55"/>`;
+    const head = `<circle cx="80" cy="56" r="34" fill="#f4cfa6" ${line}/>
+      <path d="M46 58 C42 20 118 20 114 58 C108 40 94 34 80 36 C66 34 52 42 46 58Z" fill="#3b2a20" ${line}/>
+      <ellipse class="eye" cx="68" cy="62" rx="4" ry="5.5" fill="#1d1b2a"/><ellipse class="eye" cx="92" cy="62" rx="4" ry="5.5" fill="#1d1b2a"/>
+      <circle cx="59" cy="72" r="5" fill="#f29a8b" opacity=".55"/><circle cx="101" cy="72" r="5" fill="#f29a8b" opacity=".55"/>
+      <path d="M74 76 Q80 81 86 76" fill="none" stroke="#1d1b2a" stroke-width="2.5" stroke-linecap="round"/>`;
+    const hand = (x, y, cls = "") => `<circle class="${cls}" cx="${x}" cy="${y}" r="7" fill="#f4cfa6" ${line}/>`;
+    const props = {
+      music: { back: "", front: `<g transform="rotate(-28 80 110)"><rect x="96" y="102" width="44" height="7" rx="2" fill="#5a3a1c" ${line}/><ellipse cx="82" cy="106" rx="19" ry="15" fill="#c77a30" ${line}/><circle cx="84" cy="106" r="5" fill="#3b2412"/></g>${hand(72, 112, "strum")}${hand(118, 88)}`, cls: "" },
+      body: { back: "", front: `<rect x="48" y="40" width="64" height="7" rx="3" fill="#d94a3a" ${line}/>${hand(54, 106, "tap")}${hand(106, 106, "tap2")}`, cls: "run" },
+      mind: { back: "", front: `<rect x="54" y="98" width="26" height="22" rx="2" fill="#f6f1e3" ${line}/><rect class="flip" x="80" y="98" width="26" height="22" rx="2" fill="#fffaf0" ${line}/><path d="M60 105h14M60 111h14M86 105h14M86 111h14" stroke="#9aa0b5" stroke-width="1.5"/>${hand(52, 114)}${hand(108, 114)}`, cls: "" },
+      craft: { back: "", front: `<g class="swing"><rect x="108" y="70" width="6" height="40" rx="2" fill="#7a4a1c" ${line}/><rect x="98" y="62" width="26" height="12" rx="2" fill="#8e96a8" ${line}/></g>${hand(111, 106)}${hand(52, 108)}`, cls: "" },
+      tech: { back: "", front: `<rect x="50" y="94" width="60" height="34" rx="3" fill="#2b3150" ${line}/><rect class="glow" x="55" y="99" width="50" height="22" rx="2" fill="#73a6ff"/><rect x="44" y="126" width="72" height="6" rx="2" fill="#8e96a8" ${line}/>${hand(60, 128, "tap")}${hand(100, 128, "tap2")}`, cls: "" },
+      spirit: { back: `<circle class="pulse" cx="80" cy="96" r="66" fill="var(--xp-hi)"/>`, front: `${hand(64, 114)}${hand(96, 114)}`, cls: "float" },
+      life: { back: "", front: `<g class="sweep"><rect x="106" y="58" width="5" height="74" rx="2" fill="#a0702e" ${line}/><path d="M98 130 L120 130 L124 152 L94 152 Z" fill="#e3c26a" ${line}/></g>${hand(108, 92)}${hand(108, 112)}`, cls: "" }
+    };
+    const pr = props[path] || props.life;
+    return `<svg class="chibi ${pr.cls}" viewBox="0 0 160 172" role="img" aria-label="Your hero training">
+      <ellipse cx="80" cy="160" rx="42" ry="7" fill="var(--ink)" opacity=".15"/>
+      ${pr.back}
+      <g class="hero">${legs}${body}${head}${pr.front}</g>
+    </svg>`;
+  }
+
+  function renderTraining() {
+    const t = state.timer; if (!t) return "";
+    const pj = project(t); if (!pj.s) return "";
+    liveLevel = pj.p.L;
+    const sparks = Array.from({ length: 9 }, (_, i) => `<i style="left:${8 + i * 10}%;animation-delay:${(i * 0.29).toFixed(2)}s"></i>`).join("");
+    return `<section class="panel train" aria-label="Training session">
+      <div class="stage" id="stage"><div class="sparks">${sparks}</div><div class="ring"></div><div class="lvpop" id="lvpop"></div>${chibiSVG(pj.s.cat)}</div>
+      <div class="train-info">
+        <div class="train-head"><h2><span class="live-dot"></span>Training · ${esc(pj.s.name)}</h2>
+          <span class="type-badge ${t.type === "lesson" ? "lesson" : ""}">${t.type === "lesson" ? "Class or lesson · 1.5× XP" : "Solo practice"}</span></div>
+        <div class="train-row"><span class="timer-clock" data-elapsed>${clock(Date.now() - t.startedAt)}</span><span class="live-xp num" data-live-xp>+${fmtXp(pj.xp)} XP</span></div>
+        <div style="display:grid;gap:6px">
+          <div class="train-row"><span class="lv num" data-live-lv>Lv ${pj.p.L}</span><span class="muted num" style="font-size:13px" data-live-need>${fmtXp(pj.p.have)} / ${fmtXp(pj.p.need)} XP to ${pj.p.next}</span></div>
+          <div class="xp"><i data-live-bar style="width:${(pj.p.pct * 100).toFixed(1)}%"></i></div>
+        </div>
+        <div class="train-row"><span><span class="muted" style="font-size:13px">Keys</span> <b class="num" data-live-keys>${pj.keys}</b></span><span data-live-pips>${pipsHTML(pj.rem)}</span></div>
+        ${pj.rested ? `<div class="hint" style="margin:0;color:var(--rest)">Rested: earning double XP right now.</div>` : ""}
+        <div class="timer-actions">
+          <button class="btn primary" data-act="stop-timer">Stop &amp; log</button>
+          ${confirm && confirm.kind === "timer"
+            ? `<span class="muted" style="font-size:13px;align-self:center">Discard this session?</span><button class="btn small danger" data-act="discard-timer">Discard</button><button class="btn small ghost" data-act="cancel-confirm">Keep</button>`
+            : `<button class="btn ghost" data-act="ask-discard">Discard</button>`}
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function liveTick() {
+    const t = state.timer; if (!t) return;
+    document.querySelectorAll("[data-elapsed]").forEach(el => { el.textContent = clock(Date.now() - t.startedAt); });
+    const pj = project(t); if (!pj.s) return;
+    const q = sel => document.querySelector(sel);
+    if (!q("[data-live-xp]")) return;
+    q("[data-live-xp]").textContent = `+${fmtXp(pj.xp)} XP`;
+    q("[data-live-lv]").textContent = `Lv ${pj.p.L}`;
+    q("[data-live-need]").textContent = `${fmtXp(pj.p.have)} / ${fmtXp(pj.p.need)} XP to ${pj.p.next}`;
+    q("[data-live-bar]").style.width = (pj.p.pct * 100).toFixed(1) + "%";
+    q("[data-live-keys]").textContent = pj.keys;
+    q("[data-live-pips]").innerHTML = pipsHTML(pj.rem);
+    if (liveLevel != null && pj.p.L > liveLevel) {
+      liveLevel = pj.p.L;
+      toast(`<b>DING!</b>${esc(pj.s.name)} Lv ${pj.p.L}`, "ding", 3800);
+      const st = q("#stage"), pop = q("#lvpop");
+      if (st && pop) { pop.textContent = "LEVEL UP!"; st.classList.remove("burst"); void st.offsetWidth; st.classList.add("burst"); }
+    }
+  }
+  function clock(ms) {
+    const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return (h ? h + ":" + pad(m) : m) + ":" + pad(s % 60);
+  }
+
+  function renderSkill(s) {
+    const m = totalXp(s), p = progress(m), ti = tierIdx(p.L), st = stars(m);
+    const running = state.timer && state.timer.skillId === s.id;
+    const busy = state.timer && !running;
+    const isOpen = open === s.id;
+    const xpText = p.L < MAX_LV
+      ? `<span class="num">${fmtXp(p.have)} / ${fmtXp(p.need)} XP to ${p.next}</span>`
+      : `<span class="num">${m >= LEGEND_MIN ? "600,000 XP. Legend." : fmtXp(p.have) + " / 60,000 XP to " + p.next}</span>`;
+    return `<article class="panel skill">
+      <div class="skill-row">
+        <button class="skill-main" data-act="toggle" data-id="${s.id}" aria-expanded="${isOpen}">
+          <div class="skill-title">
+            <h3>${esc(s.name)}</h3><span class="lv num">Lv ${p.L}</span><span class="tier">${TIERS[ti].name}</span>
+            ${vetBadge(s.importedMin)}
+            ${st ? `<span class="badge star">${"★".repeat(st)}</span>` : ""}
+            ${m >= LEGEND_MIN ? `<span class="badge star">Legend</span>` : ""}
+          </div>
+          <div class="xp" role="progressbar" aria-label="${esc(s.name)} progress to ${p.next}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p.pct * 100)}"><i style="width:${(p.pct * 100).toFixed(1)}%"></i></div>
+          <div class="xp-text">${xpText}<span>${fmtH(s.earnedMin)} logged${s.importedMin >= 60 ? " + " + fmtH(s.importedMin) + " veteran" : ""} · ${PATHS[s.cat].label}</span></div>
+        </button>
+        <button class="play ${running ? "on" : ""}" data-act="${running ? "stop-timer" : "start-timer"}" data-id="${s.id}" ${busy ? "disabled" : ""}
+          aria-label="${running ? "Stop and log " + esc(s.name) : "Start practicing " + esc(s.name)}" title="${busy ? "Another timer is running" : running ? "Stop & log" : "Start practice timer"}">${running ? STOP : PLAY}</button>
+      </div>
+      ${isOpen ? renderDetail(s, p, ti) : ""}
+    </article>`;
+  }
+
+  const REFRESH = '<svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>';
+  const tipCursor = {};   // per skill: how many times the player hit refresh (in-memory only)
+  function tipVotes(s, ti, idx) {
+    const key = tipSetKey(s) + ":" + ti + ":" + idx, v = state.tipVotes[key];
+    return v ? `<div class="hint" style="margin-top:4px">Thanks for the feedback.</div>`
+      : `<div class="tip-vote"><span>Helpful?</span><button class="x" data-act="vote" data-key="${key}" data-id="${s.id}" data-v="up">Yes</button><button class="x" data-act="vote" data-key="${key}" data-id="${s.id}" data-v="down">No</button></div>`;
+  }
+  function tipCard(s, label, tier, idx, which, total, old) {
+    const set = TIPS[tipSetKey(s)];
+    return `<div class="tip ${old ? "old" : ""}">
+      <div class="tip-top"><small>${label}</small>${total > 1 ? `<button class="tip-refresh" data-act="tip-next" data-id="${s.id}" data-which="${which}" aria-label="Show another tip" title="Show another tip">${REFRESH}<span>Another</span></button>` : ""}</div>
+      <p>${esc(set[tier][idx])}</p>${tipVotes(s, tier, idx)}</div>`;
+  }
+  function tipLibrary(s, ti) {
+    const set = TIPS[tipSetKey(s)], unlocked = set.slice(0, ti + 1).reduce((n, t) => n + t.length, 0);
+    return `<details class="tip-lib"><summary>Tip library · ${unlocked} unlocked of ${set.reduce((n, t) => n + t.length, 0)}</summary>
+      ${set.map((tier, i) => i <= ti
+        ? `<div class="lib-tier"><div class="lbl">${TIERS[i].name}</div><ul>${tier.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`
+        : `<div class="lib-tier locked"><div class="lbl">${TIERS[i].name}</div><span class="muted">${tier.length} tip${tier.length > 1 ? "s" : ""} unlock at Lv ${TIERS[i].min}</span></div>`).join("")}
+    </details>`;
+  }
+  function renderDetail(s, p, lvTi) {
+    const set = TIPS[tipSetKey(s)];
+    const sessions = state.sessions.filter(x => x.skillId === s.id).length;
+    // Veteran hours count on the same curve for tips only, so experienced players start with more tips.
+    const tipXp = Math.max(totalXp(s), s.importedMin || 0), ti = tierIdx(lvFrom(tipXp)), vetBoost = ti > lvTi;
+    // Today's tip rotates daily within your tier; refreshers come from every tier below. Refresh cycles through them.
+    const cur = tipCursor[s.id] || { cur: 0, ref: 0 };
+    const seed = dayNum(dayKey()) + s.name.length;
+    const curIdx = (seed + cur.cur) % set[ti].length;
+    const pool = set.slice(0, ti).flatMap((tier, i) => tier.map((_, k) => [i, k]));
+    const refPick = pool.length ? pool[(seed * 7 + cur.ref) % pool.length] : null;
+    const next = TIERS[ti + 1];
+    return `<div class="detail">
+      <div class="quick"><span>Quick log (solo)</span>
+        <button class="btn small" data-act="quick" data-id="${s.id}" data-min="10">+10m</button>
+        <button class="btn small" data-act="quick" data-id="${s.id}" data-min="15">+15m</button>
+        <button class="btn small" data-act="quick" data-id="${s.id}" data-min="20">+20m</button>
+        <button class="btn small" data-act="quick" data-id="${s.id}" data-min="30">+30m</button>
+        <button class="btn small ghost" data-act="open-log" data-id="${s.id}">Other…</button>
+      </div>
+      <div class="facts">
+        <span>Practiced here <b class="num">${fmtH(s.earnedMin)}</b></span>
+        <span>Total XP <b class="num">${fmtXp(totalXp(s))}</b></span>
+        <span>Lessons <b class="num">${state.sessions.filter(x => x.skillId === s.id && x.type === "lesson").length}</b></span>
+        <span>Sessions <b class="num">${sessions}</b></span>
+      </div>
+      <div class="vet-edit">${editVet === s.id
+        ? `<label for="vet-input">Veteran hours (before Level UP)</label><input class="input num" id="vet-input" type="number" min="0" max="20000" inputmode="numeric" value="${Math.round(s.importedMin / 60) || ""}" placeholder="0"><button class="btn small primary" data-act="vet-save" data-id="${s.id}">Save</button><button class="btn small ghost" data-act="vet-cancel">Cancel</button>`
+        : `${s.importedMin >= 60 ? vetBadge(s.importedMin, true) : `<span class="muted">No veteran hours</span>`}<button class="linkbtn" style="font-size:13px" data-act="vet-edit" data-id="${s.id}">${s.importedMin >= 60 ? "Edit" : "Add veteran hours"}</button>`}</div>
+      ${tipCard(s, `${TIERS[ti].name} tip${vetBoost ? " · unlocked by your Veteran badge" : ""}`, ti, curIdx, "cur", set[ti].length, false)}
+      ${refPick ? tipCard(s, `Refresher · ${TIERS[refPick[0]].name}`, refPick[0], refPick[1], "ref", pool.length, true) : ""}
+      ${next ? `<div class="lock">Next tip unlocks at ${next.name} (Lv ${next.min}), ${fmtXp(minFor(next.min) - tipXp)} XP away${vetBoost ? " counting your veteran hours" : ""}.</div>` : ""}
+      ${tipLibrary(s, ti)}
+      <div><button class="linkbtn" style="font-size:13px" data-act="suggest-tip" data-id="${s.id}">Suggest a ${esc(s.name)} tip</button></div>
+      <div><div class="lbl" style="margin-bottom:6px">Milestones (in-app hours only)</div>
+        <div class="ms">${MILESTONES.map(t => `<span class="${s.earnedMin >= t ? "got" : ""}">${fmtH(t)}</span>`).join("")}</div></div>
+      <div class="detail-foot">
+        ${confirm && confirm.kind === "skill" && confirm.id === s.id
+          ? `<span class="muted">Remove ${esc(s.name)} and its sessions?</span><button class="btn small danger" data-act="remove-skill" data-id="${s.id}">Remove</button><button class="btn small ghost" data-act="cancel-confirm">Keep</button>`
+          : `<button class="x" data-act="ask-remove" data-id="${s.id}">Remove skill</button>`}
+      </div>
+    </div>`;
+  }
+
+  function renderLog() {
+    const rows = state.sessions.slice(0, 12);
+    if (!rows.length) return `<div class="empty-log">No sessions yet. Tap a play button to start a timer, or use Log practice.</div>`;
+    return rows.map(x => {
+      const s = skillById(x.skillId);
+      const asking = confirm && confirm.kind === "session" && confirm.id === x.id;
+      return `<div class="log-row">
+        <span class="when">${dayLabel(x.day)}</span>
+        <span class="what"><b>${esc(s ? s.name : "Removed skill")}</b> · <span class="num">${fmt(x.min)}</span>${x.type === "lesson" ? '<span class="tag lesson">Lesson</span>' : ""}${x.rested ? '<span class="tag rest">Rested</span>' : ""}${x.note ? ` <em>${esc(x.note)}</em>` : ""}</span>
+        <span class="gold num">+${fmtXp(x.xp ?? x.min)} XP</span>
+        ${asking
+          ? `<span><button class="x" style="color:var(--danger)" data-act="delete-session" data-id="${x.id}">Delete</button><button class="x" data-act="cancel-confirm">Keep</button></span>`
+          : `<button class="x" data-act="ask-session" data-id="${x.id}" aria-label="Delete session">✕</button>`}
+      </div>`;
+    }).join("");
+  }
+
+  function renderRules() {
+    const rows = [[1, "6 min"], [5, "2.5 h"], [10, "10 h"], [14, "~20 h"], [30, "90 h"], [50, "250 h"], [100, "1,000 h"]];
+    return `<details class="panel rules"><summary class="px" style="cursor:pointer;font-size:18px">How leveling works</summary>
+      <div style="margin-top:10px">
+        <table><tr><th>Level</th><th>Solo time</th></tr>${rows.map(r => `<tr><td>Lv ${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>
+        <ul>
+          <li>Levels run on XP and follow the power law of practice: early levels come fast, later ones take real time. One minute of solo practice earns 1 XP, so the table above is in solo time.</li>
+          <li>A class or lesson earns 1.5× XP, since you're learning from someone who knows the skill.</li>
+          <li>Rested XP is the catch-up bonus. Each day off adds 30 minutes of double XP, up to 3 hours. No streaks, and nothing you've earned is ever taken away.</li>
+          <li>Your real hours practiced are always shown separately from XP. Milestones count real hours logged in the app.</li>
+          <li>Everyone starts at Lv 0. Your level only grows from time you log in the app.</li>
+          <li>Veteran hours (practice from before Level UP) earn a Veteran badge: Bronze from 1 hour, then Silver at 50, Gold at 250, Platinum at 1,000 and Diamond at 5,000. They never add XP, levels, keys or gear, and you can edit them anytime.</li>
+          <li>Every minute of practice earns 1 key shard, and 10 shards make a dungeon key, so no minute is wasted. Up to 15 keys a day. Keys open dungeon runs, where your hero earns gold for gear.</li>
+          <li>Past Lv 100, every 60,000 XP (1,000 solo hours) earns a mastery star. Legend is 600,000 XP.</li>
+          <li>Categories help you find skills. You level each skill on its own.</li>
+          <li>Behind the scenes, every skill feeds a path (Music, Body, Mind, Craft, Tech, Spirit or Life). Your class comes from your top one or two paths by total time.</li>
+        </ul>
+      </div></details>`;
+  }
+
+  // ---------- Skill picker (shared by onboarding and Add skill) ----------
+  const EG = { instrument: "Harmonica", language: "Tagalog", health: "Pilates", cooking: "Sourdough", trade: "Masonry", art: "Calligraphy", tech: "Data science", study: "Philosophy", life: "Meal planning" };
+  let browseCat = "instrument";
+  let addSel = null, addPrior = "";
+
+  function pickerHTML(multi) {
+    const c = catById(browseCat);
+    const have = new Set(state.skills.map(s => s.name.toLowerCase()));
+    const chosen = n => multi ? pick.has(n) : !!(addSel && addSel.name === n);
+    const countIn = id => multi ? [...pick.values()].filter(v => v.catId === id).length : state.skills.filter(s => s.catId === id).length;
+    const extras = multi ? [...pick.entries()].filter(([n, v]) => v.catId === c.id && !c.skills.some(([k]) => k === n)).map(([n]) => n)
+      : (addSel && addSel.catId === c.id && !c.skills.some(([k]) => k === addSel.name) ? [addSel.name] : []);
+    return `<div class="cat-grid" role="group" aria-label="Categories">${CATEGORIES.map(k => {
+        const n = countIn(k.id);
+        return `<button type="button" class="cat" data-act="pick-cat" data-cat="${k.id}" aria-pressed="${k.id === c.id}"><b>${esc(k.label)}${n ? ` <span class="count">· ${n}</span>` : ""}</b><small>${esc(k.skills.slice(0, 3).map(x => x[0]).join(", "))}…</small></button>`;
+      }).join("")}</div>
+      <div class="field"><span class="lbl">${esc(c.label)}</span>
+        <div class="chips">${[...c.skills.map(x => x[0]), ...extras].map(n => {
+          const owned = have.has(n.toLowerCase());
+          return `<button type="button" class="chip" data-act="pick-skill" data-name="${esc(n)}" aria-pressed="${chosen(n)}" ${owned ? 'disabled title="Already tracking"' : ""}>${esc(n)}</button>`;
+        }).join("")}</div></div>
+      <div class="field"><label for="pick-custom">Add your own ${esc(c.noun)}</label>
+        <div class="custom-row two"><input class="input" id="pick-custom" maxlength="40" placeholder="e.g. ${esc(EG[c.id])}"><button type="button" class="btn small" data-act="pick-custom">Add</button></div></div>`;
+  }
+
+  function renderOnboarding() {
+    app.innerHTML = `
+      <div class="panel onboard">
+        <div style="display:grid;gap:8px">
+          <h2>Create your hero</h2>
+          <p class="muted">Choose what you're working on. Each skill gets its own XP bar, and your class grows from what you train.</p>
+        </div>
+        <div class="field"><label for="ob-name">Hero name</label><input class="input" id="ob-name" maxlength="30" placeholder="e.g. Bruno the Bold" value="${esc(state.heroName)}"></div>
+        ${pickerHTML(true)}
+        ${pick.size ? `<div class="field"><span class="lbl">Your skills · veteran hours before today (optional)</span>
+          <div class="picked">${[...pick.entries()].map(([n, v], i) => `<div class="picked-row"><span>${esc(n)} <small class="muted" style="font-weight:400">${esc(catById(v.catId).label)}</small></span><input class="input num" type="number" min="0" max="20000" inputmode="numeric" placeholder="0 hours" id="ob-prior-${i}" data-prior="${esc(n)}" value="${v.prior || ""}" aria-label="Veteran hours for ${esc(n)}"></div>`).join("")}</div>
+          <div class="hint">Veteran hours earn a Veteran badge to show your past experience. Every skill starts at Lv 0 and levels from time you log here. You can edit veteran hours later.</div></div>` : ""}
+        <div class="err" id="ob-err"></div>
+        <div class="actions">
+          <button class="btn primary" data-act="ob-start" ${pick.size ? "" : "disabled"}>Begin${pick.size ? ` with ${pick.size} skill${pick.size > 1 ? "s" : ""}` : ""}</button>
+          <button class="linkbtn" data-act="sample">Preview an example hero</button>
+        </div>
+      </div>`;
+  }
+
+  function renderAdd() {
+    const body = document.getElementById("add-body");
+    body.innerHTML = pickerHTML(false) + (addSel
+      ? `<div class="field"><label for="add-prior">Veteran hours of ${esc(addSel.name)} (optional)</label>
+          <input class="input num" id="add-prior" type="number" min="0" max="20000" inputmode="numeric" placeholder="0" value="${esc(addPrior)}">
+          <div class="hint">Earns a Veteran badge for past experience. Your level still starts at 0 and grows from what you log here. You can edit this later.</div></div>`
+      : `<div class="hint">Pick a skill above, or add your own.</div>`);
+  }
+  function inPicker() { return dlgAdd.open ? "add" : "ob"; }
+  function savePickerInputs() {
+    if (dlgAdd.open) { const el = document.getElementById("add-prior"); if (el) addPrior = el.value; }
+    else { syncPriors(); keepName(); }
+  }
+  function rerenderPicker() { if (dlgAdd.open) renderAdd(); else renderOnboarding(); }
+  function pickerErr(msg) { const el = document.getElementById(dlgAdd.open ? "add-err" : "ob-err"); if (el) el.textContent = msg; }
+
+  // ---------- Toasts ----------
+  const toastBox = document.getElementById("toasts");
+  function toast(html, kind, ms = 3200) {
+    const el = document.createElement("div");
+    el.className = "toast" + (kind ? " " + kind : "");
+    el.innerHTML = html;
+    toastBox.appendChild(el);
+    while (toastBox.children.length > 3) toastBox.firstChild.remove();
+    setTimeout(() => el.remove(), ms);
+  }
+
+  // ---------- Dialogs ----------
+  const dlgLog = document.getElementById("dlg-log"), dlgAdd = document.getElementById("dlg-add");
+  let logMin = null, logAgo = 0, logType = "solo";
+  function openLog(skillId) {
+    const sel = document.getElementById("log-skill");
+    sel.innerHTML = state.skills.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+    if (skillId) sel.value = skillId;
+    logMin = null; logAgo = 0; logType = "solo";
+    document.getElementById("log-custom").value = "";
+    document.getElementById("log-note").value = "";
+    document.getElementById("log-err").textContent = "";
+    dlgLog.querySelectorAll("#log-mins .chip").forEach(c => c.setAttribute("aria-pressed", "false"));
+    dlgLog.querySelectorAll("#log-day .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.ago === "0"));
+    dlgLog.querySelectorAll("#log-type .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.type === "solo"));
+    dlgLog.showModal();
+  }
+  dlgLog.addEventListener("click", e => {
+    const m = e.target.closest("[data-min]"), d = e.target.closest("[data-ago]"), ty = e.target.closest("[data-type]");
+    if (ty) { logType = ty.dataset.type; dlgLog.querySelectorAll("#log-type .chip").forEach(c => c.setAttribute("aria-pressed", c === ty)); }
+    if (m) { logMin = +m.dataset.min; document.getElementById("log-custom").value = ""; dlgLog.querySelectorAll("#log-mins .chip").forEach(c => c.setAttribute("aria-pressed", c === m)); }
+    if (d) { logAgo = +d.dataset.ago; dlgLog.querySelectorAll("#log-day .chip").forEach(c => c.setAttribute("aria-pressed", c === d)); }
+  });
+  document.getElementById("log-custom").addEventListener("input", () => { logMin = null; dlgLog.querySelectorAll("#log-mins .chip").forEach(c => c.setAttribute("aria-pressed", "false")); });
+  document.getElementById("form-log").addEventListener("submit", e => {
+    e.preventDefault();
+    const custom = +document.getElementById("log-custom").value;
+    const min = logMin || custom;
+    const err = document.getElementById("log-err");
+    if (!min || min < 1) { err.textContent = "Choose a length or type the minutes."; return; }
+    if (min > MAX_ENTRY) { err.textContent = "One entry can be at most 12 hours (720 minutes). Split longer days into separate logs."; return; }
+    dlgLog.close();
+    logMinutes(document.getElementById("log-skill").value, min, daysAgo(logAgo), document.getElementById("log-note").value.trim(), logType);
+  });
+
+  // ---------- Tip suggestions and feedback ----------
+  // Submissions go to a shared review box (the "submissions" collection) so the team can read them.
+  // Without a connection they're kept with the hero so nothing is lost.
+  const dlgFb = document.getElementById("dlg-fb");
+  let fbMode = "feedback", fbSkill = null, fbKind = "idea";
+  async function submit(entry) {
+    const doc = Object.assign({ at: Date.now(), app: "prototype-v1" }, entry);
+    if (sample) return true;
+    if (dbh) { try { await dbh.collection("submissions").add(doc); return true; } catch (e) {} }
+    state.submissions.unshift(doc); if (state.submissions.length > 50) state.submissions.length = 50; persist();
+    return true;
+  }
+  function openFeedback(mode, skillId) {
+    fbMode = mode; fbSkill = mode === "tip" ? skillById(skillId) : null; fbKind = "idea";
+    const tipMode = mode === "tip" && fbSkill;
+    document.getElementById("fb-title").textContent = tipMode ? `Suggest a ${fbSkill.name} tip` : "Send feedback";
+    document.getElementById("fb-sub").textContent = tipMode ? "Good tips get reviewed and added for everyone at that tier." : "Tell us what's working, what's broken, or what you'd change.";
+    document.getElementById("fb-label").textContent = tipMode ? "Your tip" : "Your message";
+    document.getElementById("fb-text").placeholder = tipMode ? "One short, practical tip a player at this tier can use today." : "";
+    document.getElementById("fb-kind-wrap").hidden = !!tipMode;
+    document.getElementById("fb-tier-wrap").hidden = !tipMode;
+    if (tipMode) {
+      const cur = tierIdx(lvFrom(Math.max(totalXp(fbSkill), fbSkill.importedMin || 0)));
+      document.getElementById("fb-tier").innerHTML = TIERS.map((t, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${t.name} (Lv ${t.min}+)</option>`).join("");
+    }
+    dlgFb.querySelectorAll("#fb-kind .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.kind === "idea"));
+    document.getElementById("fb-text").value = "";
+    document.getElementById("fb-err").textContent = "";
+    dlgFb.showModal();
+  }
+  dlgFb.addEventListener("click", e => {
+    const k = e.target.closest("[data-kind]"); if (!k) return;
+    fbKind = k.dataset.kind; dlgFb.querySelectorAll("#fb-kind .chip").forEach(c => c.setAttribute("aria-pressed", c === k));
+  });
+  document.getElementById("form-fb").addEventListener("submit", async e => {
+    e.preventDefault();
+    const text = document.getElementById("fb-text").value.trim();
+    const err = document.getElementById("fb-err");
+    if (text.length < 8) { err.textContent = "Write a little more so we know what you mean (at least 8 characters)."; return; }
+    const btn = document.getElementById("fb-send"); btn.disabled = true;
+    const entry = fbMode === "tip" && fbSkill
+      ? { kind: "tip", skill: fbSkill.name, category: fbSkill.catId, tipSet: tipSetKey(fbSkill), tier: TIERS[+document.getElementById("fb-tier").value].name, text }
+      : { kind: fbKind, text };
+    await submit(entry);
+    btn.disabled = false; dlgFb.close();
+    toast(sample ? "Example mode: nothing was sent." : fbMode === "tip" ? "Thanks! Your tip was sent for review." : "Thanks! Your feedback was sent.");
+  });
+
+  const dlgStart = document.getElementById("dlg-start");
+  let startFor = null;
+  function openStart(id) {
+    const s = skillById(id); if (!s || state.timer) return;
+    startFor = id;
+    document.getElementById("start-title").textContent = "Train " + s.name;
+    dlgStart.showModal();
+  }
+
+  function openAdd() {
+    addSel = null; addPrior = "";
+    document.getElementById("add-err").textContent = "";
+    dlgAdd.showModal();
+    renderAdd();
+  }
+  document.getElementById("form-add").addEventListener("submit", e => {
+    e.preventDefault();
+    const el = document.getElementById("add-prior"); if (el) addPrior = el.value;
+    const prior = +addPrior || 0;
+    const err = document.getElementById("add-err");
+    if (!addSel) { err.textContent = "Pick a skill or add your own first."; return; }
+    if (state.skills.some(s => s.name.toLowerCase() === addSel.name.toLowerCase())) { err.textContent = `You already track ${addSel.name}.`; return; }
+    if (prior < 0 || prior > 20000) { err.textContent = "Veteran hours must be between 0 and 20,000."; return; }
+    addSkill(addSel.name, addSel.catId, addSel.cat, addSel.tips, prior * 60);
+    dlgAdd.close();
+    toast(`${esc(addSel.name)} added${prior >= 1 ? " with a Veteran badge" : ""}.`);
+    persist(); render();
+  });
+  document.querySelectorAll("dialog [data-close]").forEach(b => b.addEventListener("click", () => b.closest("dialog").close()));
+
+  // ---------- Sample hero ----------
+  function sampleState() {
+    const s = blank();
+    s.heroName = "Example hero";
+    const g = { id: "g", name: "Guitar", catId: "instrument", cat: "music", tips: "guitar", importedMin: 40 * 60, earnedMin: 0, earnedXp: 0, created: daysAgo(30) };
+    const r = { id: "r", name: "Running", catId: "health", cat: "body", tips: "running", importedMin: 0, earnedMin: 0, earnedXp: 0, created: daysAgo(30) };
+    const sp = { id: "sp", name: "Spanish", catId: "language", cat: "mind", tips: "language", importedMin: 0, earnedMin: 0, earnedXp: 0, created: daysAgo(20) };
+    s.skills = [g, r, sp];
+    const plan = [[0, "g", 30, "Worked on the F barre chord", "solo"], [0, "sp", 20, "Flashcards", "solo"], [1, "g", 45, "Weekly lesson", "lesson"], [1, "r", 30, "", "solo"],
+      [3, "sp", 60, "Conversation class", "lesson"], [4, "r", 40, "", "solo"], [5, "g", 20, "", "solo"], [8, "r", 30, "", "solo"]];
+    plan.reverse().forEach(([ago, id, min, note, type], i) => {
+      const xp = type === "lesson" ? min * LESSON_MULT : min;
+      const sk = s.skills.find(k => k.id === id); sk.earnedMin += min; sk.earnedXp += xp;
+      s.sessions.unshift({ id: "x" + i, skillId: id, min, day: daysAgo(ago), ts: Date.now() - ago * 864e5, xp, rested: 0, type, shards: min, note });
+    });
+    [[g, 600, 720], [r, 1200, 1200], [sp, 300, 390]].forEach(([k, m, x]) => { k.earnedMin += m; k.earnedXp += x; });
+    s.gold = 140; s.owned = { "g:0": true }; s.equipped = { g: "g:0" };
+    s.keyShards = s.sessions.reduce((n, x) => n + x.shards, 0) + 7; s.keysUsed = 22; s.restedPool = 30; s.lastSessionDay = daysAgo(0);
+    return s;
+  }
+
+  // ---------- Events ----------
+  function reportError(err) {
+    const msg = err && err.message ? err.message : String(err);
+    try { console.error(err); } catch (e) {}
+    toast(`Something went wrong: ${esc(msg).slice(0, 140)}. Please tell us with Send feedback.`, "", 7000);
+  }
+  window.addEventListener("error", e => reportError(e.error || e.message));
+  window.addEventListener("unhandledrejection", e => reportError(e.reason));
+  document.addEventListener("click", e => {
+    try { handleClick(e); } catch (err) { reportError(err); try { render(); } catch (e2) {} }
+  });
+  function handleClick(e) {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const id = b.dataset.id, act = b.dataset.act;
+    switch (act) {
+      case "toggle": open = open === id ? null : id; confirm = null; render(); break;
+      case "start-timer": openStart(id); break;
+      case "start-now": if (!state.timer && skillById(id)) startTimer(id, b.dataset.type); break;
+      case "start-go": dlgStart.close(); if (!state.timer && skillById(startFor)) startTimer(startFor, b.dataset.type); break;
+      case "stop-timer": stopTimer(); break;
+      case "ask-discard": confirm = { kind: "timer" }; render(); break;
+      case "discard-timer": state.timer = null; confirm = null; toast("Session discarded."); persist(); render(); break;
+      case "cancel-confirm": confirm = null; render(); break;
+      case "quick": logMinutes(id, +b.dataset.min, dayKey(), ""); break;
+      case "open-log": openLog(id); break;
+      case "open-add": openAdd(); break;
+      case "ask-remove": confirm = { kind: "skill", id }; render(); break;
+      case "remove-skill": confirm = null; removeSkill(id); break;
+      case "ask-session": confirm = { kind: "session", id }; render(); break;
+      case "delete-session": confirm = null; deleteSession(id); break;
+      case "edit-name": editingName = true; render(); break;
+      case "tab": tab = b.dataset.tab; if (tab !== "dungeons" && runView && runView.step >= 4) runView = null; try { localStorage.setItem("levelup.tab", tab); } catch (e) {} render(); break;
+      case "buy": buyItem(id); break;
+      case "equip": equipItem(id); break;
+      case "run": runDungeon(id); break;
+      case "close-run": runView = null; render(); break;
+      case "feedback": openFeedback("feedback"); break;
+      case "upd-go": Updater.go(); break;
+      case "backup-copy": {
+        const code = backupCode(), out = document.getElementById("backup-out");
+        const showBox = () => { if (out) { out.innerHTML = `<textarea class="input backup-box" id="backup-text" rows="4" readonly>${esc(code)}</textarea><div class="hint">Select all and copy this code.</div>`; const t = document.getElementById("backup-text"); t.focus(); t.select(); } };
+        try { navigator.clipboard.writeText(code).then(() => toast("Backup code copied. Paste it into Restore on your other device."), showBox); } catch (e2) { showBox(); }
+        break;
+      }
+      case "restore-open": restoreOpen = !restoreOpen; restorePending = null; render(); break;
+      case "restore-cancel": restorePending = null; restoreOpen = false; render(); break;
+      case "restore-check": {
+        const el = document.getElementById("restore-input"), err = document.getElementById("restore-err");
+        try { restorePending = readBackup(el ? el.value : ""); render(); }
+        catch (e2) { if (err) err.textContent = e2.message || "That code couldn't be read."; }
+        break;
+      }
+      case "restore-confirm": {
+        if (!restorePending) break;
+        state = Object.assign(blank(), restorePending); migrate();
+        if (state.timer && !skillById(state.timer.skillId)) state.timer = null;
+        restorePending = null; restoreOpen = false; sample = false;
+        persist(); render(); toast(`Restored ${esc(state.heroName || "your hero")}.`);
+        break;
+      }
+      case "suggest-tip": openFeedback("tip", id); break;
+      case "vote": {
+        const sk = skillById(id), key = b.dataset.key, v = b.dataset.v;
+        state.tipVotes[key] = v; persist(); render();
+        const [set, tier, idx] = key.split(":");
+        const text = TIPS[set] && TIPS[set][+tier] ? TIPS[set][+tier][+idx] || "" : "";
+        submit({ kind: "tip-vote", vote: v, tipSet: set, tier: TIERS[+tier].name, skill: sk ? sk.name : "", text });
+        break;
+      }
+      case "tip-next": {
+        const c = tipCursor[id] || (tipCursor[id] = { cur: 0, ref: 0 });
+        c[b.dataset.which === "ref" ? "ref" : "cur"] += 1; render(); break;
+      }
+      case "vet-edit": editVet = id; render(); { const el = document.getElementById("vet-input"); if (el) el.focus(); } break;
+      case "vet-cancel": editVet = null; render(); break;
+      case "vet-save": {
+        const sk = skillById(id), el = document.getElementById("vet-input"), h = el ? +el.value || 0 : 0;
+        if (!sk) break;
+        if (h < 0 || h > 20000) { toast("Veteran hours must be between 0 and 20,000."); break; }
+        sk.importedMin = Math.round(h * 60); editVet = null;
+        toast(h >= 1 ? `${esc(sk.name)} veteran hours set to ${h.toLocaleString()}.` : `Veteran hours removed from ${esc(sk.name)}.`);
+        persist(); render(); break;
+      }
+      case "sample": sample = true; state = sampleState(); setPill("Example, not saved"); render(); break;
+      case "leave-sample": sample = false; state = blank(); pick = new Map(); load().then(render); break;
+      case "pick-cat": savePickerInputs(); browseCat = b.dataset.cat; rerenderPicker(); break;
+      case "pick-skill": {
+        savePickerInputs();
+        const n = b.dataset.name, c = catById(browseCat);
+        const p = PRESETS.find(x => x.name === n && x.catId === c.id);
+        const entry = p ? { catId: p.catId, cat: p.cat, tips: p.tips } : { catId: c.id, cat: c.path, tips: c.tips };
+        if (inPicker() === "add") addSel = addSel && addSel.name === n ? null : Object.assign({ name: n }, entry);
+        else if (pick.has(n)) pick.delete(n); else pick.set(n, Object.assign({ prior: "" }, entry));
+        rerenderPicker(); break;
+      }
+      case "pick-custom": {
+        const inp = document.getElementById("pick-custom"), n = inp.value.trim().replace(/\s+/g, " ");
+        const c = catById(browseCat);
+        if (!n) { pickerErr(`Type the ${c.noun} name first.`); break; }
+        if (state.skills.some(s => s.name.toLowerCase() === n.toLowerCase())) { pickerErr(`You already track ${n}.`); break; }
+        savePickerInputs();
+        const p = PRESETS.find(x => x.name.toLowerCase() === n.toLowerCase());
+        const entry = p ? { catId: p.catId, cat: p.cat, tips: p.tips } : { catId: c.id, cat: c.path, tips: c.tips };
+        const name = p ? p.name : n;
+        if (p) browseCat = p.catId;
+        if (inPicker() === "add") addSel = Object.assign({ name }, entry);
+        else if ([...pick.keys()].some(k => k.toLowerCase() === name.toLowerCase())) { pickerErr(`${name} is already picked.`); break; }
+        else pick.set(name, Object.assign({ prior: "" }, entry));
+        rerenderPicker(); break;
+      }
+      case "ob-start": {
+        syncPriors(); keepName();
+        const bad = [...pick.values()].some(v => v.prior !== "" && (+v.prior < 0 || +v.prior > 20000));
+        if (bad) { document.getElementById("ob-err").textContent = "Veteran hours must be between 0 and 20,000."; break; }
+        state = blank(); state.heroName = obName;
+        pick.forEach((v, n) => addSkill(n, v.catId, v.cat, v.tips, (+v.prior || 0) * 60));
+        pick = new Map();
+        persist(); render();
+        toast("Your hero is ready. Start a timer to earn your first XP.");
+        break;
+      }
+    }
+  }
+  let obName = "";
+  function keepName() { const el = document.getElementById("ob-name"); if (el) { obName = el.value.trim(); state.heroName = obName; } }
+  function syncPriors() { document.querySelectorAll("[data-prior]").forEach(el => { const v = pick.get(el.dataset.prior); if (v) v.prior = el.value; }); }
+
+  document.addEventListener("keydown", e => {
+    if (e.target.id === "vet-input" && e.key === "Enter") { e.preventDefault(); const btn = document.querySelector('[data-act="vet-save"]'); if (btn) btn.click(); return; }
+    if (e.target.id === "pick-custom" && e.key === "Enter") { e.preventDefault(); const btn = document.querySelector('[data-act="pick-custom"]'); if (btn) btn.click(); return; }
+    if (e.target.id === "name-input" && (e.key === "Enter" || e.key === "Escape")) {
+      if (e.key === "Enter") commitName(e.target.value); else { editingName = false; render(); }
+    }
+  });
+  document.addEventListener("focusout", e => { if (e.target.id === "name-input" && editingName) commitName(e.target.value); });
+  function commitName(v) { editingName = false; v = v.trim(); if (v !== state.heroName) { state.heroName = v; persist(); } render(); }
+
+  setInterval(liveTick, 1000);
+
+  // ---------- Mobile app bridge ----------
+  // A native shell (Capacitor, React Native WebView, or a Swift/Kotlin WebView) hosts this UI and
+  // mirrors widgetSnapshot() into the OS widget (WidgetKit on iOS, Glance on Android).
+  // Outbound: every state change posts {type:"widget", payload} to whichever native channel exists.
+  // Inbound: native code calls window.LevelUp.* (e.g. when the widget's Quick start button fires a deep link).
+  const listeners = new Set();
+  function notifyNative() {
+    const msg = { type: "widget", payload: widgetSnapshot() };
+    try { window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.levelup && window.webkit.messageHandlers.levelup.postMessage(msg); } catch (e) {}
+    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (e) {}
+    try { window.LevelUpAndroid && window.LevelUpAndroid.postMessage(JSON.stringify(msg)); } catch (e) {}
+    listeners.forEach(fn => { try { fn(msg.payload); } catch (e) {} });
+  }
+  const baseRender = render;
+  render = function () { baseRender(); if (!sample) notifyNative(); };
+
+  window.LevelUp = Object.freeze({
+    version: 1,
+    snapshot: () => widgetSnapshot(),
+    quickStart: (skillId, type = "solo") => { const s = skillId ? skillById(skillId) : quickTarget(); if (s && !state.timer) startTimer(s.id, type); return widgetSnapshot(); },
+    stop: () => { stopTimer(); return widgetSnapshot(); },
+    log: (skillId, minutes, daysBack = 0, note = "", type = "solo") => {
+      if (!skillById(skillId)) throw new Error("Unknown skill id");
+      if (!(minutes >= 1 && minutes <= MAX_ENTRY)) throw new Error("Minutes must be 1–720");
+      logMinutes(skillId, minutes, daysAgo(Math.max(0, Math.min(2, daysBack))), note, type);
+      return widgetSnapshot();
+    },
+    skills: () => state.skills.map(s => ({ id: s.id, name: s.name, level: lvFrom(totalXp(s)), path: s.cat })),
+    onChange: fn => { listeners.add(fn); return () => listeners.delete(fn); }
+  });
+
+  // Deep links: the widget opens the app at #quickstart, #stop or #log.
+  function handleHash() {
+    const h = (location.hash || "").slice(1);
+    if (!h || !state.skills.length || sample) return;
+    if (h === "quickstart") { const s = quickTarget(); if (s && !state.timer) openStart(s.id); }
+    else if (h === "quickstart-solo") window.LevelUp.quickStart(null, "solo");
+    else if (h === "quickstart-lesson") window.LevelUp.quickStart(null, "lesson");
+    else if (h === "stop") window.LevelUp.stop();
+    else if (h === "log") openLog();
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  }
+  window.addEventListener("hashchange", handleHash);
+
+  // Live updates: hand the current state to the next version of the page so a publish never drops progress.
+  const hot = window.claude && window.claude.hot;
+  if (hot && typeof hot.snapshot === "function") {
+    try { hot.snapshot(() => ({ state: sample ? null : JSON.parse(JSON.stringify(state)), tab })); } catch (e) {}
+  }
+  function start(hotData) {
+    load().then(() => {
+      if (hotData && hotData.state && Array.isArray(hotData.state.skills) && hotData.state.skills.length) {
+        state = Object.assign(blank(), hotData.state); migrate();
+        if (hotData.tab) tab = hotData.tab;
+        persist();
+      }
+      render(); handleHash();
+    });
+  }
+  if (hot && typeof hot.ready === "function") { try { hot.ready(start); } catch (e) { start({}); } }
+  else start((hot && hot.data) || {});
+})();
+</script>
