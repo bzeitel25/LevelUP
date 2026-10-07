@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.1 — 2026-10-07 (build 2026-10-07.6)
+
+Phone-first fixes.
+
+- Phones get an app-style bottom tab bar (Training, Hero, Gear, Dungeons, Settings) with icons and gold and key badges.
+- New "Install app" button in the header opens an install screen at the top of Settings, with a QR code, the app link, a copy button, and iPhone and Android steps. On Android, it shows the one-tap install button.
+- Fix: harmless browser warnings (like layout observer notices in the mobile Claude preview) no longer pop up as "Something went wrong" errors.
+- Fix: creating a hero now lands on the Hero tab as intended.
+
 ## v0.4.0 — 2026-10-07 (build 2026-10-07.5)
 
 Make it feel amazing.
