@@ -397,7 +397,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
 @keyframes floatup { 0% { opacity: 0; transform: translateY(8px) scale(.8); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px); } }
 .xp.gain::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.75) 50%, transparent 70%); background-size: 250% 100%; animation: shine 1s ease-out 1; pointer-events: none; }
 @keyframes shine { from { background-position: 120% 0; } to { background-position: -40% 0; } }
-.battle { width: 100%; max-width: 528px; aspect-ratio: 88 / 56; height: auto; border-radius: 8px; margin: 0 auto; box-shadow: 0 0 0 2px var(--ink); }
+.battle { width: 100%; max-width: 512px; aspect-ratio: 64 / 40; height: auto; border-radius: 8px; margin: 0 auto; box-shadow: 0 0 0 2px var(--ink); }
 .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .switch { width: 46px; height: 26px; border-radius: 999px; border: 2px solid var(--ink); background: var(--panel-2); padding: 0; position: relative; flex: none; }
 .switch i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); transition: left .15s; }
@@ -937,7 +937,13 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const chance = chanceFor(d, st.power), win = Math.random() < chance;
     const weights = Object.entries(st.total).filter(([, v]) => v > 0);
     const pickStat = () => { if (!weights.length) return "body"; let r = Math.random() * weights.reduce((n, [, v]) => n + v, 0); for (const [k, v] of weights) { if ((r -= v) <= 0) return k; } return weights[0][0]; };
-    const encounters = [0, 1, 2].map(() => { const k = pickStat(); const lines = ENCOUNTERS[k]; return { stat: k, value: st.total[k], text: lines[Math.floor(Math.random() * lines.length)] }; });
+    const used = new Set();
+    const encounters = [0, 1, 2].map(() => {
+      let k = pickStat(), lines = ENCOUNTERS[k].filter(t => !used.has(t));
+      if (!lines.length) { const alt = Object.keys(ENCOUNTERS).filter(x => ENCOUNTERS[x].some(t => !used.has(t))); k = alt.find(x => st.total[x] > 0) || alt[0]; lines = ENCOUNTERS[k].filter(t => !used.has(t)); }
+      const text = lines[Math.floor(Math.random() * lines.length)]; used.add(text);
+      return { stat: k, value: Math.max(1, st.total[k]), text };
+    });
     const roll = d.gold[0] + Math.random() * (d.gold[1] - d.gold[0]);
     const gold = Math.round((win ? roll : d.gold[0] * 0.3) * (1 + fortunePct(st) / 100));
     const trophy = win && Math.random() < 0.1 ? d.trophy : null;
@@ -1072,7 +1078,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-07.4";
+  const BUILD = "2026-10-07.5";
   const APP_VERSION = "0.4.0";
   const inClaude = !!(window.claude && window.claude.use);
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude;
@@ -2095,10 +2101,50 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     g.forEach((row, y) => row.forEach((col, x) => { if (col) { c.fillStyle = col; c.fillRect((ox + x * k) * s, (oy + y * k) * s, s * k, s * k); } }));
     c.globalAlpha = 1;
   }
+  // ---------- Mini hero (overworld-style 16x16, drawn at 2x in battles) ----------
+  const MINI = [
+    ".....OOOOOO.....", "...OOHHHHHHOO...", "..OHHjHHHHHHHO..", ".OHHHHHHHHHHHHO.", ".OHHHHHHHHHHHHO.",
+    ".OHSSSSSSSSSSHO.", ".OSSSESSSSESSSO.", ".OSSSESSSSESSSO.", "..OSBSSSSSSBSO..", "...OOTTTTTTOO...",
+    "..OTTTTTTTTTTO..", "..OUTTTTTTTTUO..", "...OPPPPPPPPO...", "....OPPOOPPO....", "...OKKKOOKKKO...", "...OOOO..OOOO..."
+  ];
+  const MINI_WALK = ["...OPPO..OPPO...", "...OKKO..OKKO...", "....OO....OO...."];
+  function miniHero(look, frame, opts = {}) {
+    const ap = look.ap || defaultAppearance(), pal = heroPalette(ap), items = look.items || {};
+    const recol = Object.assign({}, pal);
+    ["body", "hands", "feet"].forEach(sl => { const it = items[sl]; if (it && S[it.sprite] && S[it.sprite].recolor) { const tp = TIER_PAL[it.tier] || TIER_PAL[0]; Object.entries(S[it.sprite].recolor).forEach(([k, v]) => { recol[k] = tp[v] || FIXED[v] || v; }); } });
+    const rows = MINI.slice(); if (opts.walk && frame % 2) rows.splice(13, 3, ...MINI_WALK);
+    const g = Array.from({ length: 18 }, () => new Array(18).fill(null));
+    const set = (x, y, c) => { if (x >= 0 && x < 18 && y >= 0 && y < 18 && c) g[y][x] = c; };
+    const tier = sl => TIER_PAL[(items[sl] || {}).tier || 0];
+    // behind: cape and back gear
+    if (items.back && items.back.sprite === "cape") for (let y = 9; y < 15; y++) { set(2, y, tier("back").a); set(14, y, tier("back").a); }
+    else if (items.back) { const t = tier("back"); [[13, 2], [14, 1], [13, 3], [12, 4]].forEach(([x, y]) => set(x + 1, y, OUTLINE)); [[13, 3], [14, 2]].forEach(([x, y]) => set(x + 1, y, FIXED.N)); set(2, 12, t.A); set(2, 13, t.a); set(1, 12, OUTLINE); set(1, 13, OUTLINE); }
+    rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) { const ch = row[x]; if (ch !== ".") set(x + 1, y + 1, recol[ch] || FIXED[ch]); } });
+    // hair styles
+    const hs = HAIR_STYLES[ap.hairStyle] || "Short";
+    if (hs === "Long") for (let y = 6; y < 11; y++) { set(1, y, OUTLINE); set(2, y, recol.H); set(15, y, recol.H); set(16, y, OUTLINE); }
+    if (hs === "Spiky") { [[4, 1], [7, 0], [10, 0], [13, 1]].forEach(([x, y]) => { set(x, y, OUTLINE); set(x, y + 1, recol.H); }); }
+    if (hs === "Bun") { [7, 8, 9, 10].forEach(x => set(x, 0, OUTLINE)); [8, 9].forEach(x => set(x, 1, recol.H)); }
+    if (hs === "Ponytail") { [[15, 4], [16, 5], [16, 6], [16, 7]].forEach(([x, y]) => set(x, y, recol.H)); [[16, 4], [17, 5], [17, 6], [17, 7], [16, 8]].forEach(([x, y]) => set(x, y, OUTLINE)); }
+    if (hs === "Puffy") { [[1, 3], [16, 3], [1, 4], [16, 4], [1, 5], [16, 5]].forEach(([x, y]) => set(x, y, recol.H)); [[0, 3], [17, 3], [0, 4], [17, 4], [0, 5], [17, 5]].forEach(([x, y]) => set(x, y, OUTLINE)); }
+    if (hs === "Buzz") { for (let x = 3; x < 15; x++) set(x, 5, recol.S); set(2, 5, recol.H); set(15, 5, recol.H); }
+    // head gear
+    const head = items.head && items.head.sprite, ht = tier("head");
+    if (head === "crown") { [5, 6, 7, 8, 9, 10, 11, 12].forEach(x => set(x, 1, ht.A)); [5, 8, 9, 12].forEach(x => set(x, 0, ht.A)); set(8, 1, FIXED.R); }
+    else if (head === "toque") { for (let x = 5; x < 13; x++) { set(x, 0, FIXED.Z); set(x, 1, FIXED.Z); } set(4, 1, OUTLINE); set(13, 1, OUTLINE); for (let x = 5; x < 13; x++) set(x, 2, ht.A); }
+    else if (head === "headband" || head === "circlet" || head === "flower") { for (let x = 3; x < 15; x++) set(x, 5, head === "flower" ? FIXED.B : ht.A); if (head === "circlet") { set(8, 5, FIXED.C); set(9, 5, FIXED.C); } }
+    if (items.face && items.face.sprite === "glasses" || (items.face && items.face.sprite === "goggles")) { [5, 6, 10, 11].forEach(x => set(x + 1, 7, items.face.sprite === "goggles" ? tier("face").A : FIXED.X)); }
+    if (items.neck) { set(8, 10, tier("neck").A); set(9, 10, tier("neck").A); }
+    // held item: a small tinted blip in the right hand
+    if (items.hand && opts.weapon !== false) { const t = tier("hand"); set(14, 10, OUTLINE); set(14, 11, t.A); set(15, 10, t.L); set(15, 11, OUTLINE); }
+    if (Object.values(items).some(it => it && it.tier === 5) && frame % 3 !== 2) { set(1, 1, FIXED.Y); set(16, 2, FIXED.W); }
+    return g;
+  }
+
   // Paint one frame of a dungeon battle. 64x46 world, 4 px per pixel.
   const BATTLE_FRAMES = 46;
   function paintBattle(cv, rv) {
-    const W = 88, H = 56, s = 4, f = rv.t;
+    const W = 64, H = 40, s = 6, f = rv.t;
     cv.width = W * s; cv.height = H * s;
     const c = cv.getContext("2d"); c.imageSmoothingEnabled = false;
     drawBackdrop(c, DUNGEON_SCENE[rv.d.id] || "dungeon", W, H, s, f);
@@ -2106,17 +2152,18 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const enc = Math.min(2, Math.floor(f / 12)), k = f % 12, done = f >= 36;
     // hero
     let hx = 0, heroFlash = false;
-    if (!done) { if (k === 1) hx = 2; if (k === 2) hx = 5; if (k === 3) hx = 4; if (k === 4) hx = 2; if (k === 7 || k === 8) heroFlash = !rv.win && enc === 2; }
+    if (!done) { if (k === 1) hx = 4; if (k === 2) hx = 9; if (k === 3) hx = 8; if (k === 4) hx = 4; if (k === 7 || k === 8) heroFlash = !rv.win && enc === 2; }
     let heroAlpha = 1;
-    if (done && !rv.win) { hx = -Math.min(20, (f - 36) * 3); heroAlpha = Math.max(0, 1 - (f - 36) / 8); }
-    const hg = renderHero(heroLook({ pose: done && rv.win ? "cheer" : "idle", frame: f }));
+    if (done && !rv.win) { hx = -Math.min(14, (f - 36) * 2); heroAlpha = Math.max(0, 1 - (f - 36) / 8); }
+    const hg = miniHero(heroLook(), f, { walk: !done && k >= 1 && k <= 4 || (done && !rv.win) });
     if (heroFlash) hg.forEach(r => r.forEach((v, x) => { if (v && v !== OUTLINE) r[x] = "#ffb0b0"; }));
-    blit(c, hg, 2 + hx, gy - 36, s, heroAlpha);
+    const hop = done && rv.win ? (f % 4 < 2 ? -2 : 0) : (!done && k === 2 ? -1 : 0);
+    blit(c, hg, 10 + hx, gy - 17 + hop, s, heroAlpha, 1);
     // monster
     const mg = monsterGrid(m, !done && (k === 3 || k === 4));
-    const Z = 2, mw = mg[0].length * Z, mh = mg.length * Z, mx = W - mw - 6 + (!done && (k === 3) ? 2 : 0) + (!done && k === 7 ? -6 : 0);
-    const bob = (f % 6 < 3 ? 0 : -1) + (rv.d.id === "library" || rv.d.id === "citadel" || rv.d.id === "spire" ? -8 : 0);
-    const my = gy - mh + 2 + bob;
+    const Z = 1, mw = mg[0].length * Z, mh = mg.length * Z, mx = W - mw - 10 + (!done && (k === 3) ? 1 : 0) + (!done && k === 7 ? -5 : 0);
+    const bob = (f % 6 < 3 ? 0 : -1) + (rv.d.id === "library" || rv.d.id === "citadel" || rv.d.id === "spire" ? -5 : 0);
+    const my = gy - mh + 1 + bob;
     const hpLeft = rv.win ? Math.max(0, 1 - (Math.min(3, enc + (k >= 3 ? 1 : 0))) / 3) : Math.max(0.3, 1 - (Math.min(3, enc + (k >= 3 ? 1 : 0))) * 0.23);
     if (!(done && rv.win)) {
       blit(c, mg, mx, my, s, 1, Z);
@@ -2127,9 +2174,9 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     } else {
       // poof, then a treasure chest with coins
       const p = f - 36;
-      if (p < 4) { c.fillStyle = "#e9e4d8"; [[0, 0], [6, -4], [12, 2], [4, 6], [16, -2]].forEach(([dx, dy]) => { const r = 3 + p * 2; c.fillRect((mx + 6 + dx - r / 2) * s, (my + 10 + dy - r / 2) * s, r * s, r * s); }); }
+      if (p < 4) { c.fillStyle = "#e9e4d8"; [[0, 0], [3, -2], [6, 1], [2, 3], [8, -1]].forEach(([dx, dy]) => { const r = 2 + p; c.fillRect((mx + 3 + dx - r / 2) * s, (my + 5 + dy - r / 2) * s, r * s, r * s); }); }
       else {
-        const cx = W - 22, cy = gy - 7;
+        const cx = W - 22, cy = gy - 6;
         const chest = ["..AAAAAAAA..", ".ALLLLLLLLA.", "AaaaaaaaaaaA", "AAAAAGGAAAAA", "AaaaaGGaaaaA", "AaaaaaaaaaaA", "AAAAAAAAAAAA"];
         const g = makeGrid(); chest.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] !== ".") g[y][x] = { A: "#8a5a34", a: "#6b4220", L: "#b07840", G: "#f2c14e" }[row[x]]; });
         blit(c, g.slice(0, 7).map(r => r.slice(0, 12)), cx, cy, s);
@@ -2140,14 +2187,14 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     // damage numbers and impact
     if (!done && k >= 3 && k <= 8) {
       const dmg = rv.encounters[enc] ? rv.encounters[enc].value || 1 : 1;
-      c.font = `bold ${s * 6}px "Pixelify Sans", monospace`; c.textAlign = "center";
+      c.font = `bold ${s * 5}px "Pixelify Sans", monospace`; c.textAlign = "center";
       const ty = (my - 6 - (k - 3)) * s;
       c.fillStyle = OUTLINE; c.fillText("-" + dmg, (mx + mw / 2) * s + 2, ty + 2);
       c.fillStyle = "#ffe58a"; c.fillText("-" + dmg, (mx + mw / 2) * s, ty);
       if (k === 3) { c.fillStyle = "#ffffff"; [[-3, -3], [3, -4], [0, 3], [4, 2], [-4, 1]].forEach(([dx, dy]) => c.fillRect((mx + 2 + dx) * s, (my + mh / 2 + dy) * s, 2 * s, 2 * s)); }
     }
-    if (done && !rv.win) { c.font = `bold ${s * 6}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("RETREAT!", W / 2 * s + 2, 9 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("RETREAT!", W / 2 * s, 9 * s); }
-    if (done && rv.win && f - 36 >= 4) { c.font = `bold ${s * 6}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("VICTORY!", (W - 26) * s + 2, 9 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("VICTORY!", (W - 26) * s, 9 * s); }
+    if (done && !rv.win) { c.font = `bold ${s * 5}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("RETREAT!", W / 2 * s + 2, 8 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("RETREAT!", W / 2 * s, 8 * s); }
+    if (done && rv.win && f - 36 >= 4) { c.font = `bold ${s * 5}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("VICTORY!", W / 2 * s + 2, 8 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("VICTORY!", W / 2 * s, 8 * s); }
   }
 
   // ---------- App themes ----------

@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.0 — 2026-10-07 (build 2026-10-07.4)
+## v0.4.0 — 2026-10-07 (build 2026-10-07.5)
 
 Make it feel amazing.
 
@@ -11,6 +11,8 @@ Make it feel amazing.
 - Panel styles: Clean, Pixel (unlocks at total level 10) and Gilded (unlocks at total level 50).
 - Floating +XP numbers and a shine across the XP bar when you log, press feedback on buttons, and a pixel logo in the header.
 - Fix: a closed celebration layer could block taps in some browsers.
+- Battles use a tiny overworld-style hero (16×16) built from your appearance and gear: hair style, colors, crown or toque, cape, and back gear. Everything in the arena shares one pixel size, and the hero walks in, hops on victory and retreats on a loss.
+- Battle encounters no longer repeat the same line.
 
 ## v0.3.0 — 2026-10-07 (build 2026-10-07.3)
 
