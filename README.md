@@ -42,7 +42,9 @@ Past Lv 100, every 1,000 hours earns a mastery star. At 10,000 hours you're a Le
 
 **Your hero.** A pixel-art chibi you customize in the Hero tab. Every item you buy appears on your hero, from a worn acoustic guitar to a legendary crown, and you can save your hero as a profile picture. While you train, your hero does the activity alongside you.
 
-**Skills and categories.** Pick from 60 skills across nine categories (instruments, languages, health, cooking, trades, art, tech, study and life skills) or add your own. Your **class** comes from the paths you train most: Bard, Warrior, Scholar, Artisan, Artificer, Monk or Steward, plus hybrids like Skald, Battlemage and Wizard.
+**Locations.** Level skills to unlock themed places to train, from a theater and concert hall to a workshop, kitchen, café, laboratory and observatory. Your hero trains in the best one you've unlocked for that skill, and any of them can be your profile picture backdrop.
+
+**Skills and categories.** Pick from 64 skills across ten categories (instruments, languages, health, cooking, trades, art, tech, study, science and life skills) or add your own. Your **class** comes from the paths you train most: Bard, Warrior, Scholar, Artisan, Artificer, Monk or Steward, plus hybrids like Skald, Battlemage and Wizard.
 
 **Veteran hours.** Past experience earns a Bronze to Diamond Veteran badge and unlocks tips for your real experience level. It never adds XP, levels or rewards. Everyone's level starts at 0 in the app.
 

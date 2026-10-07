@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.0 — 2026-10-07 (build 2026-10-07.3)
+
+Places to train. Science joins the game.
+
+- 17 new themed pixel locations, 23 in all: Theater, Amphitheater, Concert Hall, Workshop, Engineering Bay, Kitchen, Cozy Café, Grand Dining Hall, Laboratory, Observatory, Lantern Market, Stadium Track, Dojo, Zen Garden, Neon City, Art Studio and Greenhouse. Many have animated details like spinning gears, bubbling beakers, twinkling string lights and falling petals.
+- Locations unlock by leveling skills in their category (Lv 5, 15 and 30). The Dungeon unlocks when you clear your first dungeon.
+- Training happens in the best location you've unlocked for that skill. A guitarist trains on stage and a chef in the kitchen.
+- Location picker in the Hero tab, with previews and unlock requirements, and announcements when you unlock one.
+- New category, Explore science: Chemistry, Biology, Physics and Astronomy, each with a 7-tier tip set (safety first, including solar filters for astronomy).
+- New gear and sprites: Safety Goggles, Bubbling Flask, Lab Coat, Brass Microscope, Philosopher's Stone, Pocket Binoculars and Brass Telescope.
+
 ## v0.2.0 — 2026-10-07 (build 2026-10-07.2)
 
 The hero gets a body. Pixel art throughout.
