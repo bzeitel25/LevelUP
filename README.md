@@ -55,6 +55,8 @@ Past Lv 100, every 1,000 hours earns a mastery star. At 10,000 hours you're a Le
 - Spend keys on dungeon runs, which play out from your hero's stats and pay **gold**.
 - Skill levels unlock gear. Gold buys it. Gear adds a smaller bonus on top of your skill-based stats, so practice stays the main source of power.
 
+**Feel.** Level-ups get a full celebration, with your hero cheering, confetti and a list of unlocks. Dungeons are animated pixel battles against boss monsters. 8-bit sound effects and vibration can be switched off in Settings. Each class has an unlockable app theme, and there are Pixel and Gilded panel styles.
+
 **Fair play.** Gold can never be bought, so power can't be bought. Prior experience never earns rewards, and daily caps limit grinding.
 
 ---

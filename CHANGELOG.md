@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.0 — 2026-10-07 (build 2026-10-07.4)
+
+Make it feel amazing.
+
+- Level-up celebration: your hero jumps and cheers on their backdrop, with pixel confetti, the new level and tier, and a list of everything that just unlocked (gear to buy, locations, themes).
+- 8-bit sound effects made in the browser, with no audio files: timer start, logging, level-ups, buying, coins, battle hits, victory and defeat. Plus vibration on phones that support it. Both can be turned off in Settings.
+- Dungeon battles are now animated pixel fights: your hero battles a boss-sized monster (Cellar Goblin, Moss Golem, Haunted Tome, Ember Spirit, Storm Wyvern, Void Watcher) in a themed arena, with hit flashes, damage numbers and a health bar, ending in a treasure chest of coins or a retreat.
+- App themes, one per class (Bard, Warrior, Scholar, Artisan, Artificer, Monk, Steward) plus Dungeon and Legend, each with light and dark palettes and a subtle pixel pattern. Class themes unlock when that path's skills add up to Lv 10.
+- Panel styles: Clean, Pixel (unlocks at total level 10) and Gilded (unlocks at total level 50).
+- Floating +XP numbers and a shine across the XP bar when you log, press feedback on buttons, and a pixel logo in the header.
+- Fix: a closed celebration layer could block taps in some browsers.
+
 ## v0.3.0 — 2026-10-07 (build 2026-10-07.3)
 
 Places to train. Science joins the game.

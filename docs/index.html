@@ -35,6 +35,8 @@
   --good: #1b7f53;
   --danger: #bf3b28;
   --shadow: 0 1px 0 rgba(21,26,44,.06), 0 6px 18px -10px rgba(21,26,44,.25);
+  --on-fill: #1b1404;
+  --pattern: none;
   --f-display: "Pixelify Sans", ui-monospace, "Courier New", monospace;
   --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -53,7 +55,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; padding: 0 16px; }
+body { background-color: var(--bg); background-image: var(--pattern); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; padding: 0 16px; }
 .wrap { max-width: 1080px; margin: 0 auto; padding-block: 18px 48px; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -76,7 +78,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 /* buttons */
 .btn { border: 2px solid var(--ink); background: var(--panel); padding: 8px 14px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn:hover { background: var(--panel-2); }
-.btn.primary { background: var(--xp-fill); color: #1b1404; border-color: var(--xp-fill); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); }
+.btn.primary { background: var(--xp-fill); color: var(--on-fill); border-color: var(--xp-fill); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); }
 .btn.primary:hover { background: var(--xp-hi); }
 .btn.ghost { border-color: var(--line); }
 .btn.small { padding: 4px 10px; font-size: 13px; border-width: 1px; }
@@ -309,7 +311,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
 .wdg-skill { font-size: 12.5px; display: flex; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
 .wdg-skill b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wdg .xp { height: 10px; border-width: 1.5px; }
-.wdg-go { border: 0; border-radius: 999px; padding: 8px 10px; font-weight: 700; font-size: 13px; background: var(--xp-fill); color: #1b1404; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+.wdg-go { border: 0; border-radius: 999px; padding: 8px 10px; font-weight: 700; font-size: 13px; background: var(--xp-fill); color: var(--on-fill); display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
 .wdg-go svg { width: 14px; height: 14px; }
 .wdg-go.on { background: var(--danger); color: #fff; }
 .wdg-meta { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
@@ -401,6 +403,53 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
 .run-hist div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding: 6px 0; }
 .run-hist div:last-child { border-bottom: 0; }
 
+/* feel */
+.btn, .chip, .play, .tab, .wdg-go, .bd, .theme, .sw, .cat { transition: transform .08s ease, background-color .15s, border-color .15s; }
+.btn:active:not(:disabled), .chip:active:not(:disabled), .play:active:not(:disabled), .wdg-go:active, .bd:active:not(:disabled), .theme:active:not(:disabled), .sw:active, .cat:active { transform: translateY(1px) scale(.97); }
+.px-title { font-family: var(--f-display); font-weight: 700; }
+.logo { width: 30px; height: 30px; align-self: center; }
+.brand { align-items: center; }
+.skill { position: relative; }
+.float-xp { position: absolute; right: 80px; top: 8px; color: var(--xp); font-size: 20px; pointer-events: none; animation: floatup 1.6s ease-out forwards; text-shadow: 0 2px 0 var(--panel); }
+@keyframes floatup { 0% { opacity: 0; transform: translateY(8px) scale(.8); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px); } }
+.xp.gain::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.75) 50%, transparent 70%); background-size: 250% 100%; animation: shine 1s ease-out 1; pointer-events: none; }
+@keyframes shine { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+.battle { width: 100%; max-width: 528px; aspect-ratio: 88 / 56; height: auto; border-radius: 8px; margin: 0 auto; box-shadow: 0 0 0 2px var(--ink); }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.switch { width: 46px; height: 26px; border-radius: 999px; border: 2px solid var(--ink); background: var(--panel-2); padding: 0; position: relative; flex: none; }
+.switch i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); transition: left .15s; }
+.switch[aria-checked="true"] { background: var(--xp-fill); }
+.switch[aria-checked="true"] i { left: 22px; }
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.theme { border: 2px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 10px; display: grid; gap: 3px; text-align: left; min-width: 0; }
+.theme b { font-size: 14px; } .theme small { font-size: 11.5px; color: var(--muted); line-height: 1.25; }
+.theme-sw { display: flex; gap: 3px; } .theme-sw i { width: 16px; height: 16px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.theme[aria-pressed="true"] { border-color: var(--xp-fill); box-shadow: 0 0 0 2px var(--xp-fill); }
+.theme.locked { opacity: .55; cursor: not-allowed; }
+/* panel styles */
+:root[data-lpanel="pixel"] .panel { border-radius: 0; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--line); }
+:root[data-lpanel="pixel"] .btn, :root[data-lpanel="pixel"] .item, :root[data-lpanel="pixel"] .bd, :root[data-lpanel="pixel"] .theme, :root[data-lpanel="pixel"] .cat, :root[data-lpanel="pixel"] .note { border-radius: 0; }
+:root[data-lpanel="gilded"] .panel { border-radius: 2px; border: 3px double var(--xp-fill); box-shadow: 0 0 0 2px var(--ink), 5px 5px 0 var(--line); }
+:root[data-lpanel="gilded"] .btn, :root[data-lpanel="gilded"] .item, :root[data-lpanel="gilded"] .bd { border-radius: 2px; }
+:root[data-lpanel="gilded"] .section-head h2::before { content: "◆ "; color: var(--xp-fill); }
+/* celebration */
+#celebrate[hidden] { display: none !important; }
+#celebrate { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; }
+.cel-back { position: absolute; inset: 0; background: rgba(10, 8, 20, .72); }
+.cel { position: relative; width: min(380px, 100%); max-height: 100%; overflow: auto; background: var(--panel); border: 3px solid var(--ink); box-shadow: 0 0 0 4px var(--xp-fill), 0 30px 60px -20px rgba(0,0,0,.6); border-radius: 14px; padding: 18px 18px 16px; display: grid; gap: 10px; justify-items: center; text-align: center; animation: celin .35s cubic-bezier(.2,1.4,.4,1); }
+@keyframes celin { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.cel-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: pixelated; }
+.cel-title { font-size: 40px; line-height: 1; color: var(--xp); letter-spacing: .04em; text-shadow: 3px 3px 0 var(--xp-hi); animation: pulse 1s ease-in-out infinite alternate; }
+@keyframes pulse { to { transform: scale(1.06); } }
+.cel-hero { width: 160px; height: 192px; border-radius: 10px; box-shadow: 0 0 0 3px var(--ink); }
+.cel-skill { font-size: 17px; } .cel-skill b { color: var(--xp); }
+.cel-tier { font-size: 14px; color: var(--muted); }
+.cel-list { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 6px; }
+.cel-list li { display: flex; justify-content: space-between; gap: 10px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; }
+.cel-list li span { color: var(--muted); }
+.cel-btn { width: 100%; font-size: 16px; padding: 10px; }
+@media (prefers-reduced-motion: reduce) { .cel, .cel-title, .float-xp, .xp.gain::before { animation: none; } }
+
 /* toasts */
 .toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); display: grid; gap: 8px; z-index: 50; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
 .toast { background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: 14px; box-shadow: var(--shadow); animation: up .3s ease-out; }
@@ -412,7 +461,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Level <b>UP</b></h1><span id="build-tag">Prototype</span></div>
+    <div class="brand"><canvas id="logo" class="px logo" aria-hidden="true"></canvas><h1>Level <b>UP</b></h1><span id="build-tag">Prototype</span></div>
     <div class="top-actions"><button class="btn small ghost" data-act="feedback">Send feedback</button><span class="pill" id="save-pill">Loading…</span></div>
   </header>
   <div id="app"><div class="panel onboard"><p class="muted">Loading your hero…</p></div></div>
@@ -688,7 +737,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   }
 
   // ---------- State ----------
-  const blank = () => ({ v: 1, heroName: "", skills: [], sessions: [], gold: 0, keyShards: 0, keysUsed: 0, owned: {}, equipped: {}, trophies: {}, runs: [], tipVotes: {}, submissions: [], appearance: null, restedPool: 0, lastSessionDay: null, timer: null });
+  const blank = () => ({ v: 1, heroName: "", skills: [], sessions: [], gold: 0, keyShards: 0, keysUsed: 0, owned: {}, equipped: {}, trophies: {}, runs: [], tipVotes: {}, submissions: [], appearance: null, settings: { sound: true, haptics: true, theme: "classic", panel: "clean" }, restedPool: 0, lastSessionDay: null, timer: null });
   let state = blank();
   let sample = false;
   let open = null;                 // expanded skill id
@@ -760,6 +809,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
 
   // Older saves had no category; place each skill in the best-matching one.
   function migrate() {
+    if (!state.settings || typeof state.settings !== "object") state.settings = { sound: true, haptics: true, theme: "classic", panel: "clean" };
     state.skills.forEach(s => {
       if (!PATHS[s.cat]) s.cat = "life";
       if (s.earnedXp == null) s.earnedXp = s.earnedMin;
@@ -839,7 +889,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const s = skillById(skillId); if (!s) return;
     min = Math.round(min);
     type = type === "lesson" ? "lesson" : "solo";
-    const before = lvFrom(totalXp(s)), beforeTier = tierIdx(before), beforeStars = stars(totalXp(s)), bdBefore = unlockedBackdrops();
+    const before = lvFrom(totalXp(s)), beforeTier = tierIdx(before), beforeStars = stars(totalXp(s)), bdBefore = unlockedBackdrops(), snap = unlockSnapshot();
     const keysBefore = keysAvail();
     const pool = restedNow();
     const rested = Math.min(min, pool);                      // rested minutes earn double base XP
@@ -854,15 +904,18 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     if (state.sessions.length > 400) state.sessions.length = 400;
 
     const after = lvFrom(totalXp(s));
-    if (after > before) toast(`<b>DING!</b>${esc(s.name)} reached Lv ${after}`, "ding", 4200);
-    if (tierIdx(after) > beforeTier) toast(`New tier: ${TIERS[tierIdx(after)].name}. A new ${esc(s.name)} tip is unlocked.`);
+    const unlocks = unlockDiff(snap);
     if (stars(totalXp(s)) > beforeStars) toast(`Mastery star earned in ${esc(s.name)}.`);
-    announceUnlocks(bdBefore);
+    if (after > before) pendingCelebrate = { skill: s.name, from: before, to: after, tier: tierIdx(after) > beforeTier ? TIERS[tierIdx(after)].name : null, unlocks };
+    else { if (unlocks.length) Sound.play("unlock"); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); Sound.play("log"); }
+    lastGain = { skillId: s.id, xp };
     const parts = [type === "lesson" ? "lesson 1.5×" : "", rested ? `${fmt(rested)} rested` : ""].filter(Boolean);
     const newKeys = keysAvail() - keysBefore;
     toast(`Logged ${fmt(min)} of ${esc(s.name)}: +${fmtXp(xp)} XP${parts.length ? " (" + parts.join(", ") + ")" : ""}, +${shards} shards` + (newKeys > 0 ? `, ${newKeys} new dungeon key${newKeys > 1 ? "s" : ""}` : "") + (shards < min ? ". Daily key limit reached; XP still counts" : "") + ".");
     persist(); render();
+    if (pendingCelebrate) { const c = pendingCelebrate; pendingCelebrate = null; setTimeout(() => celebrate(c), 250); }
   }
+  let pendingCelebrate = null, lastGain = null;
 
   function deleteSession(id) {
     const i = state.sessions.findIndex(x => x.id === id); if (i < 0) return;
@@ -883,6 +936,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     state.gold -= it.price; state.owned[id] = true;
     const cur = equippedItem(s);
     if (!cur || cur.bonus < it.bonus) state.equipped[s.id] = id;
+    Sound.play("buy");
     toast(`Bought ${esc(it.name)}${state.equipped[s.id] === id ? " and equipped it" : ""}. +${it.bonus} ${STATS[s.cat].name}.`);
     persist(); render();
   }
@@ -906,17 +960,29 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const trophy = win && Math.random() < 0.1 ? d.trophy : null;
     state.keysUsed += 1; state.gold += gold;
     if (trophy) state.trophies[d.id] = (state.trophies[d.id] || 0) + 1;
-    const bdBefore = unlockedBackdrops();
+    const snap = unlockSnapshot();
     state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, day: dayKey(), ts: Date.now() });
-    setTimeout(() => announceUnlocks(bdBefore), 3200);
+    const unlocks = unlockDiff(snap);
     if (state.runs.length > 30) state.runs.length = 30;
     persist();
-    runView = { d, win, gold, trophy, encounters, chance, fortune: fortunePct(st), step: 0 };
+    runView = { d, win, gold, trophy, encounters, chance, fortune: fortunePct(st), step: 0, t: 0, unlocks };
     clearInterval(runTimer);
     const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) { runView.step = 4; render(); return; }
+    const finish = () => { (win ? Sound.play("win") : Sound.play("lose")); setTimeout(() => Sound.play("coin"), 450); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); };
+    if (reduce) { runView.t = BATTLE_FRAMES; runView.step = 4; render(); finish(); return; }
     render();
-    runTimer = setInterval(() => { runView.step += 1; render(); if (runView.step >= 4) clearInterval(runTimer); }, 750);
+    runTimer = setInterval(() => {
+      const rv = runView; if (!rv) { clearInterval(runTimer); return; }
+      rv.t += 1;
+      const k = rv.t % 12, enc = Math.floor(rv.t / 12);
+      if (rv.t < 36 && k === 3) { Sound.play("hit"); buzz(15); }
+      if (rv.t < 36 && k === 7 && !rv.win && enc === 2) Sound.play("hurt");
+      if (rv.t === 36) finish();
+      const step = rv.t < 36 ? enc + (k >= 3 ? 1 : 0) : 4;
+      if (step !== rv.step) { rv.step = step; render(); }
+      else { const cv = document.getElementById("battle"); if (cv) paintBattle(cv, rv); }
+      if (rv.t >= BATTLE_FRAMES) clearInterval(runTimer);
+    }, 110);
   }
 
   function removeSkill(id) {
@@ -929,7 +995,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     persist(); render();
   }
 
-  function startTimer(id, type) { state.timer = { skillId: id, startedAt: Date.now(), type: type === "lesson" ? "lesson" : "solo" }; persist(); render(); }
+  function startTimer(id, type) { Sound.play("start"); state.timer = { skillId: id, startedAt: Date.now(), type: type === "lesson" ? "lesson" : "solo" }; persist(); render(); }
   function stopTimer() {
     const t = state.timer; if (!t) return;
     const secs = (Date.now() - t.startedAt) / 1000;
@@ -1023,8 +1089,8 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-07.3";
-  const APP_VERSION = "0.3.0";
+  const BUILD = "2026-10-07.4";
+  const APP_VERSION = "0.4.0";
   const inClaude = !!(window.claude && window.claude.use);
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude;
   const Updater = {
@@ -1114,6 +1180,11 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
         <div id="backup-out"></div>
       </article>
       <article class="panel set-card">
+        <h3>Sound and feel</h3>
+        <div class="toggle-row"><div><b>Sound effects</b><div class="hint" style="margin:0">8-bit blips for training, level-ups, loot and battles.</div></div><button class="switch" role="switch" aria-checked="${state.settings.sound !== false}" data-act="toggle-sound" aria-label="Sound effects"><i></i></button></div>
+        <div class="toggle-row"><div><b>Vibration</b><div class="hint" style="margin:0">A buzz on level-ups and hits, on phones that support it.</div></div><button class="switch" role="switch" aria-checked="${state.settings.haptics !== false}" data-act="toggle-haptics" aria-label="Vibration"><i></i></button></div>
+      </article>
+      <article class="panel set-card">
         <h3>Feedback</h3>
         <p class="hint" style="margin:0">Ideas, bugs or balance problems all help shape the app.</p>
         <div><button class="btn ghost" data-act="feedback">Send feedback</button></div>
@@ -1174,9 +1245,10 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     </section>`;
   }
   function renderRun() {
-    const r = runView, done = r.step >= 4;
+    const r = runView, done = r.step >= 4, mon = MONSTERS[r.d.id] || MONSTERS.cellar;
     return `<div class="panel runlog" aria-live="polite">
-      <h3>${esc(r.d.name)}</h3>
+      <div class="train-row"><h3>${esc(r.d.name)}</h3><span class="muted" style="font-size:13px">vs. ${esc(mon.name)}</span></div>
+      <canvas id="battle" class="px battle" aria-label="Your hero fighting the ${esc(mon.name)}"></canvas>
       ${r.encounters.slice(0, Math.min(r.step, 3)).map(e => `<div class="enc"><span class="stat-chip">${STATS[e.stat].name} ${e.value}</span><span>${esc(e.text)}</span></div>`).join("")}
       ${!done ? `<div class="muted" style="font-size:13px">Exploring…</div>` : `
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
@@ -1289,6 +1361,8 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     ["..........OPPPPPPPPPPO..........", "..........OPPPppppPPPO..........", ".........OPPpO....OPPpO.........", "........OPPpO......OPPpO........", "........OKKKKO.....OKKKKO.......", "........OkkkkO......OkkkkO......", ".........OOOO........OOOO......."],
     null
   ];
+  const CHEER_TORSO = mirror(["........OOTTTTTT", "........OtTTTTTT", "........OtTTTTTT", "........OtTTTTTT", "........OtTTTTTT", "........OtTTTTTT", "........OtTTTTTT", "........OOOTTTTT"]);
+  const CHEER_ARM = [[7, 22, "T"], [8, 22, "T"], [6, 21, "T"], [7, 21, "t"], [5, 20, "T"], [6, 20, "t"], [4, 19, "T"], [5, 19, "T"], [3, 18, "U"], [4, 18, "U"], [3, 17, "U"], [4, 17, "U"]];
   const HAIR = {
     Short: mirror(["................", "................", "................", "..........OOOOOO", "........OOHHHHHH", ".......OHHHHHHHH", "......OHHjHHHHHH", ".....OHHjHHHHHHH", "....OHHjHHHHHHHH", "....OHHHHHHHHHHH", "....OHHHHHhHHHhH", "....OHHhHh.hH..h", "....OHh.h.......", "....OHh.........", "....OH..........", ".....O.........."]),
     Spiky: mirror([".........O....O.", "........OHO..OHO", ".......OHHHOOHHH", "......OHHjHHHHHH", "......OHHjHHHHHH", ".....OHHjHHHHHHH", ".....OHjHHHHHHHH", "....OHHjHHHHHHHH", "....OHHHHHHHHHHH", "....OHHHhHHHhHHH", "....OHHh.Hh..H.h", "....OHh.........", "....OH..........", ".....O.........."]),
@@ -1509,6 +1583,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const f = look.frame || 0, pose = look.pose || "idle", act = look.act || "";
     const g = makeGrid();
     let by = 0;
+    if (pose === "cheer") by = f % 6 < 3 ? -2 : 0;
     if (pose === "train") by = act === "float" ? (f % 4 < 2 ? -1 : -2) : (act === "run" ? (f % 2 ? -1 : 0) : (f % 4 === 2 ? -1 : 0));
     // recolors from body/hands/feet items
     const recol = Object.assign({}, pal);
@@ -1520,6 +1595,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     // body
     let rows = BASE;
     if (pose === "train" && act === "run" && f % 2 === 0) rows = BASE.slice(0, 30).concat(LEGS_RUN[0]);
+    if (pose === "cheer") rows = BASE.slice(0, 22).concat(CHEER_TORSO, BASE.slice(30));
     drawRows(g, recol, rows, 0, by);
     // face
     const ey = 13 + by;
@@ -1536,9 +1612,10 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const hs = HAIR_STYLES[ap.hairStyle] || "Short";
     drawRows(g, recol, HAIR[hs], 0, by);
     if (hs === "Ponytail") drawRows(g, recol, PONYTAIL.rows, PONYTAIL.x, PONYTAIL.y + by);
+    if (pose === "cheer") { const wave = f % 6 < 3 ? 0 : -1; [CHEER_ARM, CHEER_ARM.map(([x, y, ch]) => [31 - x, y, ch])].forEach((arm, side) => drawPart(g, recol, TIER_PAL[0], { pts: arm.map(([x, y, ch]) => [x, y + (side ? wave : -1 - wave), ch]), outline: true }, 0, by)); }
     layer("head"); layer("face"); layer("hands"); layer("front");
     // held item (or training prop), with a little motion while training
-    const held = look.prop || items.hand;
+    const held = pose === "cheer" ? null : (look.prop || items.hand);
     if (held && S[held.sprite]) {
       const sp = S[held.sprite], tp = TIER_PAL[held.tier] || TIER_PAL[0];
       let hx = 0, hy = by;
@@ -1918,6 +1995,229 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     if (act === "music" && items.back && S[items.back.sprite].strap) delete items.back;
     return { ap: appearance(), items, pose: "train", act, frame, prop };
   }
+  // ================= FEEL: sound, haptics, celebrations =================
+  const Sound = {
+    ctx: null,
+    on() { return state.settings ? state.settings.sound !== false : true; },
+    ac() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; } } if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {}); return this.ctx; },
+    tone(freq, start, dur, type = "square", vol = 0.06, slide = 0) {
+      const ac = this.ac(); if (!ac) return;
+      const t = ac.currentTime + start, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * slide), t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
+    },
+    noise(start, dur, vol = 0.05) {
+      const ac = this.ac(); if (!ac) return;
+      const n = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; g.gain.value = vol;
+      src.connect(g).connect(ac.destination); src.start(ac.currentTime + start);
+    },
+    play(name) {
+      if (!this.on()) return;
+      try {
+        const T = (f, s, d, ty, v, sl) => this.tone(f, s, d, ty, v, sl);
+        ({
+          start: () => { T(523, 0, .08); T(784, .08, .12); },
+          log: () => { T(988, 0, .07, "square", .05); T(1319, .07, .16, "square", .05); },
+          tap: () => T(660, 0, .04, "triangle", .04),
+          coin: () => { T(1319, 0, .06, "square", .045); T(1760, .06, .14, "square", .045); },
+          buy: () => { T(784, 0, .06); T(988, .06, .06); T(1319, .12, .2); },
+          hit: () => { this.noise(0, .09, .07); T(180, 0, .09, "square", .05, .5); },
+          hurt: () => { T(220, 0, .14, "sawtooth", .04, .6); },
+          win: () => { [523, 659, 784, 1047].forEach((f, i) => T(f, i * .09, .14)); T(1047, .38, .4, "triangle", .06); },
+          lose: () => { [392, 330, 262].forEach((f, i) => T(f, i * .14, .18, "triangle", .05)); },
+          levelup: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => T(f, i * .07, .12)); T(1568, .36, .5, "triangle", .07); T(784, .36, .5, "square", .03); },
+          unlock: () => { T(880, 0, .1, "triangle", .05); T(1175, .1, .25, "triangle", .05); }
+        })[name]();
+      } catch (e) {}
+    }
+  };
+  const buzz = pattern => { try { if (state.settings && state.settings.haptics === false) return; navigator.vibrate && navigator.vibrate(pattern); } catch (e) {} };
+
+  // Unlock snapshot so a celebration can list what just opened up.
+  function unlockSnapshot() {
+    const gear = {}; state.skills.forEach(s => gearFor(s).forEach(it => { if (earnedLv(s) >= it.lv) gear[it.id] = it.name; }));
+    return { bd: unlockedBackdrops(), themes: unlockedThemes(), gear };
+  }
+  function unlockDiff(before) {
+    const after = unlockSnapshot(), out = [];
+    after.bd.filter(k => !before.bd.includes(k)).forEach(k => out.push({ kind: "Location", name: BACKDROPS[k].name }));
+    after.themes.filter(k => !before.themes.includes(k)).forEach(k => out.push({ kind: "App theme", name: THEMES[k].name }));
+    Object.keys(after.gear).filter(k => !before.gear[k]).forEach(k => out.push({ kind: "Gear to buy", name: after.gear[k] }));
+    return out;
+  }
+
+  // ---------- Level-up celebration ----------
+  let celebrateView = null, celebrateTimer = null;
+  function celebrate(info) {
+    celebrateView = Object.assign({ f: 0 }, info);
+    Sound.play("levelup"); buzz([40, 60, 40, 60, 120]);
+    let host = document.getElementById("celebrate");
+    if (!host) { host = document.createElement("div"); host.id = "celebrate"; document.body.appendChild(host); }
+    const u = info.unlocks || [];
+    host.innerHTML = `<div class="cel-back" data-act="cel-close"></div>
+      <div class="cel" role="dialog" aria-modal="true" aria-labelledby="cel-title">
+        <canvas id="cel-fx" class="cel-fx" aria-hidden="true"></canvas>
+        <div class="cel-title px-title" id="cel-title">LEVEL UP!</div>
+        <canvas id="cel-hero" class="px cel-hero" aria-label="Your hero celebrating"></canvas>
+        <div class="cel-skill"><b>${esc(info.skill)}</b> <span class="num">Lv ${info.from} → <b>Lv ${info.to}</b></span></div>
+        ${info.tier ? `<div class="cel-tier">New tier: <b>${esc(info.tier)}</b> · new tips unlocked</div>` : ""}
+        ${u.length ? `<ul class="cel-list">${u.slice(0, 6).map(x => `<li><span>${esc(x.kind)}</span><b>${esc(x.name)}</b></li>`).join("")}${u.length > 6 ? `<li><span>And</span><b>${u.length - 6} more</b></li>` : ""}</ul>` : ""}
+        <button class="btn primary cel-btn" data-act="cel-close" autofocus>Awesome!</button>
+      </div>`;
+    host.hidden = false;
+    clearInterval(celebrateTimer);
+    const conf = Array.from({ length: 70 }, () => ({ x: Math.random() * 96, y: -Math.random() * 60, v: .6 + Math.random() * 1.2, c: ["#f2c14e", "#e2a521", "#d94a3a", "#4f86d6", "#4fc58d", "#c89cf2", "#ffffff"][Math.floor(Math.random() * 7)], w: Math.random() < .3 ? 2 : 1 }));
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const tick = () => {
+      if (!celebrateView) return;
+      celebrateView.f++;
+      const hc = document.getElementById("cel-hero");
+      if (hc) paintGrid(hc, renderHero(heroLook({ pose: "cheer", frame: celebrateView.f })), { scale: 4, pad: 4, bg: appearance().bg, frame: celebrateView.f });
+      const fx = document.getElementById("cel-fx");
+      if (fx && !reduce) {
+        fx.width = 96; fx.height = 120; const c = fx.getContext("2d"); c.clearRect(0, 0, 96, 120);
+        conf.forEach(p => { p.y += p.v; p.x += Math.sin((p.y + p.v * 10) / 9) * .4; if (p.y > 124) { p.y = -4; p.x = Math.random() * 96; } c.fillStyle = p.c; c.fillRect(Math.round(p.x), Math.round(p.y), p.w, p.w === 2 ? 1 : 2); });
+      }
+    };
+    tick(); celebrateTimer = setInterval(tick, reduce ? 400 : 70);
+  }
+  function closeCelebrate() {
+    celebrateView = null; clearInterval(celebrateTimer);
+    const host = document.getElementById("celebrate"); if (host) { host.hidden = true; host.innerHTML = ""; }
+  }
+
+  // ---------- Monsters ----------
+  const MONSTERS = {
+    cellar:  { name: "Cellar Goblin", pal: { G: "#6abf4b", g: "#3f8a2f", W: "#ffffff", E: "#1d1a2b", R: "#8a3a2a", B: "#5a3a24" }, rows: ["g............g", "gg..GGGGGG..gg", ".gGGGGGGGGGGg.", "..GGGGGGGGGG..", "..GWEGGGGWEG..", "..GGGGGGGGGG..", "...GEWWWWEG...", "....GGGGGG....", "...RRRRRRRR...", "..GRRRRRRRRG..", "..G.RRBBRR.G..", "....RRRRRR....", "....GG..GG....", "...ggg..ggg..."] },
+    ruins:   { name: "Moss Golem", pal: { S: "#9aa0ae", s: "#6b7080", m: "#5cb85c", Y: "#ffe58a" }, rows: ["....SSSSSS....", "...SSSSSSSS...", "..SmSSSSSSmS..", "..SSYSSSSYSS..", "..SSSSSSSSSS..", ".mSSSSmmSSSSm.", "SSSSSSSSSSSSSS", "SS.SSSSSSSS.SS", "Sm.SSmSSSSs.mS", "SS.SSSSSSSs.SS", "...SSSS.SSSs..", "...SSS...SSs..", "..mSSS...SSSm.", "..SSSS...SSSS."] },
+    library: { name: "Haunted Tome", pal: { P: "#7a4ac8", p: "#573493", Q: "#efe2c2", W: "#ffffff", E: "#1d1a2b", Y: "#ffe58a" }, rows: ["..Y........Y..", "PPPPPPPPPPPPP.", "PQQQQQPQQQQQP.", "PQWWEQPQWWEQP.", "PQQQQQPQQQQQP.", "PQWQWQPQWQWQP.", "PQQQQQPQQQQQP.", "PPPPPPPPPPPPP.", ".ppppppppppp..", "..Y......Y...."] },
+    forge:   { name: "Ember Spirit", pal: { R: "#d94a3a", O: "#ff8a3a", Y: "#ffd24a", W: "#fff6c8", E: "#1d1a2b" }, rows: ["......R.......", ".....RR...R...", "....RRY..RR...", "...RRYYRRYR...", "..RRYYYYYYRR..", "..RYYYYYYYYR..", "..RYYEYYYYEYR.", ".RRYYYYYYYYRR.", ".RYYYOOOOYYYR.", ".RYYOWWWWOYYR.", ".RROOWWWWOORR.", "..RROOOOOORR..", "...RRRRRRRR...", "....RRRRRR...."] },
+    citadel: { name: "Storm Wyvern", pal: { D: "#4a6fd6", d: "#3350a8", V: "#94bdf2", E: "#ffe58a", T: "#ffffff" }, rows: ["V.............V.", "VV....DDD....VV.", "VVV..DDDDD..VVV.", ".VVVDDEDDDDVVV..", "..VVDDDDDDDVV...", "...DDDDTTDDD....", "..DDDDDDDDDDD...", ".DDdDDDDDDDdD...", ".D.DDDDDDDD.D...", "...DD....DD.....", "..DDD....DDD...."] },
+    spire:   { name: "Void Watcher", pal: { K: "#3a1d5a", W: "#f4f0ff", C: "#9a58d8", E: "#120a1e" }, rows: ["....KKKKKK....", "..KKKKKKKKKK..", ".KKKWWWWWWKKK.", ".KKWWWCCWWWKK.", "KKWWWCEECWWWKK", "KKWWWCEECWWWKK", ".KKWWWCCWWWKK.", ".KKKWWWWWWKKK.", "..KKKKKKKKKK..", "...K.K..K.K...", "..K..K..K..K..", ".K...K..K...K."] }
+  };
+  const DUNGEON_SCENE = { cellar: "dungeon", ruins: "amphitheater", library: "library", forge: "forge", citadel: "dusk", spire: "observatory" };
+  function monsterGrid(m, flash) {
+    const h = m.rows.length, w = Math.max(...m.rows.map(r => r.length)), g = Array.from({ length: h + 2 }, () => new Array(w + 2).fill(null));
+    const cells = []; m.rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] !== ".") cells.push([x + 1, y + 1, row[x]]); });
+    const own = new Set(cells.map(([x, y]) => x + "," + y));
+    cells.forEach(([x, y]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { if (!own.has((x + ox) + "," + (y + oy))) g[y + oy][x + ox] = OUTLINE; }));
+    cells.forEach(([x, y, ch]) => { g[y][x] = flash ? "#ffffff" : (m.pal[ch] || FIXED[ch] || "#ff00ff"); });
+    return g;
+  }
+  function blit(c, g, ox, oy, s, alpha = 1, k = 1) {
+    c.globalAlpha = alpha;
+    g.forEach((row, y) => row.forEach((col, x) => { if (col) { c.fillStyle = col; c.fillRect((ox + x * k) * s, (oy + y * k) * s, s * k, s * k); } }));
+    c.globalAlpha = 1;
+  }
+  // Paint one frame of a dungeon battle. 64x46 world, 4 px per pixel.
+  const BATTLE_FRAMES = 46;
+  function paintBattle(cv, rv) {
+    const W = 88, H = 56, s = 4, f = rv.t;
+    cv.width = W * s; cv.height = H * s;
+    const c = cv.getContext("2d"); c.imageSmoothingEnabled = false;
+    drawBackdrop(c, DUNGEON_SCENE[rv.d.id] || "dungeon", W, H, s, f);
+    const gy = Math.round(H * 0.78), m = MONSTERS[rv.d.id] || MONSTERS.cellar;
+    const enc = Math.min(2, Math.floor(f / 12)), k = f % 12, done = f >= 36;
+    // hero
+    let hx = 0, heroFlash = false;
+    if (!done) { if (k === 1) hx = 2; if (k === 2) hx = 5; if (k === 3) hx = 4; if (k === 4) hx = 2; if (k === 7 || k === 8) heroFlash = !rv.win && enc === 2; }
+    let heroAlpha = 1;
+    if (done && !rv.win) { hx = -Math.min(20, (f - 36) * 3); heroAlpha = Math.max(0, 1 - (f - 36) / 8); }
+    const hg = renderHero(heroLook({ pose: done && rv.win ? "cheer" : "idle", frame: f }));
+    if (heroFlash) hg.forEach(r => r.forEach((v, x) => { if (v && v !== OUTLINE) r[x] = "#ffb0b0"; }));
+    blit(c, hg, 2 + hx, gy - 36, s, heroAlpha);
+    // monster
+    const mg = monsterGrid(m, !done && (k === 3 || k === 4));
+    const Z = 2, mw = mg[0].length * Z, mh = mg.length * Z, mx = W - mw - 6 + (!done && (k === 3) ? 2 : 0) + (!done && k === 7 ? -6 : 0);
+    const bob = (f % 6 < 3 ? 0 : -1) + (rv.d.id === "library" || rv.d.id === "citadel" || rv.d.id === "spire" ? -8 : 0);
+    const my = gy - mh + 2 + bob;
+    const hpLeft = rv.win ? Math.max(0, 1 - (Math.min(3, enc + (k >= 3 ? 1 : 0))) / 3) : Math.max(0.3, 1 - (Math.min(3, enc + (k >= 3 ? 1 : 0))) * 0.23);
+    if (!(done && rv.win)) {
+      blit(c, mg, mx, my, s, 1, Z);
+      // HP bar
+      c.fillStyle = OUTLINE; c.fillRect((mx) * s, (my - 4) * s, mw * s, 3 * s);
+      c.fillStyle = "#3d4152"; c.fillRect((mx + 1) * s, (my - 3) * s, (mw - 2) * s, s);
+      c.fillStyle = hpLeft > .5 ? "#4fc58d" : hpLeft > .25 ? "#e2a521" : "#d94a3a"; c.fillRect((mx + 1) * s, (my - 3) * s, Math.round((mw - 2) * hpLeft) * s, s);
+    } else {
+      // poof, then a treasure chest with coins
+      const p = f - 36;
+      if (p < 4) { c.fillStyle = "#e9e4d8"; [[0, 0], [6, -4], [12, 2], [4, 6], [16, -2]].forEach(([dx, dy]) => { const r = 3 + p * 2; c.fillRect((mx + 6 + dx - r / 2) * s, (my + 10 + dy - r / 2) * s, r * s, r * s); }); }
+      else {
+        const cx = W - 22, cy = gy - 7;
+        const chest = ["..AAAAAAAA..", ".ALLLLLLLLA.", "AaaaaaaaaaaA", "AAAAAGGAAAAA", "AaaaaGGaaaaA", "AaaaaaaaaaaA", "AAAAAAAAAAAA"];
+        const g = makeGrid(); chest.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] !== ".") g[y][x] = { A: "#8a5a34", a: "#6b4220", L: "#b07840", G: "#f2c14e" }[row[x]]; });
+        blit(c, g.slice(0, 7).map(r => r.slice(0, 12)), cx, cy, s);
+        if (p >= 5) { c.fillStyle = "#ffe58a"; c.fillRect((cx + 1) * s, (cy - 1) * s, 10 * s, s); }
+        for (let i = 0; i < 6; i++) { const t = p - 5 - i * .5; if (t > 0) { const x = cx + 5 + Math.round(Math.cos(i * 1.1) * t * 1.4), y = cy - Math.round(t * 2.2 - t * t * 0.12); c.fillStyle = "#f2c14e"; c.fillRect(x * s, y * s, 2 * s, 2 * s); c.fillStyle = "#b8860b"; c.fillRect((x + 1) * s, (y + 1) * s, s, s); } }
+      }
+    }
+    // damage numbers and impact
+    if (!done && k >= 3 && k <= 8) {
+      const dmg = rv.encounters[enc] ? rv.encounters[enc].value || 1 : 1;
+      c.font = `bold ${s * 6}px "Pixelify Sans", monospace`; c.textAlign = "center";
+      const ty = (my - 6 - (k - 3)) * s;
+      c.fillStyle = OUTLINE; c.fillText("-" + dmg, (mx + mw / 2) * s + 2, ty + 2);
+      c.fillStyle = "#ffe58a"; c.fillText("-" + dmg, (mx + mw / 2) * s, ty);
+      if (k === 3) { c.fillStyle = "#ffffff"; [[-3, -3], [3, -4], [0, 3], [4, 2], [-4, 1]].forEach(([dx, dy]) => c.fillRect((mx + 2 + dx) * s, (my + mh / 2 + dy) * s, 2 * s, 2 * s)); }
+    }
+    if (done && !rv.win) { c.font = `bold ${s * 6}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("RETREAT!", W / 2 * s + 2, 9 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("RETREAT!", W / 2 * s, 9 * s); }
+    if (done && rv.win && f - 36 >= 4) { c.font = `bold ${s * 6}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("VICTORY!", (W - 26) * s + 2, 9 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("VICTORY!", (W - 26) * s, 9 * s); }
+  }
+
+  // ---------- App themes ----------
+  // Each class has a theme that unlocks when the skills on its path add up to 10 levels.
+  const THEMES = {
+    classic:   { name: "Classic", desc: "Clean and bright" },
+    bard:      { name: "Bard", path: "music", desc: "Crimson and gold", light: ["#f6eef0", "#ffffff", "#f0e0e4", "#e2c6cd", "#a3243f", "#c8384e", "#f28a96", "#ffffff"], dark: ["#1a1016", "#241720", "#321f2c", "#4a2c3d", "#ff8aa0", "#c8384e", "#ff9fb0", "#ffffff"], pat: [[2, 2], [2, 3], [2, 4], [3, 2], [4, 3], [1, 4]] },
+    warrior:   { name: "Warrior", path: "body", desc: "Steel and ember", light: ["#eceef1", "#ffffff", "#dfe3ea", "#c4cad6", "#b5401c", "#e8642c", "#ffa06a", "#1b1404"], dark: ["#121418", "#1b1e24", "#262a33", "#363b47", "#ff8a5a", "#e8642c", "#ffa06a", "#1b1404"], pat: [[1, 1], [2, 2], [3, 3], [4, 4], [4, 1], [1, 4]] },
+    scholar:   { name: "Scholar", path: "mind", desc: "Ink and parchment", light: ["#f4efe2", "#fffaf0", "#ece3cc", "#d9cba8", "#2c4f9e", "#3d68c4", "#8fb0f0", "#ffffff"], dark: ["#0f1426", "#161d33", "#202a47", "#2e3a5e", "#8fb0ff", "#3d68c4", "#8fb0f0", "#ffffff"], pat: [[3, 1], [3, 2], [2, 3], [3, 3], [4, 3], [3, 4]] },
+    artisan:   { name: "Artisan", path: "craft", desc: "Copper and oak", light: ["#f3ebe2", "#fffaf4", "#eadccb", "#d8c2a6", "#9a4f18", "#c77a30", "#eba35e", "#1b1404"], dark: ["#17110c", "#211913", "#2e231a", "#44342a", "#f2a560", "#c77a30", "#eba35e", "#1b1404"], pat: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [2, 0], [2, 4]] },
+    artificer: { name: "Artificer", path: "tech", desc: "Circuit teal", light: ["#e8f3f3", "#ffffff", "#d6eceb", "#b6d8d6", "#0f7a73", "#19b3a6", "#6fe3d8", "#06221f"], dark: ["#0b1416", "#102024", "#163036", "#1f444b", "#5ff0e0", "#19b3a6", "#6fe3d8", "#06221f"], pat: [[0, 1], [1, 1], [2, 1], [2, 2], [2, 3], [3, 3], [4, 3]] },
+    monk:      { name: "Monk", path: "spirit", desc: "Sage and blossom", light: ["#f3f1ea", "#ffffff", "#e7ecdf", "#cfd9c4", "#5a7d3a", "#8fb85a", "#c4e08f", "#13200a"], dark: ["#11150f", "#1a2017", "#242c20", "#36412f", "#b7dc8a", "#8fb85a", "#c4e08f", "#13200a"], pat: [[2, 1], [1, 2], [3, 2], [2, 3], [2, 2]] },
+    steward:   { name: "Steward", path: "life", desc: "Forest and gold", light: ["#eef2ea", "#ffffff", "#dfe7d6", "#c4d3b6", "#2f6b3a", "#c99a2a", "#f2cc62", "#1b1404"], dark: ["#0f1610", "#172018", "#212d22", "#314233", "#f2c14e", "#c99a2a", "#f2cc62", "#1b1404"], pat: [[2, 1], [1, 2], [2, 2], [3, 2], [2, 3], [2, 4]] },
+    dungeon:   { name: "Dungeon", desc: "Clear 5 dungeons", req: { dungeons: 5 }, light: ["#dedce4", "#f2f1f6", "#d4d1dc", "#b8b4c4", "#6a3fb0", "#7a4ac8", "#c49cf2", "#ffffff"], dark: ["#0e0c14", "#18151f", "#231f2d", "#352f44", "#c49cf2", "#7a4ac8", "#c49cf2", "#ffffff"], pat: [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [0, 2], [2, 2], [3, 2], [4, 2], [2, 3]] },
+    legend:    { name: "Legend", desc: "Reach Lv 50 in any skill", req: { anyLv: 50 }, light: ["#fbf6e6", "#fffdf6", "#f3e8c6", "#e2cf8f", "#8a6200", "#f0bd3e", "#ffe7a0", "#1b1404"], dark: ["#14110a", "#1e1910", "#2b2414", "#4a3d1c", "#ffd76a", "#f0bd3e", "#ffe7a0", "#1b1404"], pat: [[2, 0], [2, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [2, 3], [2, 4]] }
+  };
+  const PANEL_STYLES = { clean: { name: "Clean" }, pixel: { name: "Pixel", req: { total: 10 } }, gilded: { name: "Gilded", req: { total: 50 } } };
+  const pathLevels = path => state.skills.filter(s => s.cat === path).reduce((n, s) => n + lvFrom(totalXp(s)), 0);
+  function themeUnlocked(k) {
+    const t = THEMES[k]; if (!t) return false;
+    if (t.path) return pathLevels(t.path) >= 10;
+    if (t.req && t.req.dungeons) return state.runs.filter(r => r.win).length >= t.req.dungeons || (state.stats && state.stats.clears >= t.req.dungeons);
+    if (t.req && t.req.anyLv) return state.skills.some(s => lvFrom(totalXp(s)) >= t.req.anyLv);
+    return true;
+  }
+  const unlockedThemes = () => Object.keys(THEMES).filter(themeUnlocked);
+  const panelUnlocked = k => { const p = PANEL_STYLES[k]; return !!p && (!p.req || totalLevel() >= p.req.total); };
+  function themeReq(k) { const t = THEMES[k]; if (t.path) return `${PATHS[t.path].label} path skills add up to Lv 10`; return t.desc; }
+  function patternURL(pts, col) {
+    const rects = pts.map(([x, y]) => `<rect x='${x + 6}' y='${y + 6}' width='1' height='1'/>`).join("");
+    return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' shape-rendering='crispEdges'><g fill='${col}'>${rects}</g></svg>`)}")`;
+  }
+  (function injectThemes() {
+    const tok = (v, alpha) => `--bg:${v[0]};--panel:${v[1]};--panel-2:${v[2]};--line:${v[3]};--xp:${v[4]};--xp-fill:${v[5]};--xp-hi:${v[6]};--on-fill:${v[7]};`;
+    let css = "";
+    Object.entries(THEMES).forEach(([k, t]) => {
+      if (!t.light) return;
+      const pl = patternURL(t.pat, t.light[3]), pd = patternURL(t.pat, t.dark[3]);
+      css += `:root[data-ltheme="${k}"]{${tok(t.light)}--pattern:${pl};}`;
+      css += `@media (prefers-color-scheme: dark){:root[data-ltheme="${k}"]:not([data-theme="light"]){${tok(t.dark)}--pattern:${pd};}}`;
+      css += `:root[data-theme="dark"][data-ltheme="${k}"]{${tok(t.dark)}--pattern:${pd};}`;
+    });
+    const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+  })();
+  function applyTheme() {
+    const se = state.settings || {};
+    const th = se.theme && themeUnlocked(se.theme) ? se.theme : "classic";
+    const ps = se.panel && panelUnlocked(se.panel) ? se.panel : "clean";
+    const root = document.documentElement;
+    if (th === "classic") delete root.dataset.ltheme; else root.dataset.ltheme = th;
+    if (ps === "clean") delete root.dataset.lpanel; else root.dataset.lpanel = ps;
+  }
+
   // ---------- Backdrop unlocks ----------
   const BD_FREE = ["meadow", "dusk", "void"];
   function reqMet(q) {
@@ -1953,6 +2253,10 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
       if (kind === "portrait") paintGrid(c, renderHero(heroLook()), { scale: +c.dataset.scale || 3, crop: [3, 0, 26, 26], bg: ap.bg });
       else if (kind === "full") paintGrid(c, renderHero(heroLook({ frame: avFrame })), { scale: +c.dataset.scale || 5, pad: 4, bg: ap.bg, frame: avFrame });
     });
+    const lg = document.getElementById("logo");
+    if (lg && !lg.dataset.done) { lg.dataset.done = "1"; lg.width = 32; lg.height = 32; const c = lg.getContext("2d"); const P = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+      [[15, 2], [14, 4], [13, 6], [12, 8], [11, 10], [10, 12], [9, 14]].forEach(([x, w], i) => { P(x, 5 + i, w, 1, "#e2a521"); P(x, 5 + i, 1, 1, "#f5cc62"); });
+      P(12, 12, 8, 9, "#e2a521"); P(12, 12, 2, 9, "#f5cc62"); P(18, 12, 2, 9, "#9a6604"); P(5, 23, 22, 5, "#1d1a2b"); P(6, 24, 20, 3, "#3d4152"); P(6, 24, 14, 3, "#e2a521"); P(6, 24, 14, 1, "#f5cc62"); }
     document.querySelectorAll("canvas[data-bd]").forEach(c => { c.width = 40; c.height = 48; const x = c.getContext("2d"); x.imageSmoothingEnabled = false; drawBackdrop(x, c.dataset.bd, 40, 48, 1, avFrame); });
     document.querySelectorAll("canvas[data-icon]").forEach(c => { const [sp, t] = c.dataset.icon.split(":"); itemIcon(c, sp, +t, +c.dataset.size || 40); });
     const tc = document.getElementById("train-canvas");
@@ -2032,6 +2336,14 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
         </div>
       </article>
       <article class="panel set-card">
+        <h3>App theme</h3>
+        <p class="hint" style="margin:0">Each class has a theme. Level skills on that path to 10 combined levels to unlock it.</p>
+        <div class="theme-grid">${Object.entries(THEMES).map(([k, t]) => { const open = themeUnlocked(k), on = (state.settings.theme || "classic") === k;
+          const sw = t.light ? [t.light[5], t.light[4], t.dark[1]] : ["#e2a521", "#9a6604", "#171a28"];
+          return `<button class="theme ${open ? "" : "locked"}" data-act="set-theme" data-val="${k}" aria-pressed="${on}" ${open ? "" : "disabled"}><span class="theme-sw">${sw.map(c => `<i style="background:${c}"></i>`).join("")}</span><b>${esc(t.name)}</b><small>${esc(open ? t.desc : themeReq(k))}</small></button>`; }).join("")}</div>
+        <div class="field"><span class="lbl">Panel style</span><div class="chips">${Object.entries(PANEL_STYLES).map(([k, p]) => { const open = panelUnlocked(k); return `<button class="chip" data-act="set-panel" data-val="${k}" aria-pressed="${(state.settings.panel || "clean") === k}" ${open ? "" : "disabled"} title="${open ? "" : "Reach total level " + p.req.total}">${esc(p.name)}${open ? "" : " · Lv " + p.req.total}</button>`; }).join("")}</div></div>
+      </article>
+      <article class="panel set-card">
         <h3>Gear on your hero</h3>
         ${slots.length ? `<p class="hint" style="margin:0">Everything you own shows up on your hero. Auto shows your best item in each spot.</p>
           <div class="slot-grid">${slots.map(sl => `<div class="field"><label class="lbl" for="slot-${sl}">${SLOT_NAMES[sl]}</label><select class="input" id="slot-${sl}" data-act-change="ap-slot" data-slot="${sl}">
@@ -2096,7 +2408,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     q("[data-live-pips]").innerHTML = pipsHTML(pj.rem);
     if (liveLevel != null && pj.p.L > liveLevel) {
       liveLevel = pj.p.L;
-      toast(`<b>DING!</b>${esc(pj.s.name)} Lv ${pj.p.L}`, "ding", 3800);
+      toast(`<b>DING!</b>${esc(pj.s.name)} Lv ${pj.p.L}`, "ding", 3800); Sound.play("levelup"); buzz([40, 60, 80]);
       const st = q("#stage"), pop = q("#lvpop");
       if (st && pop) { pop.textContent = "LEVEL UP!"; st.classList.remove("burst"); void st.offsetWidth; st.classList.add("burst"); }
     }
@@ -2114,7 +2426,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const xpText = p.L < MAX_LV
       ? `<span class="num">${fmtXp(p.have)} / ${fmtXp(p.need)} XP to ${p.next}</span>`
       : `<span class="num">${m >= LEGEND_MIN ? "600,000 XP. Legend." : fmtXp(p.have) + " / 60,000 XP to " + p.next}</span>`;
-    return `<article class="panel skill">
+    return `<article class="panel skill" data-skill="${s.id}">
       <div class="skill-row">
         <button class="skill-main" data-act="toggle" data-id="${s.id}" aria-expanded="${isOpen}">
           <div class="skill-title">
@@ -2482,6 +2794,11 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
       case "close-run": runView = null; render(); break;
       case "feedback": openFeedback("feedback"); break;
       case "upd-go": Updater.go(); break;
+      case "cel-close": closeCelebrate(); break;
+      case "set-theme": { if (!themeUnlocked(b.dataset.val)) break; state.settings.theme = b.dataset.val; Sound.play("tap"); persist(); render(); break; }
+      case "set-panel": { if (!panelUnlocked(b.dataset.val)) break; state.settings.panel = b.dataset.val; Sound.play("tap"); persist(); render(); break; }
+      case "toggle-sound": { state.settings.sound = !(state.settings.sound !== false); if (state.settings.sound) Sound.play("coin"); persist(); render(); break; }
+      case "toggle-haptics": { state.settings.haptics = state.settings.haptics === false; if (state.settings.haptics) buzz(30); persist(); render(); break; }
       case "ap-set": { const ap = appearance(); ap[b.dataset.key] = +b.dataset.val; persist(); render(); break; }
       case "ap-bg": { if (!bdUnlocked(b.dataset.val)) break; appearance().bg = b.dataset.val; persist(); render(); break; }
       case "ap-random": {
@@ -2581,6 +2898,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   function syncPriors() { document.querySelectorAll("[data-prior]").forEach(el => { const v = pick.get(el.dataset.prior); if (v) v.prior = el.value; }); }
 
   document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && celebrateView) { closeCelebrate(); return; }
     if (e.target.id === "vet-input" && e.key === "Enter") { e.preventDefault(); const btn = document.querySelector('[data-act="vet-save"]'); if (btn) btn.click(); return; }
     if (e.target.id === "pick-custom" && e.key === "Enter") { e.preventDefault(); const btn = document.querySelector('[data-act="pick-custom"]'); if (btn) btn.click(); return; }
     if (e.target.id === "name-input" && (e.key === "Enter" || e.key === "Escape")) {
@@ -2606,7 +2924,18 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     listeners.forEach(fn => { try { fn(msg.payload); } catch (e) {} });
   }
   const baseRender = render;
-  render = function () { baseRender(); try { paintPixels(); } catch (e) { console.error(e); } if (!sample) notifyNative(); };
+  render = function () {
+    try { applyTheme(); } catch (e) {}
+    baseRender();
+    try { paintPixels(); } catch (e) { console.error(e); }
+    try { const cv = document.getElementById("battle"); if (cv && runView) paintBattle(cv, runView); } catch (e) { console.error(e); }
+    if (lastGain) {
+      const card = document.querySelector(`[data-skill="${lastGain.skillId}"]`);
+      if (card) { const fl = document.createElement("span"); fl.className = "float-xp px-title"; fl.textContent = "+" + fmtXp(lastGain.xp) + " XP"; card.appendChild(fl); card.querySelector(".xp")?.classList.add("gain"); setTimeout(() => fl.remove(), 1800); }
+      lastGain = null;
+    }
+    if (!sample) notifyNative();
+  };
 
   window.LevelUp = Object.freeze({
     version: 1,
