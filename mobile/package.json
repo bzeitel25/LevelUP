@@ -1,0 +1,19 @@
+{
+  "name": "levelup-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native shell for Level UP. The app itself is docs/index.html; this project wraps it so Android (and later iPhone) can have real home-screen widgets.",
+  "type": "module",
+  "scripts": {
+    "sync-www": "node scripts/sync-www.mjs",
+    "android": "node scripts/sync-www.mjs && npx cap add android && node scripts/patch-android.mjs && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

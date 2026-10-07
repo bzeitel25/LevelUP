@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_medium_label">Level UP</string>
+    <string name="widget_small_label">Level UP quick start</string>
+    <string name="widget_medium_desc">Your hero, level, focus skill and one-tap Solo or Lesson training.</string>
+    <string name="widget_small_desc">Your hero and a one-tap Start button.</string>
+    <string name="widget_portrait">Your hero</string>
+    <string name="widget_solo">▶  Solo</string>
+    <string name="widget_lesson">▶  Lesson</string>
+    <string name="widget_start">▶  Start</string>
+    <string name="widget_stop">■  Stop</string>
+    <string name="widget_stop_short">●</string>
+    <string name="widget_stop_icon">■</string>
+    <string name="widget_training">Training</string>
+    <string name="widget_total">TOTAL</string>
+</resources>

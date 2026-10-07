@@ -448,6 +448,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .theme-sw { display: flex; gap: 3px; } .theme-sw i { width: 16px; height: 16px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
 .theme[aria-pressed="true"] { border-color: var(--xp-fill); box-shadow: 0 0 0 2px var(--xp-fill); }
 .theme.locked { opacity: .55; cursor: not-allowed; }
+.widget-get { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.widget-get .btn { flex: none; }
 /* panel styles */
 :root[data-lpanel="pixel"] .panel { border-radius: 0; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--line); }
 :root[data-lpanel="pixel"] .btn, :root[data-lpanel="pixel"] .item, :root[data-lpanel="pixel"] .bd, :root[data-lpanel="pixel"] .theme, :root[data-lpanel="pixel"] .cat, :root[data-lpanel="pixel"] .note { border-radius: 0; }
@@ -1096,10 +1098,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           </div>
           ${tab === "hero" ? renderHeroTab() : tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
           <section>
-            <div class="section-head"><h2>Home screen widget</h2><span class="muted" style="font-size:13px">Live preview · tap Quick start</span></div>
-            <div class="wall">${renderWidget("sm")}${renderWidget("md")}</div>
-          </section>
-          <section>
             <div class="section-head"><h2>Skill tracks</h2><button class="btn small" data-act="open-add">+ Add skill</button></div>
             <div class="skills">${CATEGORIES.map(c => {
               const list = state.skills.filter(s => s.catId === c.id);
@@ -1117,10 +1115,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-07.6";
-  const APP_VERSION = "0.4.1";
+  const BUILD = "2026-10-07.7";
+  const APP_VERSION = "0.5.0";
   const inClaude = !!(window.claude && window.claude.use);
-  const onWeb = location.protocol.indexOf("http") === 0 && !inClaude;
+  const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+  const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
+  const ANDROID_APK = "https://github.com/bzeitel25/LevelUP/releases/download/android/LevelUP.apk";
   const Updater = {
     prompt: null,
     installed: (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true,
@@ -1129,7 +1129,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     init() {
       window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); Updater.prompt = e; if (tab === "settings") render(); });
       window.addEventListener("appinstalled", () => { Updater.prompt = null; Updater.installed = true; toast("Installed. Level UP is on your home screen."); if (tab === "settings") render(); });
-      if (onWeb && "serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+      if (onWeb && !isNative && "serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
     },
     label() { return Updater.prompt ? "Install on this phone" : "Check for updates"; },
     say(html, cls) { Updater.status = `<div class="note ${cls || ""}">${html}</div>`; const el = document.getElementById("upd-status"); if (el) el.innerHTML = Updater.status; },
@@ -1166,7 +1166,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     }
   };
   Updater.init();
-  { const ib = document.querySelector('[data-act="install-go"]'); if (ib && Updater.installed && !inClaude) ib.hidden = true; }
+  { const ib = document.querySelector('[data-act="install-go"]'); if (ib && ((Updater.installed && !inClaude) || isNative)) ib.hidden = true; }
   { const bt = document.getElementById("build-tag"); if (bt) bt.textContent = "Prototype · v" + APP_VERSION; }
 
   // Backup code: the whole hero as text, so it can move between the Claude preview, a browser and the phone app.
@@ -1223,16 +1223,38 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     </article>`;
   }
 
+  function renderWidgetCard() {
+    const preview = `<div class="wall">${renderWidget("sm")}${renderWidget("md")}</div>`;
+    if (isNative) return `<article class="panel set-card" id="widget-card">
+        <h3>Home screen widget</h3>
+        <p class="hint" style="margin:0">Long-press an empty spot on your home screen, tap <b>Widgets</b>, find <b>Level UP</b>, and drag a widget onto your home screen. It shows your hero, level and focus skill, and starts or stops training in one tap.</p>
+        ${preview}
+      </article>`;
+    return `<article class="panel set-card" id="widget-card">
+        <h3>Home screen widget</h3>
+        <p class="hint" style="margin:0">Real home-screen widgets need the Level UP phone app. Here's what they look like (tap to try):</p>
+        ${preview}
+        <div class="widget-get">
+          <div><b>Android</b><div class="hint" style="margin:0">Download and install the Level UP app, then add the widget from your home screen. Your phone may ask you to allow installing apps from your browser.</div></div>
+          <a class="btn primary small" href="${ANDROID_APK}" target="_blank" rel="noopener">Download for Android</a>
+        </div>
+        <div class="widget-get">
+          <div><b>iPhone</b><div class="hint" style="margin:0">Coming later. iPhone widgets need the app built on a Mac and installed through Apple.</div></div>
+        </div>
+      </article>`;
+  }
+
   function renderSettings() {
     const where = inClaude ? "Claude preview" : Updater.installed ? "Installed on this device" : onWeb ? "Running in the browser" : "Local file";
     const saveWhere = mode === "cloud" ? "your Claude account (this preview only)" : mode === "local" ? "this device" : "nowhere: storage is blocked here";
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Settings</h2></div>
-      ${renderInstall()}
+      ${isNative ? "" : renderInstall()}
+      ${renderWidgetCard()}
       <article class="panel set-card">
         <h3>App version</h3>
         <div class="train-row"><span><b>v${APP_VERSION}</b> <span class="muted">· build ${esc(BUILD)}</span></span><span class="muted" style="font-size:13px">${where}</span></div>
-        ${inClaude ? `<div class="hint" style="margin:0">This preview always shows the newest version.</div>` : `<button class="btn" data-act="upd-go">Check for updates</button>`}
+        ${inClaude ? `<div class="hint" style="margin:0">This preview always shows the newest version.</div>` : isNative ? `<div class="hint" style="margin:0">New versions come as app updates. Install the latest download over this one and your hero stays.</div><a class="btn small" href="${ANDROID_APK}" target="_blank" rel="noopener">Download the latest version</a>` : `<button class="btn" data-act="upd-go">Check for updates</button>`}
         <div id="upd-status">${Updater.status}</div>
         <div class="hint" style="margin:0">Updating pulls the newest build and reloads. Your hero is untouched. It's stored separately from the app file.</div>
       </article>
@@ -3043,11 +3065,23 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // Outbound: every state change posts {type:"widget", payload} to whichever native channel exists.
   // Inbound: native code calls window.LevelUp.* (e.g. when the widget's Quick start button fires a deep link).
   const listeners = new Set();
+  let lastWidgetJson = null, lastWidgetLook = null;
   function notifyNative() {
     const msg = { type: "widget", payload: widgetSnapshot() };
     try { window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.levelup && window.webkit.messageHandlers.levelup.postMessage(msg); } catch (e) {}
     try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (e) {}
     try { window.LevelUpAndroid && window.LevelUpAndroid.postMessage(JSON.stringify(msg)); } catch (e) {}
+    try {
+      const W = isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.LevelUpWidget;
+      if (W) {
+        const json = JSON.stringify(msg.payload);
+        const lookKey = JSON.stringify(heroLook());
+        const arg = {};
+        if (json !== lastWidgetJson) arg.json = json;
+        if (lookKey !== lastWidgetLook) { arg.portrait = window.LevelUp.portrait().split(",")[1]; }
+        if (arg.json || arg.portrait) { lastWidgetJson = json; lastWidgetLook = lookKey; W.update(arg).catch(() => {}); }
+      }
+    } catch (e) {}
     listeners.forEach(fn => { try { fn(msg.payload); } catch (e) {} });
   }
   const baseRender = render;
@@ -3068,7 +3102,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   window.LevelUp = Object.freeze({
     version: 1,
     snapshot: () => widgetSnapshot(),
-    portrait: () => { const c = document.createElement("canvas"); paintGrid(c, renderHero(heroLook()), { scale: 6, crop: [3, 0, 26, 26], bg: appearance().bg }); return c.toDataURL("image/png"); },
+    portrait: () => { const c = document.createElement("canvas"); paintGrid(c, renderHero(heroLook()), { scale: 8, crop: [3, 0, 26, 26], bg: appearance().bg }); return c.toDataURL("image/png"); },
     quickStart: (skillId, type = "solo") => { const s = skillId ? skillById(skillId) : quickTarget(); if (s && !state.timer) startTimer(s.id, type); return widgetSnapshot(); },
     stop: () => { stopTimer(); return widgetSnapshot(); },
     log: (skillId, minutes, daysBack = 0, note = "", type = "solo") => {
@@ -3082,6 +3116,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   });
 
   // Deep links: the widget opens the app at #quickstart, #stop or #log.
+  let pendingLaunch = null;
   function handleHash() {
     const h = (location.hash || "").slice(1);
     if (!h || !state.skills.length || sample) return;
@@ -3093,6 +3128,19 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
   }
   window.addEventListener("hashchange", handleHash);
+  function routeLink(url) {
+    const m = String(url || "").match(/^levelup:\/\/([a-z-]+)/i); if (!m) return;
+    const action = m[1].toLowerCase();
+    if (action === "open") return;
+    if (!state.skills.length) return;
+    location.hash = "#" + action; setTimeout(handleHash, 0);
+  }
+  if (isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+    const App = window.Capacitor.Plugins.App;
+    try { App.addListener("appUrlOpen", e => routeLink(e && e.url)); } catch (e) {}
+    try { App.addListener("appStateChange", st => { if (st && !st.isActive) flushSave(); }); } catch (e) {}
+    pendingLaunch = App.getLaunchUrl ? App.getLaunchUrl().then(r => r && r.url).catch(() => null) : null;
+  }
 
   // Live updates: hand the current state to the next version of the page so a publish never drops progress.
   const hot = window.claude && window.claude.hot;
@@ -3107,6 +3155,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         persist();
       }
       render(); handleHash();
+      if (pendingLaunch) pendingLaunch.then(u => { if (u) routeLink(u); });
     });
   }
   if (hot && typeof hot.ready === "function") { try { hot.ready(start); } catch (e) { start({}); } }

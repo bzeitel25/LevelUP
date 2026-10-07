@@ -41,6 +41,15 @@ The **Check for updates** button compares the `BUILD` stamp in the live `index.h
 - **The session type (solo or lesson) is chosen before a timer starts** and can't change mid-session.
 - **Tips must be accurate.** Safety first for trades and sports. When unsure, soften the claim.
 
+## The Android app
+
+`mobile/` wraps the same web app in a Capacitor shell so Android can have real home-screen widgets. Never commit `mobile/android/`; it's generated fresh on every build.
+
+- On every push to `main`, `.github/workflows/android.yml` builds the APK and uploads it to the `android` release. The download link never changes: https://github.com/bzeitel25/LevelUP/releases/download/android/LevelUP.apk
+- The widget code lives in `mobile/native/android/` and is copied in by `mobile/scripts/patch-android.mjs`.
+- The web app talks to the widget through `window.Capacitor.Plugins.LevelUpWidget.update({ json, portrait })`. Widget buttons open `levelup://quickstart-solo`, `levelup://quickstart-lesson`, `levelup://quickstart`, `levelup://stop` and `levelup://open`.
+- `mobile/resources/android/levelup.keystore` signs every build so updates install over each other. It's a sideload key only. Make a separate, secret key before ever publishing to Google Play.
+
 ## Saves
 
 The hero lives in browser storage on each device (`levelup.hero.v1`). The Claude preview saves to the Claude account instead. They are separate saves, and the backup code in Settings moves a hero between them.

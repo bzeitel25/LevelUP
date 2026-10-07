@@ -17,6 +17,8 @@ Open the link above on your phone.
 
 It installs like a native app, with its own icon, full screen and no browser bars, and it works offline. To get a new version, open **Settings → Check for updates**.
 
+**Android app with home-screen widgets:** download [LevelUP.apk](https://github.com/bzeitel25/LevelUP/releases/download/android/LevelUP.apk) on your phone and install it. Your phone may ask you to allow installs from your browser. Then long-press your home screen → **Widgets** → **Level UP**. To update, install the newest download over the old app. iPhone widgets are coming (see `mobile/native/ios`).
+
 Your hero is saved on the device. To move a hero between devices, or from the Claude preview to your phone, use **Settings → Copy backup code** on one and **Restore from a code** on the other.
 
 ---
@@ -68,4 +70,7 @@ src/app.html     The app. Single source of truth.
 build.mjs        Wraps src/app.html into docs/index.html and stamps the build.
 docs/            What GitHub Pages serves: index.html, manifest, service worker, icons.
 CHANGELOG.md     What changed in each version.
+mobile/          Native shell (Capacitor) for home-screen widgets. GitHub Actions builds the Android APK on every push.
+  native/android Widget providers, bridge plugin, layouts and icons, added to the generated project by scripts/patch-android.mjs.
+  native/ios     iPhone widget (WidgetKit) and setup steps. Needs a Mac with Xcode.
 ```

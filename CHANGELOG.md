@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.5.0 — 2026-10-07 (build 2026-10-07.7)
+
+Real home-screen widgets.
+
+- New Android app with real home-screen widgets, built automatically by GitHub on every push. Download: https://github.com/bzeitel25/LevelUP/releases/download/android/LevelUP.apk
+  - Medium widget (4×2): your pixel hero portrait, name, class, total level, focus skill with XP bar, Solo and Lesson buttons, today's time and keys.
+  - Small widget (2×2): portrait, total level, focus skill bar and a Start button.
+  - While training, both show a live timer and a Stop button. Taps open the app and start, stop or log right away.
+  - Level UP launcher icon and splash screen. Every build is signed with the same key, so new versions install over old ones and your hero stays.
+- The widget preview moved off the Training screen into Settings → Home screen widget, with a download button for Android.
+- iPhone widget code (WidgetKit) and step-by-step Xcode setup in mobile/native/ios. Building it needs a Mac.
+
 ## v0.4.1 — 2026-10-07 (build 2026-10-07.6)
 
 Phone-first fixes.

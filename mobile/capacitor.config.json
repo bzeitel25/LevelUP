@@ -1,0 +1,7 @@
+{
+  "appId": "io.github.bzeitel25.levelup",
+  "appName": "Level UP",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false, "webContentsDebuggingEnabled": false }
+}
