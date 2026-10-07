@@ -40,6 +40,8 @@ Past Lv 100, every 1,000 hours earns a mastery star. At 10,000 hours you're a Le
 
 **No streaks.** Days off build **Rested XP**: 30 minutes of double XP per day off, up to 3 hours, so missing days never sets you back. Nothing you earn is ever taken away.
 
+**Your hero.** A pixel-art chibi you customize in the Hero tab. Every item you buy appears on your hero, from a worn acoustic guitar to a legendary crown, and you can save your hero as a profile picture. While you train, your hero does the activity alongside you.
+
 **Skills and categories.** Pick from 60 skills across nine categories (instruments, languages, health, cooking, trades, art, tech, study and life skills) or add your own. Your **class** comes from the paths you train most: Bard, Warrior, Scholar, Artisan, Artificer, Monk or Steward, plus hybrids like Skald, Battlemage and Wizard.
 
 **Veteran hours.** Past experience earns a Bronze to Diamond Veteran badge and unlocks tips for your real experience level. It never adds XP, levels or rewards. Everyone's level starts at 0 in the app.

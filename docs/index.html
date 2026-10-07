@@ -115,8 +115,23 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 /* training scene */
 .train { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; padding: 18px; margin-bottom: 20px; border: 2px solid var(--xp-fill); align-items: center; }
 @media (max-width: 640px) { .train { grid-template-columns: minmax(0, 1fr); } }
-.stage { position: relative; height: 200px; border-radius: 10px; overflow: hidden; display: grid; place-items: end center; background: radial-gradient(circle at 50% 85%, color-mix(in srgb, var(--xp-fill) 28%, var(--panel-2)), var(--panel-2) 70%); }
-.chibi { width: 160px; height: 172px; display: block; margin-bottom: 4px; }
+.stage { position: relative; height: 200px; border-radius: 10px; overflow: hidden; display: grid; place-items: center; background: var(--panel-2); }
+.stage .sparks { display: none; }
+.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.train-px { width: 160px; height: 192px; margin: auto; border-radius: 8px; }
+.portrait { width: 78px; height: 78px; border-radius: 10px; flex: none; box-shadow: 0 0 0 2px var(--xp-fill); }
+.wdg .portrait { width: 52px; height: 52px; box-shadow: 0 0 0 2px var(--xp-fill); }
+.wdg.md .portrait { width: 64px; height: 64px; }
+.item-ic { width: 40px; height: 40px; margin-bottom: 2px; }
+.hero-card { padding: 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 640px) { .hero-card { grid-template-columns: minmax(0, 1fr); } }
+.hero-stage { display: grid; place-items: center; }
+.hero-stage canvas { width: 200px; height: 240px; border-radius: 12px; box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--xp-fill); }
+.hero-side { display: grid; gap: 12px; min-width: 0; }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.sw { width: 28px; height: 28px; border-radius: 6px; border: 2px solid var(--line); padding: 0; }
+.sw[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--xp-fill); }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .chibi .ol { stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .chibi .hero { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 1.2s ease-in-out infinite; }
 .chibi.run .hero { animation-duration: .42s; }
@@ -504,27 +519,27 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     instrument: ["Worn {s}", "Student {s}", "Tuned {s}", "Concert {s}", "Masterwork {s}", "Legendary {s}"],
     language: ["{s} Phrasebook", "{s} Flashcard Deck", "Traveler's Journal", "{s} Lexicon", "Interpreter's Earpiece", "Polyglot's Circlet"],
     health: ["Sweatband", "{s} Gear Bag", "Pro {s} Kit", "Champion's Cloak", "Iron Will Amulet", "Mantle of Vigor"],
-    cooking: ["Apron", "Chef's Knife", "Cast-Iron Skillet", "Copper Pans", "Chef's Toque", "Golden Ladle"],
+    cooking: ["Apron", "Chef's Knife", "Cast-Iron Skillet", "Copper Saucepan", "Chef's Toque", "Golden Ladle"],
     trade: ["Work Gloves", "Tool Belt", "{s} Toolkit", "Journeyman's Apron", "Master's Tools", "Forgemaster's Hammer"],
-    art: ["Sketchbook", "Quality {s} Kit", "Studio Easel", "Artisan's Smock", "Master's Brush", "Muse's Quill"],
-    tech: ["Rubber Duck", "Mechanical Keyboard", "Dual Monitors", "Hoodie of Focus", "Debugger's Lens", "Arcane Terminal"],
+    art: ["Sketchbook", "Quality {s} Brushes", "Studio Easel", "Artisan's Smock", "Master's Brush", "Muse's Quill"],
+    tech: ["Rubber Duck", "Mechanical Keyboard", "Tech Backpack", "Hoodie of Focus", "Debugger's Lens", "Arcane Terminal"],
     study: ["Library Card", "Reading Glasses", "Scholar's Satchel", "Study Lamp", "Sage's Robe", "Tome of Ages"],
     life: ["Label Maker", "Weekly Planner", "Tidy Toolkit", "Steward's Keyring", "Smart Blazer", "Golden Keyring"]
   };
   const GEAR_BY_SKILL = {
     "Guitar": ["Worn Acoustic", "Electric Six-String", "Custom Hollowbody", "Stage Six-String", "Masterwork Archtop", "Mythic Axe"],
     "Singing": ["Lucky Scarf", "Practice Mic", "Vocal Coach's Notes", "Velvet Stage Mic", "Golden Microphone", "Voice of Legends"],
-    "Drums": ["Practice Pad", "Hickory Sticks", "Starter Kit", "Brass Cymbals", "Thunder Kit", "Drums of the Storm"],
+    "Drums": ["Practice Pad", "Hickory Sticks", "Snare Drum", "Brass Cymbals", "Thunder Drum", "Drums of the Storm"],
     "Running": ["Training Headband", "Trail Sneakers", "Featherweight Racers", "Marathon Medal", "Wind-Runner Boots", "Winged Boots"],
     "Strength training": ["Lifting Gloves", "Chalk Pouch", "Leather Belt", "Iron Kettlebell", "Titan Barbell", "Atlas Gauntlets"],
     "Yoga": ["Yoga Mat", "Cork Block", "Flow Wraps", "Balance Anklet", "Serpent Sash", "Lotus Crown"],
-    "Meditation": ["Cushion", "Incense Burner", "Prayer Beads", "Calm Robe", "Lotus Pendant", "Halo of Stillness"],
-    "Baking": ["Flour-Dusted Apron", "Rolling Pin", "Stand Mixer", "Stone Oven Peel", "Pastry Chef's Toque", "Golden Whisk"],
-    "Photography": ["Disposable Camera", "Starter Lens", "Prime Lens", "Steady Tripod", "Pro Camera Rig", "Eye of the Hawk"],
-    "Writing": ["Pocket Notebook", "Fountain Pen", "Writer's Desk", "Editor's Monocle", "First Edition", "Muse's Quill"],
+    "Meditation": ["Meditation Cushion", "Incense Burner", "Mala Beads", "Calm Robe", "Lotus Pendant", "Halo of Stillness"],
+    "Baking": ["Flour-Dusted Apron", "Rolling Pin", "Balloon Whisk", "Stone Oven Peel", "Pastry Chef's Toque", "Golden Whisk"],
+    "Photography": ["Disposable Camera", "Starter Lens", "Prime Lens", "Camera Strap", "Pro Camera Rig", "Eye of the Hawk"],
+    "Writing": ["Pocket Notebook", "Fountain Pen", "Writer's Satchel", "Editor's Monocle", "First Edition", "Muse's Quill"],
     "Chess": ["Travel Chess Set", "Club Badge", "Tournament Clock", "Grandmaster's Board", "Strategist's Cloak", "King's Crown"],
     "Budgeting": ["Coin Purse", "Ledger Book", "Calculator Watch", "Trader's Business Suit", "Banker's Signet", "Golden Ledger"],
-    "Coding": ["Rubber Duck", "Mechanical Keyboard", "Dual Monitors", "Hoodie of Focus", "Debugger's Lens", "Arcane Terminal"]
+    "Coding": ["Rubber Duck", "Mechanical Keyboard", "Tech Backpack", "Hoodie of Focus", "Debugger's Lens", "Arcane Terminal"]
   };
   const DUNGEONS = [
     { id: "cellar",  name: "Goblin Cellar",      rec: 5,   gold: [20, 40],   trophy: "Goblin's Lucky Tooth" },
@@ -661,14 +676,14 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   }
 
   // ---------- State ----------
-  const blank = () => ({ v: 1, heroName: "", skills: [], sessions: [], gold: 0, keyShards: 0, keysUsed: 0, owned: {}, equipped: {}, trophies: {}, runs: [], tipVotes: {}, submissions: [], restedPool: 0, lastSessionDay: null, timer: null });
+  const blank = () => ({ v: 1, heroName: "", skills: [], sessions: [], gold: 0, keyShards: 0, keysUsed: 0, owned: {}, equipped: {}, trophies: {}, runs: [], tipVotes: {}, submissions: [], appearance: null, restedPool: 0, lastSessionDay: null, timer: null });
   let state = blank();
   let sample = false;
   let open = null;                 // expanded skill id
   let editingName = false;
   let editVet = null;
   let tab = "train";
-  try { const t = localStorage.getItem("levelup.tab"); if (t === "gear" || t === "dungeons" || t === "settings") tab = t; } catch (e) {}
+  try { const t = localStorage.getItem("levelup.tab"); if (t === "gear" || t === "dungeons" || t === "settings" || t === "hero") tab = t; } catch (e) {}
   let confirm = null;              // { kind, id } for inline confirmations
   let pick = new Map();            // onboarding selections: name -> {cat, tips, prior}
 
@@ -928,7 +943,7 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
       <div class="grid">
         <aside class="panel sheet" aria-label="Character sheet">
           <div class="who">
-            <div class="emblem" aria-hidden="true">${esc(cls.name[0])}</div>
+            <canvas class="portrait px" data-av="portrait" data-scale="3" aria-hidden="true"></canvas>
             <div class="who-text">
               ${editingName
                 ? `<input class="input" id="name-input" maxlength="30" value="${esc(state.heroName)}" placeholder="Hero name" aria-label="Hero name">`
@@ -965,11 +980,12 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
         <div class="col">
           <div class="tabs" role="tablist">
             <button class="tab" role="tab" data-act="tab" data-tab="train" aria-selected="${tab === "train"}">Training</button>
+            <button class="tab" role="tab" data-act="tab" data-tab="hero" aria-selected="${tab === "hero"}">Hero</button>
             <button class="tab" role="tab" data-act="tab" data-tab="gear" aria-selected="${tab === "gear"}">Gear<span class="cnt">${state.gold.toLocaleString()}g</span></button>
             <button class="tab" role="tab" data-act="tab" data-tab="dungeons" aria-selected="${tab === "dungeons"}">Dungeons<span class="cnt">${keysAvail()} key${keysAvail() === 1 ? "" : "s"}</span></button>
             <button class="tab" role="tab" data-act="tab" data-tab="settings" aria-selected="${tab === "settings"}">Settings</button>
           </div>
-          ${tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
+          ${tab === "hero" ? renderHeroTab() : tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
           <section>
             <div class="section-head"><h2>Home screen widget</h2><span class="muted" style="font-size:13px">Live preview · tap Quick start</span></div>
             <div class="wall">${renderWidget("sm")}${renderWidget("md")}</div>
@@ -992,8 +1008,8 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-07.1";
-  const APP_VERSION = "0.1.0";
+  const BUILD = "2026-10-07.2";
+  const APP_VERSION = "0.2.0";
   const inClaude = !!(window.claude && window.claude.use);
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude;
   const Updater = {
@@ -1107,7 +1123,8 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
               : owned ? `<button class="btn small" data-act="equip" data-id="${it.id}">Equip</button>`
               : unlocked ? `<button class="btn small ${state.gold >= it.price ? "primary" : ""}" data-act="buy" data-id="${it.id}" ${state.gold >= it.price ? "" : "disabled"}>Buy · ${it.price.toLocaleString()}g</button>`
               : `<span class="req">Unlocks at Lv ${it.lv}</span>`;
-            return `<div class="item ${cls}"><b>${esc(it.name)}</b><span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>${!owned && unlocked ? `<span class="req">${state.gold >= it.price ? "Ready to buy" : `Need ${(it.price - state.gold).toLocaleString()} more gold`}</span>` : ""}${action}</div>`;
+            const look = lookFor(it);
+            return `<div class="item ${cls}"><canvas class="px item-ic" data-icon="${look}:${it.tier}" data-size="40" aria-hidden="true"></canvas><b>${esc(it.name)}</b><span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>${!owned && unlocked ? `<span class="req">${state.gold >= it.price ? "Ready to buy" : `Need ${(it.price - state.gold).toLocaleString()} more gold`}</span>` : ""}${action}</div>`;
           }).join("")}</div>
         </article>`;
       }).join("")}
@@ -1191,10 +1208,10 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     const bar = f ? `<div><div class="wdg-skill"><b>${esc(f.name)}</b><span class="num">Lv ${f.level}</span></div>
       <div class="xp" aria-hidden="true"><i style="width:${(f.progress * 100).toFixed(1)}%"></i></div></div>` : "";
     if (size === "sm") return `<div class="wdg sm" aria-label="Small widget preview">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="emblem" aria-hidden="true">${esc(w.emblem)}</div><div class="wdg-lv num" style="text-align:right"><small>Total</small>${w.totalLevel}</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><canvas class="portrait px sm" data-av="portrait" data-scale="2" aria-hidden="true"></canvas><div class="wdg-lv num" style="text-align:right"><small>Total</small>${w.totalLevel}</div></div>
       ${bar}${go}</div>`;
     return `<div class="wdg md" aria-label="Medium widget preview">
-      <div class="emblem" aria-hidden="true">${esc(w.emblem)}</div>
+      <canvas class="portrait px" data-av="portrait" data-scale="2" aria-hidden="true"></canvas>
       <div class="wdg-right">
         <div><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.heroName)}</div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="wdg-class">${esc(w.className)}</span><span class="wdg-lv num" style="font-size:20px">Lv ${w.totalLevel}</span></div></div>
@@ -1203,6 +1220,538 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
       <div class="wdg-span" style="display:grid;gap:8px">${go}
         <div class="wdg-meta"><span>Today ${fmt(w.todayMinutes)}</span><span>${w.keys} key${w.keys === 1 ? "" : "s"} · ${w.keyShards}/10${w.restedMinutes ? " · Rested" : ""}</span></div></div>
     </div>`;
+  }
+
+  // ================= PIXEL HERO =================
+  // A 32x40 chibi drawn from layered pixel maps. Every gear item has a sprite and a slot.
+  // Sprites are drawn without outlines; the renderer adds a 1px outline around each part.
+  const AV_W = 32, AV_H = 40;
+  const OUTLINE = "#1d1a2b";
+  const SKINS = [
+    ["#fde3cb", "#efc4a2"], ["#f6cfa6", "#e3ad82"], ["#e2ac7e", "#c98b5c"],
+    ["#c68a5a", "#a66d42"], ["#8d5a3b", "#71452b"], ["#5f3b27", "#4a2c1c"]
+  ];
+  const HAIR_COLORS = [
+    ["Black", "#2b2433", "#1a1520", "#4a4058"], ["Brown", "#5a3a24", "#3f2817", "#7d5436"],
+    ["Chestnut", "#8c4a22", "#673414", "#b0663a"], ["Blonde", "#e6bf55", "#c49a33", "#f6dc8c"],
+    ["Ginger", "#d1652a", "#a64a19", "#ee8b4e"], ["Silver", "#d9d6e0", "#a9a5b6", "#f4f2f8"],
+    ["Blue", "#4a6fd6", "#3350a8", "#7d9cf0"], ["Pink", "#e07ab0", "#b85488", "#f3a5cc"],
+    ["Green", "#4aa86a", "#2f7d4a", "#7cd09a"], ["Purple", "#8a5ad6", "#643aa8", "#b088f0"]
+  ];
+  const EYE_COLORS = [["Brown", "#3b2416"], ["Blue", "#2c4f9e"], ["Green", "#2a6b3c"], ["Gray", "#4a4e5c"], ["Violet", "#5b3a9e"], ["Amber", "#9a5a10"]];
+  const CLOTH = [
+    ["Crimson", "#c8423a", "#93302a"], ["Gold", "#e2a521", "#a87612"], ["Forest", "#3f8a4e", "#2b6337"],
+    ["Ocean", "#3a6fc8", "#284f93"], ["Royal", "#7a4ac8", "#573493"], ["Teal", "#2f9e96", "#1f716b"],
+    ["Charcoal", "#3d4152", "#2a2d3a"], ["Snow", "#eceef4", "#c2c6d4"], ["Rose", "#e07a9a", "#b0566f"], ["Earth", "#8a5a34", "#653f22"]
+  ];
+  const HAIR_STYLES = ["Short", "Long", "Spiky", "Bun", "Ponytail", "Puffy", "Buzz"];
+  // Tier finishes: worn, iron, bronze, sapphire, amethyst, legendary gold.
+  const TIER_PAL = [
+    { A: "#a0703a", a: "#6e4a22", L: "#c99d66" }, { A: "#8a94a4", a: "#5a6272", L: "#b9c1cd" },
+    { A: "#c77a30", a: "#8a4f18", L: "#eba35e" }, { A: "#4f86d6", a: "#2f5a9e", L: "#94bdf2" },
+    { A: "#9a58d8", a: "#64349e", L: "#c89cf2" }, { A: "#f0bd3e", a: "#b8860b", L: "#ffe7a0" }
+  ];
+  const FIXED = {
+    O: OUTLINE, Z: "#f6f3ea", z: "#cfc8b4", Q: "#efe2c2", q: "#cbb98e", X: "#2e3142", x: "#1f2230",
+    M: "#cdd3dd", m: "#8f97a8", N: "#6a4220", n: "#4a2c14", G: "#f2c14e", g: "#b8860b",
+    R: "#d94a3a", r: "#9e2f24", Y: "#ffe58a", y: "#ffb84a", C: "#7ad0ff", W: "#ffffff", K: "#3a2a22", k: "#24180f",
+    E: "#3b2416", B: "#f29a8b", V: "#7a3040", F: "#b7f0c8"
+  };
+
+  const mirror = rows => rows.map(r => r + r.split("").reverse().join(""));
+  const BASE = mirror([
+    "................", "................", "................", "................", "................",
+    "..........OOOOOO", "........OOSSSSSS", ".......OSSSSSSSS", "......OSSSSSSSSS", "......OSSSSSSSSS",
+    ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OSSSSSSSSSS",
+    ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OsSSSSSSSSS", "......OsSSSSSSSS", "......OssSSSSSSS",
+    ".......OOsSSSSSS", ".........OOOOOOO", ".........OTTTTTT", "........OTTTTTTT", ".......OtTTTTTTT",
+    ".......OtTtTTTTT", ".......OtTtTTTTT", ".......OUUOTTTTT", ".......OUUOTTTTT", "........OOOTTTTT",
+    "..........OPPPPP", "..........OPPPpp", "..........OPPpO.", "..........OPPpO.", ".........OKKKKO.",
+    ".........OkkkkO.", "..........OOOO..", "................", "................", "................"
+  ]);
+  // Running legs, two frames (rows 30-36).
+  const LEGS_RUN = [
+    ["..........OPPPPPPPPPPO..........", "..........OPPPppppPPPO..........", ".........OPPpO....OPPpO.........", "........OPPpO......OPPpO........", "........OKKKKO.....OKKKKO.......", "........OkkkkO......OkkkkO......", ".........OOOO........OOOO......."],
+    null
+  ];
+  const HAIR = {
+    Short: mirror(["................", "................", "................", "..........OOOOOO", "........OOHHHHHH", ".......OHHHHHHHH", "......OHHjHHHHHH", ".....OHHjHHHHHHH", "....OHHjHHHHHHHH", "....OHHHHHHHHHHH", "....OHHHHHhHHHhH", "....OHHhHh.hH..h", "....OHh.h.......", "....OHh.........", "....OH..........", ".....O.........."]),
+    Spiky: mirror([".........O....O.", "........OHO..OHO", ".......OHHHOOHHH", "......OHHjHHHHHH", "......OHHjHHHHHH", ".....OHHjHHHHHHH", ".....OHjHHHHHHHH", "....OHHjHHHHHHHH", "....OHHHHHHHHHHH", "....OHHHhHHHhHHH", "....OHHh.Hh..H.h", "....OHh.........", "....OH..........", ".....O.........."]),
+    Puffy: mirror(["................", "..........OOOOOO", "........OOHHHHHH", "......OOHHjHHHHH", ".....OHHHjHHHHHH", "....OHHHjHHHHHHH", "...OHHjHHHHHHHHH", "...OHHHHHHHHHHHH", "..OHHHHHHHHHHHHH", "..OHHHHHHHHHHHHH", "..OHHHHHhHHhHHhH", "..OHHHh.h.......", "..OHHh..........", "..OHHh..........", "...OHH..........", "...OHh..........", "....OO.........."]),
+    Buzz: mirror(["................", "................", "................", "................", "..........OOOOOO", "........OOHHHHHH", ".......OHHjHHHHH", "......OHHjHHHHHH", "......OHhhhhhhhh", ".....OHh........", ".....OH.........", ".....O.........."])
+  };
+  HAIR.Long = HAIR.Short.slice(0, 15).concat(mirror(["....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", ".....OO........."]));
+  HAIR.Bun = mirror(["..............OO", ".............OHj", ".............OHH"]).concat(HAIR.Short.slice(3));
+  HAIR.Ponytail = HAIR.Short;
+  const PONYTAIL = { x: 25, y: 8, rows: ["..OO", ".OHHO", "OHHhO", "OHHhO", ".OHhO", ".OHhO", ".OHhO", "..OhO", "..OO"] };
+
+  // ---------- Sprite library ----------
+  // Each sprite: { slot, parts: [{ x, y, rows, outline? }] } or a function (pal, ctx) returning parts.
+  const S = {};
+  const part = (x, y, rows, outline = true) => ({ x, y, rows, outline });
+  // HEAD
+  S.headband = { slot: "head", parts: [part(4, 10, ["AAAAAAAAAAAAAAAAAAAAAAA", "aaaaaaaaaaaaaaaaaaaaaaa"]), part(27, 11, ["AL.", ".aA"])] };
+  S.toque = { slot: "head", parts: [part(9, 0, ["..ZZZZZZZZZZ..", ".ZZZZZZZZZZZZ.", "ZZZZZzZZZzZZZZ", "ZZZZZzZZZzZZZZ", ".ZZZZzZZZzZZZ.", ".AAAAAAAAAAAA.", ".aaaaaaaaaaaa."])] };
+  S.circlet = { slot: "head", parts: [part(5, 9, ["AAAAAAAAAACCAAAAAAAAAA"], true), part(14, 7, [".CC.", "CWCC"])] };
+  S.flower = { slot: "head", parts: [part(5, 9, ["AAAAAAAAAAAAAAAAAAAAAA"]), part(12, 5, ["..B..B..", ".BBBBBBB", "..BYYB..", "...BB..."])] };
+  S.crown = { slot: "head", parts: [part(10, 1, ["A....AA....A", "AA..ALLA..AA", "AAAAAAAAAAAA", "aRaaaCCaaaRa", "aaaaaaaaaaaa"])] };
+  S.earpiece = { slot: "head", parts: [part(26, 12, ["AA", "AC", "A."])] };
+  // FACE
+  S.glasses = { slot: "face", parts: [part(9, 12, ["XXXX......XXXX", "X..XXXXXXXX..X", "X..X......X..X", "XXXX......XXXX"], false)] };
+  S.monocle = { slot: "face", parts: [part(19, 12, ["AAAA", "A..A", "A..A", "AAAA", "...A", "...A", "....A"], false)] };
+  // NECK
+  S.scarf = { slot: "neck", parts: [part(9, 21, [".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA", "aaaaaaLaaaaaaa"]), part(19, 24, ["AA", "aA", "AA", "a."])] };
+  S.amulet = { slot: "neck", parts: [part(11, 22, ["g........g", ".g......g.", "..g....g..", "...g..g..."], false), part(14, 26, [".AA.", "ALAA", ".AA."])] };
+  S.medal = { slot: "neck", parts: [part(12, 22, ["R......R", ".R....R.", "..R..R.."], false), part(14, 25, [".GG.", "GGYG", "GGGG", ".GG."])] };
+  S.beads = { slot: "neck", parts: [part(11, 22, ["A........A", ".A......A.", "..A....A..", "...AAAA..."], false), part(15, 26, ["L", "A"])] };
+  S.camstrap = { slot: "neck", parts: [part(11, 22, ["X........X", ".X......X.", "..X....X.."], false), part(12, 25, ["..XX....", "XXXXXXXX", "XMCMXXAX", "XMMMXXXX", "XXXXXXXX"])] };
+  // BODY (palette overrides recolor the outfit, plus detail parts)
+  S.apron = { slot: "body", parts: [part(11, 22, ["A........A", "A........A", "AAAAAAAAAA", "AAAAAAAAAA", "AAAALLAAAA", "AAAALLAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "aaaaaaaaaa", "aaaaaaaaaa"])] };
+  S.robe = { slot: "body", recolor: { T: "A", t: "a", P: "A", p: "a" }, parts: [part(11, 29, ["LLLLLLLLLL"], false), part(14, 22, ["LL..LL", ".LLLL."], false)] };
+  S.suit = { slot: "body", recolor: { T: "X", t: "x", P: "X", p: "x" }, parts: [part(13, 22, ["ZZZZZZ", ".ZAAZ.", "..AA..", "..AA..", "..aa.."], false), part(19, 24, ["L"], false)] };
+  S.smock = { slot: "body", recolor: { T: "Q", t: "q" }, parts: [part(11, 23, ["....R.....", "........C.", "..Y.......", "......A...", ".C........"], false)] };
+  S.hoodie = { slot: "body", recolor: { T: "A", t: "a" }, parts: [part(9, 21, [".aaaaaaaaaaaa.", "a............a"], false), part(14, 23, ["Z..Z", "Z..Z"], false), part(12, 27, ["aaaaaaaa"], false)] };
+  S.sash = { slot: "body", parts: [part(10, 22, ["AA.........", ".AA........", "..AA.......", "...AA......", "....AA.....", ".....AL....", "......AA...", ".......AA..", "........AA."], false)] };
+  // BELT
+  S.belt = { slot: "belt", parts: [part(11, 29, ["AAAAMMAAAA"], false)] };
+  S.toolbelt = { slot: "belt", parts: [part(11, 29, ["AAAAMMAAAA"], false), part(9, 30, ["aa..........aa", "aa..........aa"]), part(10, 28, ["M"], false)] };
+  S.pouch = { slot: "belt", parts: [part(11, 29, ["aaaaaaaaaa"], false), part(21, 29, ["AAA", "ZAZ", "AAA"])] };
+  S.keyring = { slot: "belt", parts: [part(21, 29, [".A.", "A.A", ".A.", ".M.", ".MM"])] };
+  S.purse = { slot: "belt", parts: [part(21, 28, [".G.", "AAA", "AAA", ".A."])] };
+  // HANDS (recolor the hands, plus details)
+  S.gloves = { slot: "hands", recolor: { U: "A" }, parts: [] };
+  S.gauntlets = { slot: "hands", recolor: { U: "A" }, parts: [part(8, 26, ["LL............LL"], false)] };
+  S.watch = { slot: "hands", parts: [part(22, 26, ["AA"], false), part(22, 26, ["C."], false)] };
+  S.ring = { slot: "hands", parts: [part(23, 28, ["G"], false)] };
+  // FEET
+  S.sneakers = { slot: "feet", recolor: { K: "A", k: "Z" }, parts: [] };
+  S.boots = { slot: "feet", recolor: { K: "A", k: "a" }, parts: [part(11, 32, ["AA.....AA"], false), part(11, 33, ["AA.....AA"], false)] };
+  S.winged = { slot: "feet", recolor: { K: "A", k: "a" }, parts: [part(7, 32, ["Z..AA.....AA..Z", "ZZ.AA.....AA.ZZ"])] };
+  S.anklet = { slot: "feet", parts: [part(11, 33, ["GG.......GG"], false)] };
+  // HAND-HELD (viewer's right hand at 22-23, 27-28)
+  S.book = { slot: "hand", grip: false, parts: [part(20, 23, ["aAAAAA", "aAAAAA", "aALLAA", "aAAAAA", "aAAAAA", "aAAAAA", "qQQQQQ"])] };
+  S.cards = { slot: "hand", parts: [part(21, 23, [".ZZ.", "ZZZZ", "ZAZZ", "ZZZZ", "ZZZZ"]), part(24, 22, ["ZZ", "ZA", "ZZ", "ZZ"])] };
+  S.quill = { slot: "hand", grip: true, parts: [part(22, 18, ["....ZZ", "...ZZZ", "..ZZZz", ".ZZZz.", ".ZZz..", ".Az...", "A.....", "N....."])] };
+  S.pen = { slot: "hand", grip: true, parts: [part(23, 22, ["..A", ".A.", "A..", "X..", "G.."])] };
+  S.knife = { slot: "hand", grip: true, parts: [part(22, 18, [".M", "MM", "MM", "MM", "MM", "MM", "mM", "AA", "AA", "AA", "AA", "AA"])] };
+  S.pan = { slot: "hand", grip: true, parts: [part(24, 24, ["....XXX", "..XXXXX", "AAXXxXX", "..XXXXX", "....XXX"])] };
+  S.ladle = { slot: "hand", grip: true, parts: [part(22, 19, [".A", ".A", ".A", ".A", ".A", ".A", ".A", ".A", ".A", ".A", ".A", "AAA", "aAA", ".a."])] };
+  S.whisk = { slot: "hand", grip: true, parts: [part(21, 18, [".MMM.", "M.M.M", "M.M.M", "M.M.M", ".MMM.", "..M..", "..M..", "..A..", "..A..", "..A..", "..A.."])] };
+  S.pin = { slot: "hand", grip: true, parts: [part(17, 27, ["MAAAAAAAAAAM", "MaaaaaaaaaaM"])] };
+  S.hammer = { slot: "hand", grip: true, parts: [part(20, 18, ["AAAAAA", "AALAAa", "..N...", "..N...", "..N...", "..N...", "..N...", "..N...", "..N...", "..N...", "..N..."])] };
+  S.bighammer = { slot: "hand", grip: true, parts: [part(19, 16, ["AAAAAAAA", "ALLAAAAa", "AAAAAAAa", "...NN...", "...NN...", "...NN...", "...NN...", "...NN...", "...NN...", "...NN...", "...NN...", "...NN...", "...NN..."])] };
+  S.wrench = { slot: "hand", grip: true, parts: [part(21, 19, ["A.A", "AAA", ".M.", ".M.", ".M.", ".M.", ".M.", ".M.", ".M.", ".M.", ".M."])] };
+  S.brush = { slot: "hand", grip: true, parts: [part(22, 18, [".R", "RR", "MM", ".A", ".A", ".A", ".A", ".A", ".A", ".A", ".A", ".A"])] };
+  S.camera = { slot: "hand", grip: false, parts: [part(19, 23, [".XX...", "XXXXXX", "XMAMXA", "XMCMXX", "XMMMXX", "XXXXXX"])] };
+  S.mic = { slot: "hand", grip: true, parts: [part(21, 20, [".AAA.", "ALAAA", "AAAAa", ".aaa.", "..X..", "..X..", "..X..", "..X..", "..X..", "..X.."])] };
+  S.sticks = { slot: "hand", grip: true, parts: [part(22, 19, [".....Q", "....Q.", "...Q.Q", "..Q.Q.", ".Q.Q..", "Q.Q...", ".Q....", "Q....."], true)] };
+  S.pad = { slot: "hand", grip: false, parts: [part(19, 25, [".XXXXX.", "XAAAAAX", "XAAAAAX", ".XXXXX."])] };
+  S.kettlebell = { slot: "hand", grip: true, parts: [part(20, 28, [".AAAA.", "A....A", ".AAAA.", "AAAAAA", "ALAAAA", "AAAAAa", ".aaaa."])] };
+  S.duck = { slot: "hand", grip: false, parts: [part(21, 23, [".GG..", "GGXG.", "GGGGy", "GGGG.", ".GGG."])] };
+  S.tablet = { slot: "hand", grip: false, parts: [part(19, 22, ["XXXXXX", "XCCCCX", "XCYCCX", "XCCCCX", "XCCCYX", "XXXXXX", "..AA.."])] };
+  S.gadget = { slot: "hand", grip: false, parts: [part(20, 24, ["AAAAA", "AZZZA", "AAAAA", "AXAXA", "AAAAA"])] };
+  S.lamp = { slot: "hand", grip: true, parts: [part(21, 26, [".M.", ".M.", "MMM", "AYA", "AYA", "AYA", "aaa"])] };
+  S.board = { slot: "hand", grip: false, parts: [part(19, 22, ["AAAAAAA", "AXZXZXA", "AZXZXZA", "AXZXZXA", "AZXZXZA", "AAAAAAA"])] };
+  S.clock = { slot: "hand", grip: false, parts: [part(19, 23, ["AAAAAAA", "AZZAZZA", "AZXAXZA", "AZZAZZA", "AAAAAAA", ".a...a."])] };
+  S.incense = { slot: "hand", grip: true, parts: [part(23, 21, ["N", "N", "N", "N", "N", "N", "N", "A"], false), part(22, 16, [".Z.", "..Z", ".Z.", "Z..", ".Z."], false)] };
+  S.block = { slot: "hand", grip: false, parts: [part(20, 24, ["AAAAA", "ALAAa", "AAAAa", "aaaaa"])] };
+  S.broom = { slot: "hand", grip: true, parts: [part(23, 16, ["N", "N", "N", "N", "N", "N", "N", "N", "N", "N", "N", "N", "N", "N", "N"], false), part(21, 31, ["GGGGG", "GGGGG", "GgGgG"])] };
+  // FRONT (worn across the body)
+  S.sax = { slot: "front", parts: [part(12, 20, ["........XA", ".......AA.", "......AA..", "......AA..", "......AA..", "......AL..", ".....AAA..", "....AAAa..", "..AAAAa...", ".AAAAA....", "LAAAa.....", "LLA......."])] };
+  // BACK (drawn behind the body)
+  const line = (x0, y0, x1, y1, ch, w = 1) => {
+    const pts = []; const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy, x = x0, y = y0;
+    for (;;) { for (let k = 0; k < w; k++) pts.push([x + k, y, ch]); if (x === x1 && y === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+    return pts;
+  };
+  const ellipse = (cx, cy, rx, ry, ch, shade) => {
+    const pts = [];
+    for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+      const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+      if (d <= 1) pts.push([x, y, shade && x > cx + rx * 0.35 ? shade : ch]);
+    }
+    return pts;
+  };
+  const pts = (list, outline = true) => ({ pts: list, outline });
+  function stringed(kind) {
+    // Diagonal on the back: body bottom-left behind the hip, neck over the right shoulder.
+    const big = kind === "bass", small = kind === "uke";
+    const body = small ? ellipse(6, 30, 3.5, 3, "A", "a") : kind === "violin"
+      ? ellipse(6, 29, 3.4, 4.6, "A", "a") : ellipse(6, 30, big ? 4.6 : 5.2, big ? 3.8 : 4.4, "A", "a");
+    const top = small ? [27, 6] : big ? [30, 0] : [29, 1];
+    const neck = line(8, 27, top[0], top[1], "N", 2);
+    const head = small ? ellipse(top[0] + 1, top[1] - 1, 1.6, 1.6, "n") : kind === "violin" ? ellipse(top[0] + 1, top[1] - 1, 1.4, 1.4, "n")
+      : [[top[0], top[1] - 1, "n"], [top[0] + 1, top[1] - 1, "n"], [top[0] + 1, top[1] - 2, "n"], [top[0] + 2, top[1] - 2, "n"], [top[0] + 1, top[1], "n"]];
+    const hole = kind === "violin" ? [[5, 28, "x"], [7, 30, "x"]] : [[6, 29, "x"], [5, 30, "x"], [6, 30, "x"]];
+    return { slot: "back", strap: true, parts: [pts(body.concat(hole)), pts(neck.concat(head))] };
+  }
+  S.guitar = stringed("guitar"); S.bass = stringed("bass"); S.uke = stringed("uke"); S.violin = stringed("violin");
+  S.keytar = { slot: "back", strap: true, parts: [pts(line(3, 31, 26, 8, "A", 3).concat(line(4, 31, 27, 8, "Z", 1)))] };
+  S.tuba = { slot: "back", parts: [pts(ellipse(26, 9, 4.5, 3.2, "A", "a").concat(ellipse(26, 9, 2.6, 1.6, "a"), line(24, 12, 22, 20, "A", 2)))] };
+  S.drum = { slot: "back", parts: [pts(ellipse(26, 22, 4.5, 6, "A", "a").concat(line(22, 17, 30, 17, "M"), line(22, 27, 30, 27, "M"), line(24, 19, 28, 25, "Z"), line(28, 19, 24, 25, "Z")))] };
+  S.cymbals = { slot: "back", parts: [pts(ellipse(5, 16, 3.6, 1.6, "G", "g")), pts(ellipse(27, 14, 3.6, 1.6, "G", "g")), pts(line(5, 17, 6, 22, "M").concat(line(27, 15, 26, 22, "M")), false)] };
+  S.bag = { slot: "back", straps: true, parts: [pts((() => { const p = []; for (let y = 22; y <= 31; y++) for (let x = 6; x <= 25; x++) { if ((y === 22 || y === 31) && (x === 6 || x === 25)) continue; p.push([x, y, x < 8 || x > 23 ? "a" : "A"]); } for (let y = 24; y <= 25; y++) { p.push([6, y, "L"]); p.push([25, y, "L"]); } return p; })())] };
+  S.mat = { slot: "back", parts: [pts((() => { const p = []; for (let y = 18; y <= 21; y++) for (let x = 1; x <= 30; x++) p.push([x, y, y === 18 ? "L" : y === 21 ? "a" : "A"]); [1, 30].forEach(x => [19, 20].forEach(y => p.push([x, y, "a"]))); return p; })())] };
+  S.barbell = { slot: "back", parts: [pts(line(0, 20, 31, 20, "M").concat(line(0, 21, 31, 21, "m"))), pts((() => { const p = []; [[0, 3], [28, 31]].forEach(([a, b]) => { for (let x = a; x <= b; x++) for (let y = 15; y <= 26; y++) p.push([x, y, (x === a || x === b) ? "a" : "A"]); }); return p; })())] };
+  S.paddle = { slot: "back", parts: [pts(line(7, 31, 24, 10, "N", 2)), pts((() => { const p = []; for (let y = 1; y <= 9; y++) for (let x = 23; x <= 30; x++) if (!((y === 1 || y === 9) && (x === 23 || x === 30))) p.push([x, y, x > 27 ? "a" : "A"]); return p; })())] };
+  S.easel = { slot: "back", parts: [pts(line(4, 34, 24, 4, "N", 1).concat(line(27, 34, 25, 12, "N", 1))), pts((() => { const p = []; for (let y = 1; y <= 10; y++) for (let x = 22; x <= 30; x++) p.push([x, y, "Q"]); p.push([24, 4, "R"], [26, 6, "C"], [28, 3, "Y"], [25, 8, "A"], [28, 8, "A"]); return p; })())] };
+  S.cape = { slot: "back", parts: [pts((() => { const p = []; for (let y = 21; y <= 35; y++) { const w = Math.min(11, 6 + (y - 21)); for (let x = 16 - w; x < 16 + w; x++) p.push([x, y, (x < 16 - w + 2 || x > 16 + w - 3) ? "a" : "A"]); } return p; })())], front: [part(14, 22, ["GLLG"], false)] };
+  // HELD INSTRUMENTS (training pose): diagonal across the body, neck to the upper left.
+  function stringedHeld(kind) {
+    const small = kind === "uke", big = kind === "bass";
+    const body = kind === "violin" ? ellipse(21, 26, 3, 4, "A", "a") : ellipse(21, 28, small ? 3 : 4.4, small ? 2.6 : 3.6, "A", "a");
+    const end = small ? [10, 23] : big ? [3, 19] : [5, 20];
+    const neck = line(18, 27, end[0], end[1], "N", 1).concat(line(18, 26, end[0], end[1] - 1, "N", 1));
+    const head = [[end[0] - 1, end[1] - 1, "n"], [end[0] - 2, end[1] - 1, "n"], [end[0] - 1, end[1] - 2, "n"]];
+    return { slot: "held", parts: [pts(body.concat([[21, 28, "x"], [20, 27, "x"]])), pts(neck.concat(head))] };
+  }
+  S.guitarHeld = stringedHeld("guitar"); S.bassHeld = stringedHeld("bass"); S.ukeHeld = stringedHeld("uke"); S.violinHeld = stringedHeld("violin");
+  S.keytarHeld = { slot: "held", parts: [pts((() => { const p = []; for (let x = 6; x <= 26; x++) for (let y = 26; y <= 28; y++) p.push([x, y, y === 26 ? "A" : (x % 2 ? "Z" : "z")]); for (let x = 9; x <= 25; x += 3) p.push([x, 27, "X"]); return p; })())] };
+  S.tubaHeld = { slot: "held", parts: [pts(ellipse(16, 27, 5, 4, "A", "a").concat(ellipse(23, 19, 4, 2.4, "A", "a"), ellipse(23, 19, 2.2, 1.2, "a"), line(20, 22, 18, 24, "A", 2)))] };
+  const HELD = { guitar: "guitarHeld", bass: "bassHeld", uke: "ukeHeld", violin: "violinHeld", keytar: "keytarHeld", tuba: "tubaHeld", drum: "sticks", sax: "sax", mic: "mic" };
+
+  // AURA
+  S.halo = { slot: "aura", parts: [part(10, 0, ["..YYYYYYYY..", "YY........YY", "..YYYYYYYY.."], false)] };
+  S.notes = { slot: "aura", parts: [part(1, 8, ["..AA", "..A.", "AAA.", "AA.."], true), part(27, 4, ["AAA", "A.A", "A.A", "AA."], true)] };
+  S.storm = { slot: "aura", parts: [part(1, 6, ["...C", "..C.", ".CCC", "..C.", ".C.."], false), part(28, 3, ["..C", ".C.", "CCC", ".C.", "C.."], false)] };
+
+  // ---------- Item looks ----------
+  // Every gear name maps to a sprite. Instrument items take their look from the skill.
+  const INSTRUMENT_LOOK = { guitar: "guitar", bass: "bass", ukulele: "uke", violin: "violin", saxophone: "sax", tuba: "tuba", piano: "keytar", drums: "drum", singing: "mic" };
+  const LOOK_BY_NAME = {
+    "Phrasebook": "book", "Flashcard Deck": "cards", "Traveler's Journal": "book", "Lexicon": "book", "Interpreter's Earpiece": "earpiece", "Polyglot's Circlet": "circlet",
+    "Sweatband": "headband", "Gear Bag": "bag", "Kit": "bag", "Champion's Cloak": "cape", "Iron Will Amulet": "amulet", "Mantle of Vigor": "cape",
+    "Apron": "apron", "Chef's Knife": "knife", "Cast-Iron Skillet": "pan", "Copper Saucepan": "pan", "Chef's Toque": "toque", "Golden Ladle": "ladle",
+    "Work Gloves": "gloves", "Tool Belt": "toolbelt", "Toolkit": "wrench", "Journeyman's Apron": "apron", "Master's Tools": "hammer", "Forgemaster's Hammer": "bighammer",
+    "Sketchbook": "book", "Brushes": "brush", "Studio Easel": "easel", "Artisan's Smock": "smock", "Master's Brush": "brush", "Muse's Quill": "quill",
+    "Rubber Duck": "duck", "Mechanical Keyboard": "keytar", "Tech Backpack": "bag", "Hoodie of Focus": "hoodie", "Debugger's Lens": "monocle", "Arcane Terminal": "tablet",
+    "Library Card": "cards", "Reading Glasses": "glasses", "Scholar's Satchel": "bag", "Study Lamp": "lamp", "Sage's Robe": "robe", "Tome of Ages": "book",
+    "Label Maker": "gadget", "Weekly Planner": "book", "Tidy Toolkit": "wrench", "Steward's Keyring": "keyring", "Smart Blazer": "suit", "Golden Keyring": "keyring",
+    "Training Headband": "headband", "Trail Sneakers": "sneakers", "Featherweight Racers": "sneakers", "Marathon Medal": "medal", "Wind-Runner Boots": "boots", "Winged Boots": "winged",
+    "Lifting Gloves": "gloves", "Chalk Pouch": "pouch", "Leather Belt": "belt", "Iron Kettlebell": "kettlebell", "Titan Barbell": "barbell", "Atlas Gauntlets": "gauntlets",
+    "Yoga Mat": "mat", "Cork Block": "block", "Flow Wraps": "gloves", "Balance Anklet": "anklet", "Serpent Sash": "sash", "Lotus Crown": "flower",
+    "Meditation Cushion": "mat", "Incense Burner": "incense", "Mala Beads": "beads", "Calm Robe": "robe", "Lotus Pendant": "amulet", "Halo of Stillness": "halo",
+    "Flour-Dusted Apron": "apron", "Rolling Pin": "pin", "Balloon Whisk": "whisk", "Stone Oven Peel": "paddle", "Pastry Chef's Toque": "toque", "Golden Whisk": "whisk",
+    "Disposable Camera": "camera", "Starter Lens": "camera", "Prime Lens": "camera", "Camera Strap": "camstrap", "Pro Camera Rig": "camera", "Eye of the Hawk": "monocle",
+    "Pocket Notebook": "book", "Fountain Pen": "pen", "Writer's Satchel": "bag", "Editor's Monocle": "monocle", "First Edition": "book",
+    "Travel Chess Set": "board", "Club Badge": "medal", "Tournament Clock": "clock", "Grandmaster's Board": "board", "Strategist's Cloak": "cape", "King's Crown": "crown",
+    "Coin Purse": "purse", "Ledger Book": "book", "Calculator Watch": "watch", "Trader's Business Suit": "suit", "Banker's Signet": "ring", "Golden Ledger": "book",
+    "Practice Pad": "pad", "Hickory Sticks": "sticks", "Snare Drum": "drum", "Brass Cymbals": "cymbals", "Thunder Drum": "drum", "Drums of the Storm": "drum",
+    "Lucky Scarf": "scarf", "Practice Mic": "mic", "Vocal Coach's Notes": "book", "Velvet Stage Mic": "mic", "Golden Microphone": "mic", "Voice of Legends": "notes"
+  };
+  // Training props when a skill has no hand-held item of its own.
+  const TRAIN_PROP = { language: "book", study: "book", cooking: "pan", trade: "hammer", art: "brush", tech: "tablet", life: "broom" };
+
+  function lookFor(item) {
+    const s = item.skill;
+    const name = item.name, keys = Object.keys(LOOK_BY_NAME);
+    const k = keys.find(k => name === k) || keys.find(k => name.endsWith(" " + k));
+    if (k) return LOOK_BY_NAME[k];
+    if (s.catId === "instrument") return INSTRUMENT_LOOK[slugOf(s.name)] || "guitar";
+    return "book";
+  }
+
+  // ---------- Renderer ----------
+  function makeGrid() { return Array.from({ length: AV_H }, () => new Array(AV_W).fill(null)); }
+  function heroPalette(ap) {
+    const sk = SKINS[ap.skin] || SKINS[1], hc = HAIR_COLORS[ap.hairColor] || HAIR_COLORS[1];
+    const sh = CLOTH[ap.shirt] || CLOTH[3], pa = CLOTH[ap.pants] || CLOTH[6];
+    return Object.assign({}, FIXED, {
+      S: sk[0], s: sk[1], U: sk[0], H: hc[1], h: hc[2], j: hc[3],
+      T: sh[1], t: sh[2], P: pa[1], p: pa[2], E: (EYE_COLORS[ap.eyes] || EYE_COLORS[0])[1]
+    });
+  }
+  function put(g, x, y, c) { if (x >= 0 && x < AV_W && y >= 0 && y < AV_H && c) g[y][x] = c; }
+  function drawPart(g, pal, tierPal, p, dx = 0, dy = 0) {
+    const cells = [];
+    if (p.pts) p.pts.forEach(([x, y, ch]) => cells.push([x + dx, y + dy, ch]));
+    else p.rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) { const ch = row[rx]; if (ch !== ".") cells.push([p.x + rx + dx, p.y + ry + dy, ch]); } });
+    const col = ch => tierPal[ch] || pal[ch];
+    if (p.outline) {
+      const own = new Set(cells.map(([x, y]) => x + "," + y));
+      cells.forEach(([x, y]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { if (!own.has((x + ox) + "," + (y + oy))) put(g, x + ox, y + oy, OUTLINE); }));
+    }
+    cells.forEach(([x, y, ch]) => put(g, x, y, col(ch)));
+  }
+  function drawRows(g, pal, rows, dx = 0, dy = 0, y0 = 0) {
+    rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) { const ch = row[rx]; if (ch !== ".") put(g, rx + dx, ry + y0 + dy, pal[ch]); } });
+  }
+  // look = { ap, items: { slot: { sprite, tier } }, pose, frame, prop }
+  function renderHero(look) {
+    const ap = look.ap || defaultAppearance();
+    const pal = heroPalette(ap);
+    const items = look.items || {};
+    const f = look.frame || 0, pose = look.pose || "idle", act = look.act || "";
+    const g = makeGrid();
+    let by = 0;
+    if (pose === "train") by = act === "float" ? (f % 4 < 2 ? -1 : -2) : (act === "run" ? (f % 2 ? -1 : 0) : (f % 4 === 2 ? -1 : 0));
+    // recolors from body/hands/feet items
+    const recol = Object.assign({}, pal);
+    ["body", "hands", "feet"].forEach(sl => { const it = items[sl]; if (it && S[it.sprite] && S[it.sprite].recolor) { const tp = TIER_PAL[it.tier] || TIER_PAL[0]; Object.entries(S[it.sprite].recolor).forEach(([k, v]) => { recol[k] = tp[v] || FIXED[v] || v; }); } });
+    const layer = (sl, front) => { const it = items[sl]; if (!it || !S[it.sprite]) return; const sp = S[it.sprite], tp = TIER_PAL[it.tier] || TIER_PAL[0]; (front ? (sp.front || []) : sp.parts).forEach(p => drawPart(g, recol, tp, p, 0, by)); };
+    // aura and back first
+    layer("aura"); layer("back");
+    if (items.back && S[items.back.sprite] && S[items.back.sprite].straps) { /* straps drawn later */ }
+    // body
+    let rows = BASE;
+    if (pose === "train" && act === "run" && f % 2 === 0) rows = BASE.slice(0, 30).concat(LEGS_RUN[0]);
+    drawRows(g, recol, rows, 0, by);
+    // face
+    const ey = 13 + by;
+    [[10, ey], [20, ey]].forEach(([x, y]) => { put(g, x, y, FIXED.W); put(g, x + 1, y, recol.E); for (let k = 1; k < 3; k++) { put(g, x, y + k, recol.E); put(g, x + 1, y + k, recol.E); } });
+    if (pose === "train" && f % 16 === 15) { [[10, ey], [20, ey]].forEach(([x, y]) => { for (let k = 0; k < 3; k++) { put(g, x, y + k, recol.S); put(g, x + 1, y + k, recol.S); } put(g, x, y + 2, recol.E); put(g, x + 1, y + 2, recol.E); }); }
+    [[8, 16], [9, 16], [22, 16], [23, 16]].forEach(([x, y]) => put(g, x, y + by, FIXED.B));
+    put(g, 15, 17 + by, FIXED.V); put(g, 16, 17 + by, FIXED.V);
+    layer("body"); layer("feet"); layer("belt"); layer("neck");
+    const back = items.back && S[items.back.sprite];
+    if (back && back.strap) drawPart(g, recol, TIER_PAL[items.back.tier] || TIER_PAL[0], { pts: line(10, 22, 21, 29, "a"), outline: false }, 0, by);
+    if (back && back.straps) drawPart(g, recol, TIER_PAL[items.back.tier] || TIER_PAL[0], { pts: line(11, 22, 11, 28, "a").concat(line(20, 22, 20, 28, "a")), outline: false }, 0, by);
+    if (back && back.front) layer("back", true);
+    // hair
+    const hs = HAIR_STYLES[ap.hairStyle] || "Short";
+    drawRows(g, recol, HAIR[hs], 0, by);
+    if (hs === "Ponytail") drawRows(g, recol, PONYTAIL.rows, PONYTAIL.x, PONYTAIL.y + by);
+    layer("head"); layer("face"); layer("hands"); layer("front");
+    // held item (or training prop), with a little motion while training
+    const held = look.prop || items.hand;
+    if (held && S[held.sprite]) {
+      const sp = S[held.sprite], tp = TIER_PAL[held.tier] || TIER_PAL[0];
+      let hx = 0, hy = by;
+      if (pose === "train") {
+        if (act === "swing") hy += f % 2 ? 2 : -1;
+        else if (act === "lift") hy += f % 4 < 2 ? 0 : -3;
+        else if (act === "flip") hy += f % 4 === 1 ? -2 : 0;
+        else if (act === "sweep") hx += f % 4 < 2 ? -1 : 1;
+        else if (act === "read") hy += 0;
+        else hy += f % 2;
+      }
+      if (held.sprite in S && S[held.sprite].slot !== "hand") sp.parts.forEach(p => drawPart(g, recol, tp, p, 0, by));
+      else sp.parts.forEach(p => drawPart(g, recol, tp, p, hx, hy));
+      if (sp.grip) [[22, 27], [23, 27], [22, 28], [23, 28]].forEach(([x, y]) => put(g, x + hx, y + hy, recol.U));
+    }
+    // training effects
+    if (pose === "train") {
+      const fx = (x, y, col) => put(g, x, y, col);
+      if (act === "music") { const k = f % 6; [[3, 14 - k], [27, 10 - ((k + 3) % 6)]].forEach(([x, y]) => { fx(x, y, FIXED.Y); fx(x + 1, y, FIXED.Y); fx(x + 1, y - 1, FIXED.Y); fx(x + 1, y - 2, FIXED.Y); fx(x + 2, y - 2, FIXED.Y); }); }
+      if (act === "swing" && f % 2) { [[19, 17], [26, 16], [25, 19]].forEach(([x, y]) => fx(x, y, FIXED.y)); }
+      if (act === "run") { const k = f % 4; fx(3 + k, 34, "#d8d2c4"); fx(2 + k, 33, "#d8d2c4"); fx(28, 9 + k % 2, FIXED.C); }
+      if (act === "float") { const k = f % 8; [[3, 30 - k * 2], [28, 26 - k * 2], [6, 20 - k]].forEach(([x, y]) => fx(x, y, FIXED.F)); }
+      if (act === "read") { if (f % 6 < 3) { fx(27, 10, FIXED.Y); fx(26, 11, FIXED.Y); fx(28, 11, FIXED.Y); fx(27, 12, FIXED.Y); } }
+      if (act === "flip" && f % 4 === 1) { fx(27, 20, "#d8d2c4"); fx(29, 18, "#d8d2c4"); }
+      if (act === "sweep") { fx(19 + (f % 4), 35, "#d8d2c4"); fx(18 + (f % 3), 34, "#d8d2c4"); }
+      if (act === "type" && f % 2) { fx(17, 21, FIXED.C); fx(26, 20, FIXED.C); }
+    }
+    // legendary sparkle
+    const legend = Object.values(items).some(it => it && it.tier === 5);
+    if (legend) [[3, 5], [28, 18], [4, 27]].forEach(([x, y], i) => { if ((f + i) % 3 !== 2) { put(g, x, y, FIXED.Y); put(g, x + 1, y + 1, FIXED.W); } });
+    return g;
+  }
+  function paintGrid(canvas, g, opts = {}) {
+    const scale = opts.scale || 4, crop = opts.crop || [0, 0, AV_W, AV_H];
+    const [cx, cy, cw, ch] = crop;
+    const pad = opts.pad || 0;
+    canvas.width = (cw + pad * 2) * scale; canvas.height = (ch + pad * 2) * scale;
+    const c = canvas.getContext("2d");
+    c.imageSmoothingEnabled = false;
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    if (opts.bg) drawBackdrop(c, opts.bg, cw + pad * 2, ch + pad * 2, scale, opts.frame || 0);
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) { const col = g[y + cy] && g[y + cy][x + cx]; if (col) { c.fillStyle = col; c.fillRect((x + pad) * scale, (y + pad) * scale, scale, scale); } }
+  }
+
+  // ---------- Backdrops ----------
+  // Pixel scenes for the avatar frame and training. Built as a list so themed, unlockable ones slot in later.
+  const BACKDROPS = {
+    meadow:  { name: "Meadow",  sky: ["#8fd3ff", "#bfe8ff"], ground: ["#5cb85c", "#3f8f44"], deco: "hills" },
+    dusk:    { name: "Dusk",    sky: ["#3a2a6b", "#e0708a"], ground: ["#3b3357", "#2a2440"], deco: "stars" },
+    dungeon: { name: "Dungeon", sky: ["#2a2d3a", "#3a3e50"], ground: ["#55596b", "#3d4052"], deco: "bricks" },
+    forge:   { name: "Forge",   sky: ["#3a1d1a", "#8a3a1a"], ground: ["#4a3a33", "#33271f"], deco: "embers" },
+    library: { name: "Library", sky: ["#4a3326", "#6b4a33"], ground: ["#8a5a34", "#653f22"], deco: "shelves" },
+    void:    { name: "Plain",   sky: ["#e9edf5", "#dfe5f0"], ground: ["#c9d1e1", "#b7c0d4"], deco: "" }
+  };
+  function drawBackdrop(c, key, w, h, s, f) {
+    const b = BACKDROPS[key] || BACKDROPS.meadow, gy = Math.round(h * 0.78);
+    const band = Math.ceil(gy / 4);
+    for (let i = 0; i < 4; i++) { c.fillStyle = mix(b.sky[0], b.sky[1], i / 3); c.fillRect(0, i * band * s, w * s, band * s); }
+    const px = (x, y, col) => { c.fillStyle = col; c.fillRect(x * s, y * s, s, s); };
+    if (b.deco === "hills") { c.fillStyle = mix(b.ground[0], b.sky[1], .45); for (let x = 0; x < w; x++) { const hh = Math.round(3 + 2 * Math.sin(x / 4)); c.fillRect(x * s, (gy - hh) * s, s, hh * s); } px(w - 6, 3, "#fff6b0"); px(w - 5, 3, "#fff6b0"); px(w - 6, 4, "#fff6b0"); px(w - 5, 4, "#fff6b0"); }
+    if (b.deco === "stars") [[3, 3], [9, 6], [w - 5, 2], [w - 10, 7], [14, 2], [w - 3, 9]].forEach(([x, y], i) => px(x, y, (f + i) % 5 ? "#fff4c8" : b.sky[0]));
+    if (b.deco === "bricks") { c.fillStyle = "rgba(0,0,0,.18)"; for (let y = 2; y < gy; y += 4) { c.fillRect(0, y * s, w * s, s); for (let x = (y / 4) % 2 ? 0 : 3; x < w; x += 6) c.fillRect(x * s, (y - 3) * s, s, 3 * s); } px(3, 8, "#ffb84a"); px(3, 7, (f % 2) ? "#ffe58a" : "#ff8a3a"); px(w - 4, 8, "#ffb84a"); px(w - 4, 7, (f % 2) ? "#ff8a3a" : "#ffe58a"); }
+    if (b.deco === "embers") [[4, gy - 3], [9, gy - 8], [w - 6, gy - 5], [w - 3, gy - 11], [14, gy - 13]].forEach(([x, y], i) => px(x, y - (f + i * 2) % 6, i % 2 ? "#ffb84a" : "#ff6a2a"));
+    if (b.deco === "shelves") { for (let y = 3; y < gy - 2; y += 6) { c.fillStyle = "#3a261a"; c.fillRect(0, (y + 4) * s, w * s, s); for (let x = 1; x < w - 1; x += 2) { c.fillStyle = ["#c8423a", "#3a6fc8", "#e2a521", "#3f8a4e", "#7a4ac8"][(x + y) % 5]; c.fillRect(x * s, (y + 1) * s, s, 3 * s); } } }
+    c.fillStyle = b.ground[0]; c.fillRect(0, gy * s, w * s, (h - gy) * s);
+    c.fillStyle = b.ground[1]; for (let x = 0; x < w; x += 3) c.fillRect(x * s, (gy + 1 + (x % 2)) * s, s, s);
+    c.fillStyle = "rgba(0,0,0,.2)"; c.fillRect(Math.round(w / 2 - 7) * s, (gy + 1) * s, 14 * s, s);
+  }
+  function mix(a, b, t) {
+    const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const [r1, g1, b1] = p(a), [r2, g2, b2] = p(b);
+    return "#" + [r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t].map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+  }
+  function defaultAppearance() { return { skin: 1, hairStyle: 0, hairColor: 1, eyes: 0, shirt: 3, pants: 6, bg: "meadow", show: {} }; }
+
+  // Render one item on its own, cropped to its pixels (for gear cards).
+  function itemIcon(canvas, sprite, tier, size = 40) {
+    const sp = S[sprite]; if (!sp) return;
+    const g = makeGrid(), pal = Object.assign({}, FIXED, { U: SKINS[1][0], T: "#3a6fc8", t: "#284f93", P: "#3d4152", p: "#2a2d3a", K: FIXED.K, k: FIXED.k });
+    const tp = TIER_PAL[tier] || TIER_PAL[0];
+    if (sp.recolor) {
+      // show the recolored region as a small swatch shape
+      const rc = Object.assign({}, pal); Object.entries(sp.recolor).forEach(([k, v]) => { rc[k] = tp[v] || FIXED[v] || v; });
+      const region = sp.slot === "feet" ? BASE.slice(32, 37) : sp.slot === "hands" ? BASE.slice(26, 30) : BASE.slice(21, 34);
+      const y0 = sp.slot === "feet" ? 32 : sp.slot === "hands" ? 26 : 21;
+      drawRows(g, rc, region, 0, 0, y0);
+    }
+    sp.parts.forEach(p => drawPart(g, pal, tp, p));
+    (sp.front || []).forEach(p => drawPart(g, pal, tp, p));
+    let x0 = AV_W, y0 = AV_H, x1 = -1, y1 = -1;
+    g.forEach((row, y) => row.forEach((v, x) => { if (v) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } }));
+    if (x1 < 0) return;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, scale = Math.max(1, Math.floor(size / Math.max(w, h)));
+    canvas.width = size; canvas.height = size;
+    const c = canvas.getContext("2d"); c.imageSmoothingEnabled = false; c.clearRect(0, 0, size, size);
+    const ox = Math.floor((size - w * scale) / 2), oy = Math.floor((size - h * scale) / 2);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const col = g[y + y0][x + x0]; if (col) { c.fillStyle = col; c.fillRect(ox + x * scale, oy + y * scale, scale, scale); } }
+  }
+
+  // ---------- Hero look from appearance + owned gear ----------
+  const SLOT_NAMES = { head: "Head", face: "Face", neck: "Neck", body: "Outfit", belt: "Belt", back: "Back", front: "Front", hand: "Hand", hands: "Gloves & wrist", feet: "Feet", aura: "Aura" };
+  function appearance() { if (!state.appearance) state.appearance = defaultAppearance(); if (!state.appearance.show) state.appearance.show = {}; return state.appearance; }
+  function ownedLooks() {
+    const out = [];
+    state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const sp = lookFor(it); if (S[sp]) out.push({ id: it.id, name: it.name, sprite: sp, slot: S[sp].slot, tier: it.tier, skill: s }); } }));
+    return out;
+  }
+  function heroItems() {
+    const ap = appearance(), bySlot = {};
+    ownedLooks().forEach(o => { (bySlot[o.slot] = bySlot[o.slot] || []).push(o); });
+    const items = {};
+    Object.keys(SLOT_NAMES).forEach(sl => {
+      const list = bySlot[sl] || [], pick = ap.show[sl];
+      if (pick === "none") return;
+      const chosen = pick && pick !== "auto" ? list.find(o => o.id === pick) : list.slice().sort((a, b) => b.tier - a.tier)[0];
+      if (chosen) items[sl] = { sprite: chosen.sprite, tier: chosen.tier, id: chosen.id };
+    });
+    return items;
+  }
+  function heroLook(extra) { return Object.assign({ ap: appearance(), items: heroItems() }, extra || {}); }
+  // What the hero does while training a skill.
+  const RUN_SKILLS = ["running", "cycling", "swimming", "climbing", "martial-arts"];
+  function trainingLook(s, frame) {
+    const sl = slugOf(s.name), best = gearFor(s).filter(it => state.owned[it.id]).sort((a, b) => b.tier - a.tier)[0];
+    const tier = best ? best.tier : 0, ownLook = best ? lookFor(best) : null;
+    let act = "bob", prop = null;
+    if (s.catId === "instrument") {
+      const inst = GEAR_BY_SKILL[s.name] ? (sl === "drums" ? "drum" : sl === "singing" ? "mic" : "guitar") : (INSTRUMENT_LOOK[sl] || "guitar");
+      act = "music"; prop = { sprite: HELD[inst] || "guitarHeld", tier };
+    } else if (s.cat === "spirit") act = "float";
+    else if (sl === "strength-training") { act = "lift"; prop = { sprite: "kettlebell", tier }; }
+    else if (s.catId === "health" || RUN_SKILLS.includes(sl)) act = "run";
+    else {
+      const def = TRAIN_PROP[s.catId] || "book";
+      const sp = ownLook && S[ownLook] && S[ownLook].slot === "hand" ? ownLook : def;
+      prop = { sprite: sp, tier };
+      act = { book: "read", cards: "read", pan: "flip", knife: "flip", ladle: "flip", whisk: "flip", pin: "flip", hammer: "swing", bighammer: "swing", wrench: "swing", brush: "swing", quill: "read", tablet: "type", gadget: "type", broom: "sweep" }[sp] || "bob";
+    }
+    const items = heroItems();
+    if (prop) delete items.hand;
+    if (act === "music" && items.back && S[items.back.sprite].strap) delete items.back;
+    return { ap: appearance(), items, pose: "train", act, frame, prop };
+  }
+  // Paint every pixel canvas on the page after a render.
+  function paintPixels() {
+    document.querySelectorAll("canvas[data-av]").forEach(c => {
+      const kind = c.dataset.av, ap = appearance();
+      if (kind === "portrait") paintGrid(c, renderHero(heroLook()), { scale: +c.dataset.scale || 3, crop: [3, 0, 26, 26], bg: ap.bg });
+      else if (kind === "full") paintGrid(c, renderHero(heroLook({ frame: avFrame })), { scale: +c.dataset.scale || 5, pad: 4, bg: ap.bg, frame: avFrame });
+    });
+    document.querySelectorAll("canvas[data-icon]").forEach(c => { const [sp, t] = c.dataset.icon.split(":"); itemIcon(c, sp, +t, +c.dataset.size || 40); });
+    const tc = document.getElementById("train-canvas");
+    if (tc && state.timer) { const s = skillById(state.timer.skillId); if (s) paintGrid(tc, renderHero(trainingLook(s, avFrame)), { scale: 4, pad: 4, bg: appearance().bg, frame: avFrame }); }
+  }
+  let avFrame = 0;
+  setInterval(() => {
+    avFrame++;
+    const tc = document.getElementById("train-canvas");
+    if (tc && state.timer) { const s = skillById(state.timer.skillId); if (s) paintGrid(tc, renderHero(trainingLook(s, avFrame)), { scale: 4, pad: 4, bg: appearance().bg, frame: avFrame }); }
+    const hc = document.querySelector('canvas[data-av="full"]');
+    if (hc && avFrame % 2 === 0) paintGrid(hc, renderHero(heroLook({ frame: avFrame })), { scale: +hc.dataset.scale || 5, pad: 4, bg: appearance().bg, frame: avFrame });
+  }, 220);
+
+  // Profile picture: full hero on its backdrop, 480x480.
+  function portraitCanvas() {
+    const c = document.createElement("canvas");
+    paintGrid(c, renderHero(heroLook()), { scale: 10, pad: 0, bg: appearance().bg });
+    const out = document.createElement("canvas"); out.width = 480; out.height = 480;
+    const o = out.getContext("2d"); o.imageSmoothingEnabled = false;
+    const bg = document.createElement("canvas"); bg.width = 48; bg.height = 48;
+    drawBackdrop(bg.getContext("2d"), appearance().bg, 48, 48, 1, 0);
+    o.drawImage(bg, 0, 0, 480, 480);
+    o.drawImage(c, 80, 60);
+    o.fillStyle = OUTLINE; [[0, 0, 480, 10], [0, 470, 480, 10], [0, 0, 10, 480], [470, 0, 10, 480]].forEach(r => o.fillRect(...r));
+    o.fillStyle = (TIER_PAL[Math.min(5, Math.floor(totalLevel() / 25))] || TIER_PAL[0]).A;
+    [[10, 10, 460, 6], [10, 464, 460, 6], [10, 10, 6, 460], [464, 10, 6, 460]].forEach(r => o.fillRect(...r));
+    return out;
+  }
+  async function savePortrait() {
+    const name = (state.heroName || "level-up-hero").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() + ".png";
+    const cv = portraitCanvas();
+    const blob = await new Promise(r => cv.toBlob(r, "image/png"));
+    if (inClaude) {
+      try {
+        const dl = await window.claude.use("downloads");
+        if (dl) { await dl.save({ filename: name, data: blob }); toast("Profile picture saved."); return; }
+      } catch (e) { if (e && e.code === "declined") return; }
+      showPortrait(cv); return;
+    }
+    try {
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast("Profile picture saved.");
+    } catch (e) { showPortrait(cv); }
+  }
+  function showPortrait(cv) {
+    const out = document.getElementById("portrait-out");
+    if (out) { out.innerHTML = `<img src="${cv.toDataURL("image/png")}" alt="Your hero" style="width:200px;image-rendering:pixelated;border-radius:8px"><div class="hint">Press and hold (or right-click) the picture to save it.</div>`; }
+  }
+
+  // ---------- Hero tab ----------
+  function swatchRow(label, key, list, colorOf, nameOf) {
+    const ap = appearance();
+    return `<div class="field"><span class="lbl">${label}</span><div class="swatches">${list.map((v, i) =>
+      `<button class="sw" data-act="ap-set" data-key="${key}" data-val="${i}" aria-pressed="${ap[key] === i}" title="${esc(nameOf(v, i))}" aria-label="${esc(label + ": " + nameOf(v, i))}" style="background:${colorOf(v)}"></button>`).join("")}</div></div>`;
+  }
+  function renderHeroTab() {
+    const ap = appearance(), looks = ownedLooks(), bySlot = {};
+    looks.forEach(o => { (bySlot[o.slot] = bySlot[o.slot] || []).push(o); });
+    const slots = Object.keys(SLOT_NAMES).filter(sl => bySlot[sl]);
+    return `<section style="display:grid;gap:12px">
+      <div class="section-head" style="margin:0"><h2>Hero</h2><span class="muted" style="font-size:13px">${esc(heroClass().name)} · Lv ${totalLevel()}</span></div>
+      <article class="panel hero-card">
+        <div class="hero-stage"><canvas data-av="full" data-scale="5" class="px" aria-label="Your hero"></canvas></div>
+        <div class="hero-side">
+          <div class="field"><span class="lbl">Hair style</span><div class="chips">${HAIR_STYLES.map((h, i) => `<button class="chip" data-act="ap-set" data-key="hairStyle" data-val="${i}" aria-pressed="${ap.hairStyle === i}">${h}</button>`).join("")}</div></div>
+          ${swatchRow("Hair color", "hairColor", HAIR_COLORS, v => v[1], v => v[0])}
+          ${swatchRow("Skin", "skin", SKINS, v => v[0], (v, i) => "Tone " + (i + 1))}
+          ${swatchRow("Eyes", "eyes", EYE_COLORS, v => v[1], v => v[0])}
+          ${swatchRow("Shirt", "shirt", CLOTH, v => v[1], v => v[0])}
+          ${swatchRow("Pants", "pants", CLOTH, v => v[1], v => v[0])}
+          <div class="field"><span class="lbl">Backdrop</span><div class="chips">${Object.entries(BACKDROPS).map(([k, b]) => `<button class="chip" data-act="ap-bg" data-val="${k}" aria-pressed="${ap.bg === k}">${b.name}</button>`).join("")}</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="portrait">Save profile picture</button><button class="btn ghost" data-act="ap-random">Surprise me</button></div>
+          <div id="portrait-out"></div>
+        </div>
+      </article>
+      <article class="panel set-card">
+        <h3>Gear on your hero</h3>
+        ${slots.length ? `<p class="hint" style="margin:0">Everything you own shows up on your hero. Auto shows your best item in each spot.</p>
+          <div class="slot-grid">${slots.map(sl => `<div class="field"><label class="lbl" for="slot-${sl}">${SLOT_NAMES[sl]}</label><select class="input" id="slot-${sl}" data-act-change="ap-slot" data-slot="${sl}">
+            <option value="auto" ${!ap.show[sl] || ap.show[sl] === "auto" ? "selected" : ""}>Auto</option>
+            ${bySlot[sl].map(o => `<option value="${o.id}" ${ap.show[sl] === o.id ? "selected" : ""}>${esc(o.name)}</option>`).join("")}
+            <option value="none" ${ap.show[sl] === "none" ? "selected" : ""}>Hide</option></select></div>`).join("")}</div>`
+        : `<p class="hint" style="margin:0">Gear you buy appears on your hero. Practice to unlock items, run dungeons for gold, then buy them in the Gear tab.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>`}
+      </article>
+    </section>`;
   }
 
   // ---------- Training scene ----------
@@ -1217,40 +1766,13 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     return { s, xp, rested: pool > 0 && rested < pool, p: progress(total), shards, keys: Math.floor((state.keyShards + shards) / SHARDS_PER_KEY) - state.keysUsed, rem: (state.keyShards + shards) % SHARDS_PER_KEY };
   }
 
-  function chibiSVG(path) {
-    const line = 'class="ol"';
-    const legs = `<rect class="legA" x="66" y="124" width="12" height="26" rx="5" fill="#3d3a5c" ${line}/><rect class="legB" x="82" y="124" width="12" height="26" rx="5" fill="#3d3a5c" ${line}/>`;
-    const body = `<rect x="56" y="88" width="48" height="42" rx="15" fill="var(--xp-fill)" ${line}/><rect x="56" y="112" width="48" height="6" fill="#7a4a12" opacity=".55"/>`;
-    const head = `<circle cx="80" cy="56" r="34" fill="#f4cfa6" ${line}/>
-      <path d="M46 58 C42 20 118 20 114 58 C108 40 94 34 80 36 C66 34 52 42 46 58Z" fill="#3b2a20" ${line}/>
-      <ellipse class="eye" cx="68" cy="62" rx="4" ry="5.5" fill="#1d1b2a"/><ellipse class="eye" cx="92" cy="62" rx="4" ry="5.5" fill="#1d1b2a"/>
-      <circle cx="59" cy="72" r="5" fill="#f29a8b" opacity=".55"/><circle cx="101" cy="72" r="5" fill="#f29a8b" opacity=".55"/>
-      <path d="M74 76 Q80 81 86 76" fill="none" stroke="#1d1b2a" stroke-width="2.5" stroke-linecap="round"/>`;
-    const hand = (x, y, cls = "") => `<circle class="${cls}" cx="${x}" cy="${y}" r="7" fill="#f4cfa6" ${line}/>`;
-    const props = {
-      music: { back: "", front: `<g transform="rotate(-28 80 110)"><rect x="96" y="102" width="44" height="7" rx="2" fill="#5a3a1c" ${line}/><ellipse cx="82" cy="106" rx="19" ry="15" fill="#c77a30" ${line}/><circle cx="84" cy="106" r="5" fill="#3b2412"/></g>${hand(72, 112, "strum")}${hand(118, 88)}`, cls: "" },
-      body: { back: "", front: `<rect x="48" y="40" width="64" height="7" rx="3" fill="#d94a3a" ${line}/>${hand(54, 106, "tap")}${hand(106, 106, "tap2")}`, cls: "run" },
-      mind: { back: "", front: `<rect x="54" y="98" width="26" height="22" rx="2" fill="#f6f1e3" ${line}/><rect class="flip" x="80" y="98" width="26" height="22" rx="2" fill="#fffaf0" ${line}/><path d="M60 105h14M60 111h14M86 105h14M86 111h14" stroke="#9aa0b5" stroke-width="1.5"/>${hand(52, 114)}${hand(108, 114)}`, cls: "" },
-      craft: { back: "", front: `<g class="swing"><rect x="108" y="70" width="6" height="40" rx="2" fill="#7a4a1c" ${line}/><rect x="98" y="62" width="26" height="12" rx="2" fill="#8e96a8" ${line}/></g>${hand(111, 106)}${hand(52, 108)}`, cls: "" },
-      tech: { back: "", front: `<rect x="50" y="94" width="60" height="34" rx="3" fill="#2b3150" ${line}/><rect class="glow" x="55" y="99" width="50" height="22" rx="2" fill="#73a6ff"/><rect x="44" y="126" width="72" height="6" rx="2" fill="#8e96a8" ${line}/>${hand(60, 128, "tap")}${hand(100, 128, "tap2")}`, cls: "" },
-      spirit: { back: `<circle class="pulse" cx="80" cy="96" r="66" fill="var(--xp-hi)"/>`, front: `${hand(64, 114)}${hand(96, 114)}`, cls: "float" },
-      life: { back: "", front: `<g class="sweep"><rect x="106" y="58" width="5" height="74" rx="2" fill="#a0702e" ${line}/><path d="M98 130 L120 130 L124 152 L94 152 Z" fill="#e3c26a" ${line}/></g>${hand(108, 92)}${hand(108, 112)}`, cls: "" }
-    };
-    const pr = props[path] || props.life;
-    return `<svg class="chibi ${pr.cls}" viewBox="0 0 160 172" role="img" aria-label="Your hero training">
-      <ellipse cx="80" cy="160" rx="42" ry="7" fill="var(--ink)" opacity=".15"/>
-      ${pr.back}
-      <g class="hero">${legs}${body}${head}${pr.front}</g>
-    </svg>`;
-  }
-
   function renderTraining() {
     const t = state.timer; if (!t) return "";
     const pj = project(t); if (!pj.s) return "";
     liveLevel = pj.p.L;
     const sparks = Array.from({ length: 9 }, (_, i) => `<i style="left:${8 + i * 10}%;animation-delay:${(i * 0.29).toFixed(2)}s"></i>`).join("");
     return `<section class="panel train" aria-label="Training session">
-      <div class="stage" id="stage"><div class="sparks">${sparks}</div><div class="ring"></div><div class="lvpop" id="lvpop"></div>${chibiSVG(pj.s.cat)}</div>
+      <div class="stage" id="stage"><div class="sparks">${sparks}</div><div class="ring"></div><div class="lvpop" id="lvpop"></div><canvas id="train-canvas" class="px train-px" aria-label="Your hero training"></canvas></div>
       <div class="train-info">
         <div class="train-head"><h2><span class="live-dot"></span>Training · ${esc(pj.s.name)}</h2>
           <span class="type-badge ${t.type === "lesson" ? "lesson" : ""}">${t.type === "lesson" ? "Class or lesson · 1.5× XP" : "Solo practice"}</span></div>
@@ -1630,6 +2152,10 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
   }
 
   // ---------- Events ----------
+  document.addEventListener("change", e => {
+    const el = e.target;
+    if (el.dataset && el.dataset.actChange === "ap-slot") { appearance().show[el.dataset.slot] = el.value; persist(); render(); }
+  });
   function reportError(err) {
     const msg = err && err.message ? err.message : String(err);
     try { console.error(err); } catch (e) {}
@@ -1667,6 +2193,14 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
       case "close-run": runView = null; render(); break;
       case "feedback": openFeedback("feedback"); break;
       case "upd-go": Updater.go(); break;
+      case "ap-set": { const ap = appearance(); ap[b.dataset.key] = +b.dataset.val; persist(); render(); break; }
+      case "ap-bg": { appearance().bg = b.dataset.val; persist(); render(); break; }
+      case "ap-random": {
+        const ap = appearance(), r = n => Math.floor(Math.random() * n);
+        Object.assign(ap, { skin: r(SKINS.length), hairStyle: r(HAIR_STYLES.length), hairColor: r(HAIR_COLORS.length), eyes: r(EYE_COLORS.length), shirt: r(CLOTH.length), pants: r(CLOTH.length) });
+        persist(); render(); break;
+      }
+      case "portrait": savePortrait(); break;
       case "backup-copy": {
         const code = backupCode(), out = document.getElementById("backup-out");
         const showBox = () => { if (out) { out.innerHTML = `<textarea class="input backup-box" id="backup-text" rows="4" readonly>${esc(code)}</textarea><div class="hint">Select all and copy this code.</div>`; const t = document.getElementById("backup-text"); t.focus(); t.select(); } };
@@ -1747,7 +2281,8 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
         pick.forEach((v, n) => addSkill(n, v.catId, v.cat, v.tips, (+v.prior || 0) * 60));
         pick = new Map();
         persist(); render();
-        toast("Your hero is ready. Start a timer to earn your first XP.");
+        tab = "hero";
+        toast("Your hero is ready. Give them a look, then start a timer to earn your first XP.");
         break;
       }
     }
@@ -1782,11 +2317,12 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
     listeners.forEach(fn => { try { fn(msg.payload); } catch (e) {} });
   }
   const baseRender = render;
-  render = function () { baseRender(); if (!sample) notifyNative(); };
+  render = function () { baseRender(); try { paintPixels(); } catch (e) { console.error(e); } if (!sample) notifyNative(); };
 
   window.LevelUp = Object.freeze({
     version: 1,
     snapshot: () => widgetSnapshot(),
+    portrait: () => { const c = document.createElement("canvas"); paintGrid(c, renderHero(heroLook()), { scale: 6, crop: [3, 0, 26, 26], bg: appearance().bg }); return c.toDataURL("image/png"); },
     quickStart: (skillId, type = "solo") => { const s = skillId ? skillById(skillId) : quickTarget(); if (s && !state.timer) startTimer(s.id, type); return widgetSnapshot(); },
     stop: () => { stopTimer(); return widgetSnapshot(); },
     log: (skillId, minutes, daysBack = 0, note = "", type = "solo") => {
