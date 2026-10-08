@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-08.9",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-08.10",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -1393,8 +1393,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.9";
-  const APP_VERSION = "0.11.1";
+  const BUILD = "2026-10-08.10";
+  const APP_VERSION = "0.11.2";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1822,7 +1822,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
             if (cur && e.pct <= cur.pct) return `<button class="btn small" disabled>${cur.kind === k ? "Already active" : "A stronger one is active"}</button>`;
             if (cur) return `<button class="btn small" data-act="drink" data-id="${k}">Replace active elixir…</button>`;
             return `<button class="btn small primary" data-act="drink" data-id="${k}">Drink</button>`; })()}</div>`).join("")}</div>`
-          : `<p class="hint" style="margin:0">No elixirs yet. Elixirs last 1 hour of practice, one at a time. Small XP elixirs (+5%) turn up in dungeons now and then and from finishing all of a day's quests. Medium, Large and Grand elixirs (+10% to +25%) are very rare finds deep in the dungeons, and rewards for weekly quests and big achievements.</p>`}
+          : `<p class="hint" style="margin:0">No elixirs yet. Elixirs last 1 hour of practice, one at a time. Buy Small (+5%) and Medium (+10%) elixirs in the Shop, or find them: Small ones turn up in dungeons now and then and when you finish all of a day's quests. Large and Grand elixirs (+15% and +25%) are very rare finds deep in the dungeons, and rewards for weekly quests and big achievements.</p>`}
       </article>
     </section>`;
   }
@@ -1832,6 +1832,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Shop</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${state.gold.toLocaleString()}</b> gold</span></div>
       <p class="hint" style="margin:0">Each skill unlocks gear as you level it. Buy it with dungeon gold, and it goes to your Inventory. One item per skill can be equipped, and its bonus adds to that skill's stat. Items you own can turn up in their Radiant version in dungeons.</p>
+      ${renderPotionShop()}
       ${CATEGORIES.flatMap(c => state.skills.filter(s => s.catId === c.id)).map(s => {
         const lv = earnedLv(s), eq = state.equipped[s.id];
         return `<article class="panel gear-skill">
@@ -2163,8 +2164,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // Friendly boosts, never pressure: daily quests refresh each day and nothing carries over or is lost,
   // rewards arrive on their own (no claiming), and achievements count totals, never streaks.
   const ELIXIRS = {
-    small:  { name: "Small XP Elixir",  pct: 5,  min: 60, col: "#7ad0ff" },
-    medium: { name: "Medium XP Elixir", pct: 10, min: 60, col: "#4fc58d" },
+    small:  { name: "Small XP Elixir",  pct: 5,  min: 60, col: "#7ad0ff", price: 80 },
+    medium: { name: "Medium XP Elixir", pct: 10, min: 60, col: "#4fc58d", price: 220 },
     large:  { name: "Large XP Elixir",  pct: 15, min: 60, col: "#c89cf2" },
     grand:  { name: "Grand XP Elixir",  pct: 25, min: 60, col: "#f2c14e" }
   };
@@ -2194,6 +2195,21 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
   // One elixir at a time, each lasting 1 hour of practice. A stronger one can replace the active one,
   // but only after you confirm, since the old one's remaining minutes are lost.
+  // Small and Medium elixirs can be bought, so boosting isn't only luck. Large and Grand stay rare finds.
+  function buyElixir(k) {
+    const e = ELIXIRS[k]; if (!e || !e.price) return;
+    if (state.gold < e.price) { toast(`You need ${e.price - state.gold} more gold.`); return; }
+    state.gold -= e.price; if (!state.elixirs) state.elixirs = {}; state.elixirs[k] = elixirCount(k) + 1;
+    Sound.play("buy"); toast(`Bought a <b>${esc(e.name)}</b>. Drink it from your Inventory when you're ready to practice.`);
+    persist(); render();
+  }
+  function renderPotionShop() {
+    return `<article class="panel gear-skill">
+      <div class="gear-head"><h3>Elixirs</h3><span class="muted" style="font-size:13px">One works at a time · lasts 1 hour of practice</span></div>
+      <div class="gear-grid">${Object.entries(ELIXIRS).filter(([, e]) => e.price).map(([k, e]) => `<div class="item elix">${ElixirIcon(k, 40)}<b>${esc(e.name)}</b><span class="eff">+${e.pct}% XP for 1 hour of practice</span>${elixirCount(k) ? `<span class="req">You have ${elixirCount(k)}</span>` : ""}<button class="btn small ${state.gold >= e.price ? "primary" : ""}" data-act="buy-elixir" data-id="${k}" ${state.gold >= e.price ? "" : "disabled"}>Buy · ${e.price}g</button></div>`).join("")}</div>
+      <p class="hint" style="margin:0">Spend gold to level a little faster, or save it for gear. Large and Grand elixirs can't be bought: find them deep in dungeons, or earn them from weekly quests and achievements.</p>
+    </article>`;
+  }
   function drinkElixir(k, replace) {
     const e = ELIXIRS[k]; if (!e || elixirCount(k) < 1) return;
     const cur = activeElixir();
@@ -2238,10 +2254,10 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     { id: "skills", kind: "dungeon", text: "Use 5 battle skills", target: 5, val: () => qc().skills, need: () => battleSkills().length > 0 }
   ];
   const WEEKLY = [
-    { id: "w180", text: "Practice for 3 hours this week", target: 180, val: () => weeklyTotals(1, "all")[0].min, reward: 150 },
-    { id: "w5", text: "Clear 5 dungeons this week", target: 5, val: () => wq().wins, reward: 150 }
+    { id: "w180", text: "Practice for 3 hours this week", target: 180, val: () => weeklyTotals(1, "all")[0].min, reward: 75 },
+    { id: "w5", text: "Clear 5 dungeons this week", target: 5, val: () => wq().wins, reward: 75 }
   ];
-  const DAILY_GOLD = 30, DAILY_BONUS_GOLD = 50;
+  const DAILY_GOLD = 10, DAILY_BONUS_GOLD = 20;         // up to 50 gold a day: a nudge, not an income
   // Today's 3 quests: two practice quests and one dungeon quest, chosen by the date so they stay put all day.
   function dailyQuests() {
     let seed = dayNum(dayKey()) * 2654435761 % 4294967296;
@@ -4181,6 +4197,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "bt-skill": useSkill(id); break;
       case "drink": drinkElixir(id); break;
       case "drink-replace": drinkElixir(id, true); break;
+      case "buy-elixir": buyElixir(id); break;
       case "feedback": openFeedback("feedback"); break;
       case "upd-go": Updater.go(); break;
       case "toggle-autoupd": { state.settings.autoUpdate = !Updater.auto(); persist(); render(); if (Updater.auto()) Updater.check(false); break; }

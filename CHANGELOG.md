@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.11.2 — 2026-10-08 (build 2026-10-08.10)
+
+Quest gold and an elixir shop.
+
+- Daily quests now pay 10 gold each, plus 20 for finishing all 3: up to 50 gold a day, a nudge next to dungeon gold rather than an income.
+- Weekly quests now pay 75 gold each (they were 150), to match.
+- New Elixirs section in the Shop: Small XP Elixir (+5%) for 80 gold and Medium (+10%) for 220. Large and Grand elixirs still can't be bought, only found or earned.
+
 ## v0.11.1 — 2026-10-08 (build 2026-10-08.9)
 
 Elixir safety.
