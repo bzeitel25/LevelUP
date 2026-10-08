@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.1 — 2026-10-08 (build 2026-10-08.5)
+
+Automatic updates.
+
+- Level UP now updates itself. It checks when you open it and when you come back to it (at most every 15 minutes), downloads any new version, and switches over. If you're mid-dungeon, in a dialog or watching a celebration, it waits until you leave the app. A short "Level UP updated" note confirms it. Your hero is never touched.
+- Settings → App version has an "Update automatically" switch (on by default) and a "Check now" button.
+- Android app: new versions of the app itself download in the background, are kept on the phone (they work offline and share your saved hero), and start on the next launch. If a downloaded version ever fails to start, the app drops it within a few seconds and falls back to the built-in version. A new APK is only needed when the native widget code changes. Install this build once to get it.
+
 ## v0.8.0 — 2026-10-08 (build 2026-10-08.4)
 
 Inventory and Radiant relics.
