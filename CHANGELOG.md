@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.11.1 — 2026-10-08 (build 2026-10-08.9)
+
+Elixir safety.
+
+- Only one elixir works at a time, and every elixir lasts 1 hour of practice (the Grand elixir was 90 minutes).
+- While one is active, weaker or equal elixirs can't be drunk.
+- A stronger elixir can replace the active one, but only after a confirmation that warns the current elixir's remaining minutes will be lost.
+
 ## v0.11.0 — 2026-10-08 (build 2026-10-08.8)
 
 Elixirs, quests and achievements.
@@ -8,7 +16,7 @@ Elixirs, quests and achievements.
   - Small: +5% for 60 min.
   - Medium: +10% for 60 min.
   - Large: +15% for 60 min.
-  - Grand: +25% for 90 min.
+  - Grand: +25% for 60 min.
   - The sheet shows the active elixir and how many minutes it has left. Sessions boosted by an elixir are tagged, and deleting one gives its elixir minutes back.
 - Where elixirs come from: Small ones turn up in any dungeon now and then (4% to 10% per win) and half the time when you finish all of a day's quests. Medium, Large and Grand are very rare drops in the deeper dungeons (Grand: 0.2% to 0.5% in the last two), and rewards for weekly quests and big achievements.
 - Daily quests: 3 small goals each day, like "Practice for 30 minutes", "Practice 2 different skills" or "Clear a dungeon". Each pays 30 gold, and finishing all 3 adds 50 gold and a 50% chance at a Small elixir.

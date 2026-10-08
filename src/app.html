@@ -1364,8 +1364,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.8";
-  const APP_VERSION = "0.11.0";
+  const BUILD = "2026-10-08.9";
+  const APP_VERSION = "0.11.1";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1788,8 +1788,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       </article>
       <article class="panel gear-skill">
         <div class="gear-head"><h3>Consumables</h3>${activeElixir() ? `<span class="muted" style="font-size:13px">Active: +${activeElixir().pct}% XP · ${fmt(activeElixir().left)} left</span>` : ""}</div>
-        ${Object.keys(ELIXIRS).some(k => elixirCount(k)) ? `<div class="gear-grid">${Object.entries(ELIXIRS).filter(([k]) => elixirCount(k)).map(([k, e]) => `<div class="item elix">${ElixirIcon(k, 40)}<b>${esc(e.name)} <span class="muted num">×${elixirCount(k)}</span></b><span class="eff">+${e.pct}% XP for ${e.min} min of practice</span><button class="btn small ${activeElixir() ? "" : "primary"}" data-act="drink" data-id="${k}" ${activeElixir() ? "disabled" : ""}>${activeElixir() ? "One is already active" : "Drink"}</button></div>`).join("")}</div>`
-          : `<p class="hint" style="margin:0">No elixirs yet. Small XP elixirs (+5%) turn up in dungeons now and then and from finishing all of a day's quests. Medium, Large and Grand elixirs (+10% to +25%) are very rare finds deep in the dungeons, and rewards for weekly quests and big achievements.</p>`}
+        ${Object.keys(ELIXIRS).some(k => elixirCount(k)) ? `<div class="gear-grid">${Object.entries(ELIXIRS).filter(([k]) => elixirCount(k)).map(([k, e]) => `<div class="item elix">${ElixirIcon(k, 40)}<b>${esc(e.name)} <span class="muted num">×${elixirCount(k)}</span></b><span class="eff">+${e.pct}% XP for 1 hour of practice</span>${(() => { const cur = activeElixir();
+            if (confirm && confirm.kind === "elixir" && confirm.id === k) return `<div class="note warn" style="font-size:12.5px;margin-top:4px">This replaces your active ${esc(ELIXIRS[cur.kind].name)} (+${cur.pct}%, ${fmt(cur.left)} left). Its remaining minutes are lost.</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn small danger" data-act="drink-replace" data-id="${k}">Replace</button><button class="btn small ghost" data-act="cancel-confirm">Keep current</button></div>`;
+            if (cur && e.pct <= cur.pct) return `<button class="btn small" disabled>${cur.kind === k ? "Already active" : "A stronger one is active"}</button>`;
+            if (cur) return `<button class="btn small" data-act="drink" data-id="${k}">Replace active elixir…</button>`;
+            return `<button class="btn small primary" data-act="drink" data-id="${k}">Drink</button>`; })()}</div>`).join("")}</div>`
+          : `<p class="hint" style="margin:0">No elixirs yet. Elixirs last 1 hour of practice, one at a time. Small XP elixirs (+5%) turn up in dungeons now and then and from finishing all of a day's quests. Medium, Large and Grand elixirs (+10% to +25%) are very rare finds deep in the dungeons, and rewards for weekly quests and big achievements.</p>`}
       </article>
     </section>`;
   }
@@ -1852,7 +1856,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
         ${r.summary ? `<div class="muted" style="font-size:13px">${esc(r.summary)}${r.lucky ? ` · Lucky Find +${r.lucky}% gold` : ""}</div>` : ""}
         <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune || r.talGold ? ` <span class="muted">(includes ${[r.fortune ? `Fortune +${r.fortune}%` : "", r.talGold ? `talents +${r.talGold}%` : ""].filter(Boolean).join(" and ")})</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
-        ${r.elixir ? `<div class="relic-drop elix-drop">${ElixirIcon(r.elixir, 44)}<div><div class="relic-kicker">Rare elixir found</div><b>${esc(ELIXIRS[r.elixir].name)}</b><div class="muted" style="font-size:13px">+${ELIXIRS[r.elixir].pct}% XP for ${ELIXIRS[r.elixir].min} minutes of practice. Drink it from your Inventory whenever you like.</div></div></div>` : ""}
+        ${r.elixir ? `<div class="relic-drop elix-drop">${ElixirIcon(r.elixir, 44)}<div><div class="relic-kicker">Rare elixir found</div><b>${esc(ELIXIRS[r.elixir].name)}</b><div class="muted" style="font-size:13px">+${ELIXIRS[r.elixir].pct}% XP for 1 hour of practice. Drink it from your Inventory whenever you like.</div></div></div>` : ""}
         ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}). It's on your hero now. Switch versions anytime in your Inventory.</div></div></div>` : ""}
         <div style="display:flex;gap:8px;flex-wrap:wrap">${r.relic ? `<button class="btn small" data-act="tab" data-tab="inventory">Open inventory</button>` : ""}<button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
     </div>`;
@@ -2133,7 +2137,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     small:  { name: "Small XP Elixir",  pct: 5,  min: 60, col: "#7ad0ff" },
     medium: { name: "Medium XP Elixir", pct: 10, min: 60, col: "#4fc58d" },
     large:  { name: "Large XP Elixir",  pct: 15, min: 60, col: "#c89cf2" },
-    grand:  { name: "Grand XP Elixir",  pct: 25, min: 90, col: "#f2c14e" }
+    grand:  { name: "Grand XP Elixir",  pct: 25, min: 60, col: "#f2c14e" }
   };
   // Only the deeper dungeons drop elixirs, and rarely.
   // Chance per dungeon win. Small elixirs are fairly common; the bigger ones are very rare and only drop deep down.
@@ -2159,9 +2163,14 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     state.elixirs[k] = elixirCount(k) + 1;
     toast(`${why ? esc(why) + ": " : ""}<b>${esc(ELIXIRS[k].name)}</b> (+${ELIXIRS[k].pct}% XP) added to your Inventory.`, "", 5000);
   }
-  function drinkElixir(k) {
+  // One elixir at a time, each lasting 1 hour of practice. A stronger one can replace the active one,
+  // but only after you confirm, since the old one's remaining minutes are lost.
+  function drinkElixir(k, replace) {
     const e = ELIXIRS[k]; if (!e || elixirCount(k) < 1) return;
-    if (activeElixir()) { toast("An elixir is already working. Finish its minutes first."); return; }
+    const cur = activeElixir();
+    if (cur && e.pct <= cur.pct) { toast("An equal or stronger elixir is already working. Finish its minutes first."); return; }
+    if (cur && !replace) { confirm = { kind: "elixir", id: k }; render(); return; }
+    confirm = null;
     state.elixirs[k]--; state.elixir = { kind: k, pct: e.pct, left: e.min, total: e.min };
     if (!state.stats) state.stats = { clears: 0, runs: 0 };
     state.stats.elixirs = (state.stats.elixirs || 0) + 1;
@@ -4142,6 +4151,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "close-run": runView = null; render(); break;
       case "bt-skill": useSkill(id); break;
       case "drink": drinkElixir(id); break;
+      case "drink-replace": drinkElixir(id, true); break;
       case "feedback": openFeedback("feedback"); break;
       case "upd-go": Updater.go(); break;
       case "toggle-autoupd": { state.settings.autoUpdate = !Updater.auto(); persist(); render(); if (Updater.auto()) Updater.check(false); break; }
