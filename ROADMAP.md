@@ -15,7 +15,7 @@ Design rules that every feature follows:
 | v0.1 to v0.3 | Tracker, timer, solo and lesson sessions, rested XP, veteran badges, tips, keys, dungeons, gear |
 | v0.4 | Pixel hero, celebrations, sound, animated battles, themes, backdrops |
 | v0.5 | Android app with real home-screen widgets |
-| v0.6 | Talent trees: one per category, with titles and signature moves |
+| v0.6 | Talent trees: one per category, with titles |
 | v0.7 | Portrait frames and the Progress view (weekly chart and per-skill time) |
 | v0.8 | Inventory tab, Radiant relic versions of gear you own (switch Regular or Radiant), Relic Hunter frame |
 | v0.8.1 | Automatic updates on the web and in the Android app |

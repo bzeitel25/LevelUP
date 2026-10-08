@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-08.14",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-08.15",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -546,6 +546,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .tal-bar i { background: linear-gradient(90deg, var(--xp-fill), var(--xp-hi)); }
 .tal-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .tal-col { display: grid; gap: 14px; align-content: start; }
+.tal-style { font-family: var(--f-display); font-size: 14px; color: var(--xp-fill); margin-bottom: 2px; }
+.tal-sum { padding: 10px 14px; }
+.tal-sum summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.tal-sum ul { margin: 8px 0; padding-left: 18px; font-size: 13px; line-height: 1.6; columns: 2; column-gap: 28px; }
+@media (max-width: 520px) { .tal-sum ul { columns: 1; } }
 .tal-branch { font-family: var(--f-display); font-size: 15px; text-align: center; color: var(--muted); border-bottom: 2px solid var(--line); padding-bottom: 4px; min-height: 2.6em; display: grid; place-items: end center; line-height: 1.15; }
 .tal-node { position: relative; display: grid; gap: 2px; }
 .tal-node::before { content: ""; position: absolute; left: 50%; top: -15px; width: 4px; height: 15px; margin-left: -2px; background: var(--line); }
@@ -572,8 +577,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .tal-title-btn { font-size: 12px; justify-self: center; }
 .tal-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
 .hero-title { display: inline-block; font-size: 11.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--xp); border: 1.5px solid var(--xp-fill); border-radius: 4px; padding: 0 6px; margin-top: 3px; }
-.enc.sig { background: color-mix(in srgb, var(--xp-fill) 12%, transparent); border-radius: 6px; }
-.enc.sig .stat-chip { border-color: var(--xp-fill); color: var(--xp); }
 @keyframes talGlow { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--xp-fill) 20%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--xp-fill) 35%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .tal-node.ready .tal-btn { animation: none; } }
 @media (max-width: 520px) {
@@ -809,15 +812,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     { id: "citadel", name: "Sky Citadel",        rec: 160, gold: [280, 420], trophy: "Cloud-Silk Banner" },
     { id: "spire",   name: "The Endless Spire",  rec: 260, gold: [450, 700], trophy: "Shard of Forever" }
   ];
-  const ENCOUNTERS = {
-    music:  ["You played a rousing tune and the party fought harder.", "Your melody lulled the guards to sleep."],
-    body:   ["You smashed through the barricade.", "You outran the rolling boulder."],
-    mind:   ["You solved the door's ancient riddle.", "You read the warning runes just in time."],
-    craft:  ["You rebuilt the broken bridge.", "You forged a key from scrap metal."],
-    tech:   ["You disarmed the pressure-plate trap.", "You rewired the clockwork golem."],
-    spirit: ["You stayed calm and spotted the hidden passage.", "You resisted the curse's whispers."],
-    life:   ["You found a forgotten coin purse.", "You sorted the chaos of the treasure room."]
-  };
   const SHARDS_PER_KEY = 10;            // 1 minute of practice = 1 key shard; 10 shards = 1 dungeon key
   const DAILY_SHARD_CAP = 150;          // up to 15 keys per day
   const MAX_ENTRY = 720;                // one entry can't exceed 12 h
@@ -1059,8 +1053,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     return { name: PATHS[a[0]].cls, paths: [a[0]] };
   }
   // Dungeon keys: earned from real practice minutes only (never prior hours), capped per day.
-  const keysAvail = () => Math.floor(state.keyShards / SHARDS_PER_KEY) - state.keysUsed;
-  const shardRem = () => state.keyShards % SHARDS_PER_KEY;
+  // Shards behind keys you already spent can't be taken back, so deleting a session that paid for a
+  // spent key leaves a small shard debt that your next practice repays first.
+  const keysAvail = () => Math.max(0, Math.floor(state.keyShards / SHARDS_PER_KEY) - state.keysUsed);
+  const shardDebt = () => Math.max(0, state.keysUsed * SHARDS_PER_KEY - state.keyShards);
+  const shardRem = () => shardDebt() ? 0 : state.keyShards % SHARDS_PER_KEY;
   const shardsOnDay = day => state.sessions.filter(x => x.day === day).reduce((n, x) => n + (x.shards || 0), 0);
   const earnedLv = s => lvFrom(totalXp(s));
   function gearFor(s) {
@@ -1069,77 +1066,120 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
   function equippedItem(s) { const id = state.equipped[s.id]; return id ? gearFor(s).find(g => g.id === id) : null; }
   function heroStats() {
-    const base = {}, gear = {}, tal = talentFx().stat;
+    const tf = talentFx(), tal = tf.stat, gp = 1 + tf.gearPow / 100, base = {}, gear = {};
     Object.keys(STATS).forEach(k => { base[k] = 0; gear[k] = 0; });
     state.skills.forEach(s => { base[s.cat] += lvFrom(totalXp(s)); const it = equippedItem(s); if (it) gear[s.cat] += it.bonus; });
+    Object.keys(gear).forEach(k => { gear[k] = Math.round(gear[k] * gp); });
     const total = {}; Object.keys(STATS).forEach(k => total[k] = base[k] + gear[k] + (tal[k] || 0));
     return { base, gear, tal, total, power: Object.values(total).reduce((a, b) => a + b, 0) };
   }
   const fortunePct = st => Math.min(50, st.total.life);
-  const chanceFor = (d, power) => Math.max(0.1, Math.min(0.97, 0.35 + 0.5 * (power / d.rec) + talentFx().win / 100));
   const dungeonOpen = (d, power) => d.rec <= 5 || power >= d.rec * 0.5;
 
   // ---------- Talent trees ----------
-  // One tree per category. Category level = every skill level in that category added together.
-  // Points come at fixed category levels. Talents power up the game side (stats, dungeon odds,
-  // gold, gear prices, titles) and never XP, so levels always mean real practice. Resetting is free.
+  // One tree per category, each with its own play style (WoW-style): warriors hit harder and faster,
+  // mages cast more often, pathfinders find treasure. Category level = every skill level in that category
+  // added together. Points come at fixed category levels. Talents change combat, loot and the shop, and
+  // never XP, so levels always mean real practice. Resetting is free.
   const TALENT_AT = [3, 6, 10, 15, 20, 25, 30, 40, 50, 60, 75, 90];
   const CAPSTONE_SPENT = 6;              // a capstone needs 6 points already in the tree
-  const TAL_CAP = { gold: 25, win: 10, retreat: 30, trophy: 15 };
-  // Branch mechanics are shared by every tree; the names are each tree's own.
-  const TAL_FX = [
-    [{ stat: 2 }, { stat: 3 }, { stat: 4 }, { stat: 6, title: true }],
-    [{ gold: 4 }, { disc: 10 }, { gold: 6 }, { trophy: 5, title: true }],
-    [{ win: 2 }, { retreat: 10 }, { win: 3 }, { win: 2, move: true, title: true }]
-  ];
-  const TAL_KIND = ["power", "fortune", "tactics"];
-  const TALENT_TREES = {
-    instrument: { short: "Instrument", move: "You struck a power chord that shook dust from the ceiling.", branches: [
-      ["Stage Presence", ["Steady Tempo", "Bold Dynamics", "Commanding Chorus", "Virtuoso"], "Virtuoso"],
-      ["Busker's Luck", ["Open Case", "Tip Jar", "Encore Request", "Golden Record"], "Headliner"],
-      ["Battle Hymns", ["War Drum", "Rally Song", "Lullaby of Ruin", "Power Chord"], "Battle Bard"]] },
-    language: { short: "Language", move: "You spoke the guardian's ancient tongue, and it let you pass.", branches: [
-      ["Fluency", ["Word Hoard", "Grammar Sense", "Native Ear", "Polyglot"], "Polyglot"],
-      ["Trade Tongue", ["Haggler", "Market Talk", "Merchant's Toast", "Silver Tongue"], "Silver Tongue"],
-      ["Diplomacy", ["Polite Greeting", "Parley", "Ancient Dialect", "Word of Command"], "Envoy"]] },
-    health: { short: "Health", move: "You shrugged off the ogre's blow and pushed it back.", branches: [
-      ["Conditioning", ["Warm Muscles", "Iron Lungs", "Second Wind", "Peak Form"], "Champion"],
-      ["Bounty Runner", ["Quick Feet", "Light Pack", "Treasure Sprint", "Fleet of Foot"], "Pathfinder"],
-      ["Combat Drills", ["Footwork", "Guard Up", "Counterstrike", "Unbreakable"], "Unbreakable"]] },
-    cooking: { short: "Cooking", move: "You cooked a hearty stew that restored the whole party.", branches: [
-      ["Mise en Place", ["Sharp Knife", "Hot Pan", "Perfect Sear", "Signature Dish"], "Head Chef"],
-      ["Market Day", ["Fresh Produce", "Bulk Buyer", "Spice Trader", "Feast for Kings"], "Royal Cook"],
-      ["Field Rations", ["Trail Snacks", "Hearty Stew", "Campfire Feast", "Banquet of Heroes"], "Quartermaster"]] },
-    trade: { short: "Trade", move: "You braced the collapsing tunnel while the party ran through.", branches: [
-      ["Steady Hands", ["Measure Twice", "True Cut", "Solid Joints", "Master Builder"], "Master Builder"],
-      ["Salvage", ["Scrap Collector", "Wholesale Prices", "Reclaimer", "Guild Seal"], "Guildmaster"],
-      ["Siegecraft", ["Quick Repairs", "Barricade", "Battering Ram", "Iron Engine"], "Siege Engineer"]] },
-    art: { short: "Art", move: "You painted a door on the wall, and it swung open.", branches: [
-      ["Practiced Eye", ["Steady Line", "Color Sense", "Composition", "Masterpiece"], "Maestro"],
-      ["Patronage", ["First Commission", "Art Supply Sale", "Collector's Eye", "Grand Exhibition"], "Patron's Favorite"],
-      ["Illusions", ["Sketch a Map", "Trompe-l'oeil", "Painted Door", "Living Canvas"], "Illusionist"]] },
-    tech: { short: "Tech", move: "Your clockwork drone mapped the maze ahead.", branches: [
-      ["Optimization", ["Clean Code", "Refactor", "Overclock", "Root Access"], "Architect"],
-      ["Side Hustle", ["Freelance Gig", "Open-Source Parts", "Bug Bounty", "Unicorn Startup"], "Tycoon"],
-      ["Gadgeteer", ["Pocket Multitool", "Trap Scanner", "Drone Scout", "Clockwork Ally"], "Gadgeteer"]] },
-    study: { short: "Study", move: "You saw three moves ahead and sprang the trap on the boss.", branches: [
-      ["Deep Study", ["Active Recall", "Spaced Review", "Deep Focus", "Polymath"], "Polymath"],
-      ["Appraisal", ["Price Check", "Bargain Hunter", "Rare Find", "Treasure Scholar"], "Appraiser"],
-      ["Strategy", ["Opening Theory", "The Fork", "The Pin", "Checkmate"], "Grand Strategist"]] },
-    science: { short: "Science", move: "You recognized the glowing fungus as harmless and led the way.", branches: [
-      ["Method", ["Hypothesis", "Controlled Test", "Peer Review", "Breakthrough"], "Savant"],
-      ["Grant Writing", ["Small Grant", "Lab Surplus", "Research Fund", "Nobel Gala"], "Laureate"],
-      ["Field Science", ["Specimen Jar", "Field Kit", "Keen Observer", "Eureka"], "Field Scientist"]] },
-    life: { short: "Life skill", move: "You had exactly the right tool packed for the locked chest.", branches: [
-      ["Good Habits", ["Tidy Pack", "Daily Routine", "Clear Schedule", "Well-Oiled Life"], "Steward of the Realm"],
-      ["Thrift", ["Coin Jar", "Smart Shopper", "Interest Earned", "Treasury"], "Treasurer"],
-      ["Preparedness", ["Spare Torch", "Emergency Kit", "Map and Compass", "Always Ready"], "Ever-Ready"]] }
+  const MAX_TAL_SKILLS = 2;              // talent-granted battle skills you can bring into a fight
+  // Caps on the total from every tree together, so no build runs away with the game.
+  const TAL_CAP = {
+    atkDmg: 25, skillDmg: 40, crit: 15, critDmg: 60, atkSpeed: 25, cdr: 25, execute: 40, lifesteal: 6, rampage: 3,
+    hp: 25, block: 20, dmgTaken: 20, dodge: 12, thorns: 15, regen: 2, healPow: 60, monSlow: 15, weaken: 15,
+    ctrlDur: 60, buffDur: 60, gearPow: 30, firstStrike: 100, stunChance: 10, heavyLess: 15, monDelay: 4, secondWind: 40,
+    gold: 25, shopDisc: 15, reveal: 2, elixirFind: 60, relicFind: 40, trophy: 15, retreat: 30, shardChance: 30,
+    cacheChance: 25, chestGold: 40
   };
+  // How each effect reads in the tree. Every line is built from the real numbers, so the text can't drift.
+  const FX_TEXT = {
+    atkDmg: v => `+${v}% auto-attack damage`, skillDmg: v => `+${v}% skill damage`, crit: v => `+${v}% critical hit chance`,
+    critDmg: v => `Critical hits deal ${200 + v}% damage instead of 200%`, atkSpeed: v => `Attack ${v}% faster`, cdr: v => `Skill cooldowns ${v}% shorter`,
+    execute: v => `+${v}% damage to monsters below 30% HP`, lifesteal: v => `Heal for ${v}% of auto-attack damage`,
+    rampage: v => `Each hit adds +${v}% damage, stacking 10 times`, hp: v => `+${v}% max HP`,
+    block: v => `${v}% chance to block half of a hit`, dmgTaken: v => `Take ${v}% less damage`, dodge: v => `${v}% chance to dodge a hit`,
+    thorns: v => `Reflect ${v}% of damage taken`, regen: v => `Regenerate ${v}% HP every 5 seconds`, healPow: v => `Heals ${v}% stronger`,
+    monSlow: v => `Monsters attack ${v}% slower`, weaken: v => `Monsters deal ${v}% less damage`, ctrlDur: v => `Stuns last ${v}% longer`,
+    buffDur: v => `Buffs last ${v}% longer`, gearPow: v => `Equipped gear ${v}% stronger`, firstStrike: v => `Your first hit deals +${v}% damage`,
+    stunChance: v => `${v}% chance for auto-attacks to stun for 1 second`, heavyLess: v => `Monster heavy hits drop from 20% to ${20 - v}% of attacks`,
+    monDelay: v => `Monsters wait ${v} extra second${v === 1 ? "" : "s"} before their first attack`,
+    secondWind: v => `Once per fight, below 30% HP, heal ${v}% HP`, lastStand: () => "Once per fight, survive a killing blow with 1 HP and a shield",
+    doubleEvery: v => `Every ${v}th auto-attack strikes twice`,
+    gold: v => `+${v}% dungeon gold`, shopDisc: v => `All gear in the shop ${v}% cheaper`, reveal: v => `See ${v} tile${v === 1 ? "" : "s"} farther on the map`,
+    elixirFind: v => `Find elixirs in dungeons ${v}% more often`, relicFind: v => `Find Radiant relics ${v}% more often`,
+    trophy: v => `+${v}% trophy drops`, retreat: v => `Retreating keeps ${30 + v}% of the dungeon's minimum gold instead of 30%`,
+    shardChance: v => `${v}% chance per session of 10+ minutes to find 5 bonus key shards`,
+    cacheChance: v => `${v}% chance after a win to find a hidden cache (+50% gold)`, chestGold: v => `+${v}% gold from map chests`
+  };
+  // Battle skills granted by capstones. A capstone's skill joins your skill bar (up to 2 talent skills).
+  const TALENT_SKILLS = {
+    powerchord: { name: "Power Chord", cd: 14, icon: "note", desc: "2.5× damage and a 1s stun", mult: 2.5, stun: 1 },
+    encore:     { name: "Encore", cd: 12, icon: "note", desc: "Plays your last skill again", encore: true },
+    wordpower:  { name: "Word of Power", cd: 12, icon: "rune", desc: "2× damage and a 1.5s stun", mult: 2, stun: 1.5 },
+    command:    { name: "Command", cd: 18, icon: "rune", desc: "The monster skips its next 2 attacks", monSkip: 2 },
+    mortal:     { name: "Mortal Strike", cd: 12, icon: "sword", desc: "2.5× damage, monster deals 30% less for 4s", mult: 2.5, weak: [30, 4] },
+    flambe:     { name: "Flambé", cd: 12, icon: "heart", desc: "2× damage, then burns for 4s", mult: 2, burn: [0.35, 4] },
+    banquet:    { name: "Banquet", cd: 18, icon: "heart", desc: "Heals 15% HP and +20% damage for 5s", heal: 0.15, buff: [20, 5] },
+    hammerfall: { name: "Hammerfall", cd: 14, icon: "gear", desc: "2.2× damage and a 1s stun", mult: 2.2, stun: 1 },
+    barricade:  { name: "Barricade", cd: 18, icon: "rune", desc: "Blocks the next 3 hits", shieldHits: 3 },
+    masterpiece:{ name: "Masterpiece", cd: 16, icon: "star", desc: "A 3× damage finishing stroke", mult: 3 },
+    decoy:      { name: "Decoy", cd: 16, icon: "eye", desc: "Every attack misses you for 3s", decoy: 3 },
+    overdrive:  { name: "Overdrive", cd: 25, icon: "gear", desc: "Resets every other skill's cooldown", reset: true },
+    turret:     { name: "Turret", cd: 16, icon: "gear", desc: "A turret fires 0.5× shots for 6s", turret: [0.5, 6] },
+    checkmate:  { name: "Checkmate", cd: 14, icon: "eye", desc: "4× damage below 40% HP, otherwise 1.2×", exec40: [4, 1.2] },
+    flask:      { name: "Unstable Flask", cd: 10, icon: "star", desc: "Random 1.2× to 3.6× damage", rand: [1.2, 3.6] },
+    medkit:     { name: "Emergency Kit", cd: 20, icon: "heart", desc: "Heals 25% of your HP", heal: 0.25 }
+  };
+  // Each branch: [name, icon kind, capstone title, [[node name, fx] x4]].
+  const TALENT_TREES = {
+    instrument: { short: "Instrument", style: "Bard: crits, tempo, and encores", branches: [
+      ["Virtuoso", "power", "Virtuoso", [["Perfect Pitch", { crit: 3 }], ["Crescendo", { skillDmg: 8 }], ["Showstopper", { critDmg: 20 }], ["Power Chord", { skill: "powerchord" }]]],
+      ["Tempo", "tactics", "Tempo Master", [["Allegro", { atkSpeed: 5 }], ["Syncopation", { cdr: 6 }], ["Presto", { atkSpeed: 6 }], ["Metronome", { doubleEvery: 6 }]]],
+      ["Encore", "fortune", "Headliner", [["Lingering Notes", { buffDur: 25 }], ["Tip Jar", { gold: 5 }], ["Soothing Melody", { regen: 1 }], ["Encore", { skill: "encore" }]]]] },
+    language: { short: "Language", style: "Wordmage: spell power and control", branches: [
+      ["Incantation", "power", "Wordmage", [["Rune Script", { skillDmg: 8 }], ["Spellweave", { cdr: 6 }], ["Arcane Fluency", { skillDmg: 12 }], ["Word of Power", { skill: "wordpower" }]]],
+      ["Polyglot", "fortune", "Silver Tongue", [["Haggler", { shopDisc: 5 }], ["Market Talk", { gold: 5 }], ["Read the Signs", { reveal: 1 }], ["Silver Tongue", { shopDisc: 5, monDelay: 2 }]]],
+      ["Lexicon", "tactics", "Envoy", [["Slow Speech", { monSlow: 6 }], ["Cutting Words", { weaken: 6 }], ["Binding Grammar", { ctrlDur: 30 }], ["Command", { skill: "command" }]]]] },
+    health: { short: "Health", style: "Warrior: big hits, fury, and toughness", branches: [
+      ["Arms", "power", "Champion", [["Weapon Mastery", { atkDmg: 5 }], ["Brutal Blows", { critDmg: 20 }], ["Executioner", { execute: 20 }], ["Mortal Strike", { skill: "mortal" }]]],
+      ["Fury", "power", "Berserker", [["Flurry", { atkSpeed: 6 }], ["Bloodlust", { lifesteal: 3 }], ["Frenzy", { atkSpeed: 8 }], ["Rampage", { rampage: 2 }]]],
+      ["Protection", "tactics", "Unbreakable", [["Toughness", { hp: 8 }], ["Shield Wall", { block: 8 }], ["Iron Skin", { dmgTaken: 5 }], ["Second Wind", { secondWind: 20 }]]]] },
+    cooking: { short: "Cooking", style: "Chef: spicy openers, feasts, and provisions", branches: [
+      ["Spice", "power", "Head Chef", [["Amuse-Bouche", { firstStrike: 50 }], ["Hot Pepper", { crit: 3 }], ["Seasoned", { skillDmg: 8 }], ["Flambé", { skill: "flambe" }]]],
+      ["Feast", "tactics", "Quartermaster", [["Comfort Food", { healPow: 20 }], ["Hearty Stew", { hp: 8 }], ["Slow Simmer", { regen: 1 }], ["Banquet", { skill: "banquet" }]]],
+      ["Provisions", "fortune", "Royal Cook", [["Market Day", { gold: 5 }], ["Pantry Find", { elixirFind: 20 }], ["Bulk Buyer", { shopDisc: 5 }], ["Feast for Kings", { gold: 5, elixirFind: 20 }]]]] },
+    trade: { short: "Trade", style: "Smith: forged power and fortifications", branches: [
+      ["Forge", "power", "Master Smith", [["Honed Edge", { atkDmg: 5 }], ["Masterwork", { gearPow: 15 }], ["Tempered Steel", { critDmg: 20 }], ["Hammerfall", { skill: "hammerfall" }]]],
+      ["Fortify", "tactics", "Siege Engineer", [["Reinforced", { dmgTaken: 5 }], ["Spiked Armor", { thorns: 8 }], ["Bulwark", { block: 8 }], ["Barricade", { skill: "barricade" }]]],
+      ["Salvage", "fortune", "Guildmaster", [["Scrap Collector", { gold: 5 }], ["Wholesale", { disc: 15 }], ["Reclaimer", { relicFind: 15 }], ["Guild Seal", { shopDisc: 5, trophy: 5 }]]]] },
+    art: { short: "Art", style: "Illusionist: inspiration and trickery", branches: [
+      ["Inspiration", "power", "Maestro", [["Muse", { buffDur: 25 }], ["Bold Strokes", { skillDmg: 8 }], ["Golden Ratio", { crit: 3 }], ["Masterpiece", { skill: "masterpiece" }]]],
+      ["Illusion", "tactics", "Illusionist", [["Blur", { dodge: 4 }], ["Mirage", { dodge: 4 }], ["Unsettling Image", { weaken: 6 }], ["Decoy", { skill: "decoy" }]]],
+      ["Patronage", "fortune", "Patron's Favorite", [["First Commission", { gold: 5 }], ["Collector's Eye", { trophy: 5 }], ["Curator", { relicFind: 15 }], ["Grand Exhibition", { gold: 5, disc: 15 }]]]] },
+    tech: { short: "Tech", style: "Engineer: cooldowns, gadgets, and automation", branches: [
+      ["Overclock", "power", "Architect", [["Clean Code", { cdr: 6 }], ["Multithreading", { atkSpeed: 5 }], ["Hot Path", { cdr: 6 }], ["Overdrive", { skill: "overdrive" }]]],
+      ["Gadgets", "tactics", "Gadgeteer", [["Capacitors", { ctrlDur: 30 }], ["Taser Rounds", { stunChance: 4 }], ["Force Field", { dmgTaken: 5 }], ["Turret", { skill: "turret" }]]],
+      ["Automation", "fortune", "Tycoon", [["Side Gig", { gold: 5 }], ["Cron Job", { shardChance: 15 }], ["Drone Scout", { reveal: 1 }], ["Unicorn Startup", { gold: 5, cacheChance: 10 }]]]] },
+    study: { short: "Study", style: "Strategist: openings, focus, and finishers", branches: [
+      ["Strategy", "power", "Grand Strategist", [["Opening Theory", { firstStrike: 50 }], ["Tempo Play", { monSlow: 6 }], ["Endgame", { execute: 20 }], ["Checkmate", { skill: "checkmate" }]]],
+      ["Deep Focus", "tactics", "Polymath", [["Active Recall", { crit: 3 }], ["Spaced Review", { cdr: 6 }], ["Deep Work", { critDmg: 20 }], ["Flow State", { crit: 3, cdr: 4, skillDmg: 8 }]]],
+      ["Scholarship", "fortune", "Appraiser", [["Annotated Maps", { reveal: 1 }], ["Scholarship", { gold: 5 }], ["Archivist", { relicFind: 15 }], ["Treasure Scholar", { chestGold: 25, trophy: 5 }]]]] },
+    science: { short: "Science", style: "Alchemist: volatile power and potions", branches: [
+      ["Experiment", "power", "Mad Scientist", [["Hypothesis", { skillDmg: 8 }], ["Reaction", { critDmg: 20 }], ["Catalyst", { crit: 3 }], ["Unstable Flask", { skill: "flask" }]]],
+      ["Alchemy", "fortune", "Alchemist", [["Distillation", { elixirFind: 20 }], ["Tinctures", { healPow: 20 }], ["Transmutation", { gold: 5 }], ["Philosopher's Stone", { elixirFind: 30, healPow: 20 }]]],
+      ["Observation", "tactics", "Field Scientist", [["Keen Eye", { dodge: 4 }], ["Pattern Reading", { heavyLess: 8 }], ["Lab Coat", { dmgTaken: 5 }], ["Contingency Plan", { lastStand: 1 }]]]] },
+    life: { short: "Life skill", style: "Pathfinder: treasure, thrift, and a well-stocked kit", branches: [
+      ["Pathfinding", "fortune", "Pathfinder", [["Trailblazer", { reveal: 1 }], ["Shard Sense", { shardChance: 15 }], ["Treasure Nose", { elixirFind: 20, chestGold: 15 }], ["Hidden Cache", { cacheChance: 15 }]]],
+      ["Thrift", "fortune", "Treasurer", [["Coin Jar", { gold: 5 }], ["Smart Shopper", { shopDisc: 5 }], ["Rainy-Day Fund", { retreat: 20 }], ["Treasury", { gold: 5, cacheChance: 10 }]]],
+      ["Homestead", "tactics", "Ever-Ready", [["Hardy", { hp: 8 }], ["First Aid", { healPow: 20 }], ["Steady Nerves", { dmgTaken: 5 }], ["Emergency Kit", { skill: "medkit" }]]]] }
+  };
+  const TAL_KIND = ["power", "tactics", "fortune"];
   const talId = (c, b, r) => `${c}.${"abc"[b]}${r + 1}`;
   function talNode(id) {
     const m = /^([a-z]+)\.([abc])([1-4])$/.exec(id || ""); if (!m || !TALENT_TREES[m[1]]) return null;
     const c = m[1], b = "abc".indexOf(m[2]), r = +m[3] - 1, br = TALENT_TREES[c].branches[b];
-    return { id, cat: c, b, r, name: br[1][r], branch: br[0], fx: TAL_FX[b][r], title: TAL_FX[b][r].title ? br[2] : null };
+    return { id, cat: c, b, r, name: br[3][r][0], branch: br[0], kind: br[1], fx: br[3][r][1], title: r === 3 ? br[2] : null };
   }
   const catLevel = c => state.skills.filter(s => s.catId === c).reduce((n, s) => n + earnedLv(s), 0);
   const talentPts = c => TALENT_AT.filter(t => catLevel(c) >= t).length;
@@ -1153,47 +1193,50 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const n = talNode(id); if (!n) return { ok: false };
     const have = talentsIn(n.cat);
     if (have.includes(id)) return { ok: false, why: "Learned" };
-    if (n.r > 0 && !have.includes(talId(n.cat, n.b, n.r - 1))) return { ok: false, why: `Needs ${TALENT_TREES[n.cat].branches[n.b][1][n.r - 1]}` };
+    if (n.r > 0 && !have.includes(talId(n.cat, n.b, n.r - 1))) return { ok: false, why: `Needs ${talNode(talId(n.cat, n.b, n.r - 1)).name}` };
     if (n.r === 3 && have.length < CAPSTONE_SPENT) return { ok: false, why: `Needs ${CAPSTONE_SPENT} points in this tree` };
     if (unspent(n.cat) < 1) return { ok: false, why: "No points to spend", wait: true };
     return { ok: true };
   }
+  let talFxCache = null, talFxKey = "";
   function talentFx() {
-    const fx = { stat: {}, gold: 0, win: 0, retreat: 0, trophy: 0, disc: {}, titles: [], moves: [] };
+    const key = JSON.stringify(state.talents || {}) + "|" + CATEGORIES.map(c => talentPts(c.id)).join(",");
+    if (talFxCache && key === talFxKey) return talFxCache;
+    const fx = { stat: {}, disc: {}, titles: [], skills: [], doubleEvery: 0, lastStand: 0 };
     Object.keys(STATS).forEach(k => { fx.stat[k] = 0; });
+    Object.keys(TAL_CAP).forEach(k => { fx[k] = 0; });
     CATEGORIES.forEach(c => {
       if (!TALENT_TREES[c.id]) return;
       activeTalents(c.id).forEach(id => {
         const n = talNode(id); if (!n) return;
-        const f = n.fx;
-        if (f.stat) fx.stat[c.path] += f.stat;
-        if (f.gold) fx.gold += f.gold;
-        if (f.win) fx.win += f.win;
-        if (f.retreat) fx.retreat += f.retreat;
-        if (f.trophy) fx.trophy += f.trophy;
-        if (f.disc) fx.disc[c.id] = (fx.disc[c.id] || 0) + f.disc;
-        if (f.title) fx.titles.push({ id, name: n.title });
-        if (f.move) fx.moves.push({ cat: c.id, path: c.path, text: TALENT_TREES[c.id].move });
+        Object.entries(n.fx).forEach(([k, v]) => {
+          if (k === "skill") fx.skills.push(Object.assign({ key: "t-" + v, from: id, path: c.path, power: 1 }, TALENT_SKILLS[v]));
+          else if (k === "disc") fx.disc[c.id] = (fx.disc[c.id] || 0) + v;
+          else if (k === "stat") fx.stat[c.path] += v;
+          else if (k === "doubleEvery") fx.doubleEvery = fx.doubleEvery ? Math.min(fx.doubleEvery, v) : v;
+          else fx[k] = (fx[k] || 0) + v;
+        });
+        if (n.title) fx.titles.push({ id, name: n.title });
       });
     });
-    fx.gold = Math.min(TAL_CAP.gold, fx.gold); fx.win = Math.min(TAL_CAP.win, fx.win);
-    fx.retreat = Math.min(TAL_CAP.retreat, fx.retreat); fx.trophy = Math.min(TAL_CAP.trophy, fx.trophy);
+    Object.entries(TAL_CAP).forEach(([k, cap]) => { fx[k] = Math.min(cap, fx[k]); });
+    talFxCache = fx; talFxKey = key;
     return fx;
   }
   function talEffText(n) {
-    const f = n.fx, c = catById(n.cat), st = STATS[c.path].name, out = [];
-    if (f.stat) out.push(`+${f.stat} ${st}`);
-    if (f.gold) out.push(`+${f.gold}% dungeon gold`);
-    if (f.disc) out.push(`${TALENT_TREES[n.cat].short} gear ${f.disc}% cheaper`);
-    if (f.win) out.push(`+${f.win}% battle damage`);
-    if (f.retreat) out.push(`Keep +${f.retreat}% gold when you retreat`);
-    if (f.trophy) out.push(`+${f.trophy}% trophy drops`);
-    if (f.move) out.push("Signature move in battle");
-    if (f.title) out.push(`Title: ${n.title}`);
+    const out = [];
+    Object.entries(n.fx).forEach(([k, v]) => {
+      if (k === "skill") { const s = TALENT_SKILLS[v]; out.push(`New battle skill: ${s.desc} (${s.cd}s cooldown)`); }
+      else if (k === "disc") out.push(`${TALENT_TREES[n.cat].short} gear ${v}% cheaper`);
+      else if (k === "stat") out.push(`+${v} ${STATS[catById(n.cat).path].name}`);
+      else if (FX_TEXT[k]) out.push(FX_TEXT[k](v));
+    });
+    if (n.title) out.push(`Title: ${n.title}`);
     return out;
   }
   const heroTitle = () => { const t = state.title && talentFx().titles.find(x => x.id === state.title); return t ? t.name : ""; };
-  const itemPrice = it => Math.round(it.price * (1 - ((talentFx().disc[it.skill.catId] || 0) / 100)));
+  const shopMult = () => 1 - talentFx().shopDisc / 100;
+  const itemPrice = it => Math.round(it.price * (1 - ((talentFx().disc[it.skill.catId] || 0) / 100)) * shopMult());
 
   function learnTalent(id) {
     const chk = canLearn(id), n = talNode(id); if (!n) return;
@@ -1214,7 +1257,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     persist(); render();
   }
 
-  const pipsHTML = n => `<span class="pips" aria-label="${n} of 10 key shards">${Array.from({ length: SHARDS_PER_KEY - 1 }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
+  const pipsHTML = n => `<span class="pips" aria-label="${n} of ${SHARDS_PER_KEY} key shards">${Array.from({ length: SHARDS_PER_KEY - 1 }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
 
   const totalLevel = () => state.skills.reduce((n, s) => n + lvFrom(totalXp(s)), 0);
   const todayMin = () => state.sessions.filter(x => x.day === dayKey()).reduce((n, x) => n + x.min, 0);
@@ -1241,7 +1284,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     state.lastSessionDay = dayKey();
     s.earnedMin += min;
     s.earnedXp = (s.earnedXp ?? 0) + xp;
-    const shards = Math.max(0, Math.min(min, DAILY_SHARD_CAP - shardsOnDay(day)));
+    const tfS = talentFx().shardChance, bonusShards = tfS && min >= 10 && Math.random() < tfS / 100 ? 5 : 0;
+    const shards = Math.max(0, Math.min(min + bonusShards, DAILY_SHARD_CAP - shardsOnDay(day)));
     state.keyShards += shards;
     state.sessions.unshift({ id: uid(), skillId, min, day, ts: Date.now(), xp, rested, type, shards, note: note || "", elixir: ae ? { kind: ae.kind, min: elixMin, pct: ae.pct } : undefined });
     addDay(day, skillId, min);
@@ -1255,7 +1299,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     lastGain = { skillId: s.id, xp };
     const parts = [type === "lesson" ? "lesson 1.5×" : "", rested ? `${fmt(rested)} rested` : "", ae ? `elixir +${ae.pct}%` : ""].filter(Boolean);
     const newKeys = keysAvail() - keysBefore;
-    toast(`Logged ${fmt(min)} of ${esc(s.name)}: +${fmtXp(xp)} XP${parts.length ? " (" + parts.join(", ") + ")" : ""}, +${shards} shards` + (newKeys > 0 ? `, ${newKeys} new dungeon key${newKeys > 1 ? "s" : ""}` : "") + (shards < min ? ". Daily key limit reached; XP still counts" : "") + ".");
+    toast(`Logged ${fmt(min)} of ${esc(s.name)}: +${fmtXp(xp)} XP${parts.length ? " (" + parts.join(", ") + ")" : ""}, +${shards} shards${bonusShards && shards > min ? " (found 5 bonus shards!)" : ""}` + (newKeys > 0 ? `, ${newKeys} new dungeon key${newKeys > 1 ? "s" : ""}` : "") + (shards < min ? ". Daily key limit reached; XP still counts" : "") + ".");
     persist(); render();
     if (pendingCelebrate) { const c = pendingCelebrate; pendingCelebrate = null; setTimeout(() => celebrate(c), 250); }
   }
@@ -1266,9 +1310,13 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const x = state.sessions[i], s = skillById(x.skillId);
     if (s) { s.earnedMin = Math.max(0, s.earnedMin - x.min); s.earnedXp = Math.max(0, (s.earnedXp ?? 0) - (x.xp ?? x.min)); }
     if (x.rested) state.restedPool = Math.min(REST_CAP, state.restedPool + x.rested);
-    if (x.elixir && x.elixir.min) { const ae = activeElixir(); if (ae && ae.kind === x.elixir.kind) ae.left = Math.min(ae.total, ae.left + x.elixir.min); }
+    if (x.elixir && x.elixir.min) {
+      const ae = activeElixir();
+      if (ae && ae.kind === x.elixir.kind) ae.left = Math.min(ae.total, ae.left + x.elixir.min);
+      else if (!ae && ELIXIRS[x.elixir.kind]) state.elixir = { kind: x.elixir.kind, pct: x.elixir.pct, left: x.elixir.min, total: ELIXIRS[x.elixir.kind].min };
+    }
     addDay(x.day, x.skillId, -x.min);
-    state.keyShards = Math.max(state.keysUsed * SHARDS_PER_KEY, state.keyShards - (x.shards || 0));
+    state.keyShards = Math.max(0, state.keyShards - (x.shards || 0));
     state.sessions.splice(i, 1);
     toast("Session removed.");
     persist(); render();
@@ -1358,8 +1406,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           </div>
           ${(() => { const st = heroStats(); return `<div>
             <div class="power"><strong>Hero power</strong><b class="num">${st.power}</b></div>
-            <div class="statgrid">${Object.entries(STATS).map(([k, v]) => `<div title="${esc(v.desc)}"><span>${v.name}</span><b>${st.total[k]}${st.gear[k] ? ` <i>+${st.gear[k]}</i>` : ""}${st.tal[k] ? ` <i class="tal" title="From talents">+${st.tal[k]}</i>` : ""}</b></div>`).join("")}</div>
-            <div class="hint">Stats come from your skill levels in each path. Green numbers are gear bonuses, gold numbers are talents.</div>
+            <div class="statgrid">${Object.entries(STATS).map(([k, v]) => `<div title="${esc(v.desc)}"><span>${v.name}</span><b>${st.total[k]}${st.gear[k] ? ` <i>+${st.gear[k]}</i>` : ""}</b></div>`).join("")}</div>
+            <div class="hint">Stats come from your skill levels in each path. Green numbers are gear bonuses.</div>
           </div>`; })()}
           <div>
             <div class="meter-label"><strong>Rested XP</strong><span class="num">${rested ? "next " + fmt(rested) + " earns 2× XP" : "Not rested"}</span></div>
@@ -1368,7 +1416,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
             ${(() => { const ae = activeElixir(); return ae ? `<div class="meter-label" style="margin-top:8px"><strong>${esc(ELIXIRS[ae.kind].name)}</strong><span class="num">+${ae.pct}% XP · ${fmt(ae.left)} left</span></div><div class="rest-bar"><i style="width:${ae.left / ae.total * 100}%;background:${ELIXIRS[ae.kind].col}"></i></div>` : ""; })()}
           </div>
           <div>
-            <div class="meter-label"><strong>Dungeon keys</strong><span class="num muted">${shardRem()} / ${SHARDS_PER_KEY} shards</span></div>
+            <div class="meter-label"><strong>Dungeon keys</strong><span class="num muted">${shardDebt() ? `repaying ${shardDebt()} shards` : `${shardRem()} / ${SHARDS_PER_KEY} shards`}</span></div>
             <div class="keys-row"><span class="keys-count num">${keysAvail()} key${keysAvail() === 1 ? "" : "s"}</span>${pipsHTML(shardRem())}</div>
             <div class="hint">Every minute of practice is a shard, and 10 shards make a key (up to 15 keys a day). Spend keys on dungeon runs to earn gold for gear.</div>
           </div>
@@ -1406,8 +1454,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.14";
-  const APP_VERSION = "0.12.2";
+  const BUILD = "2026-10-08.15";
+  const APP_VERSION = "0.13.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1586,7 +1634,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         <div class="train-row"><span><b>v${APP_VERSION}</b> <span class="muted">· build ${esc(BUILD)}</span></span><span class="muted" style="font-size:13px">${where}</span></div>
         ${inClaude ? `<div class="hint" style="margin:0">This preview always shows the newest version.</div>` : `
           <div class="toggle-row"><div><b>Update automatically</b><div class="hint" style="margin:0">Checks when you open the app and installs new versions by itself. Your hero is never touched.</div></div><button class="switch" role="switch" aria-checked="${Updater.auto()}" aria-label="Update automatically" data-act="toggle-autoupd"><i></i></button></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="upd-go">Check now</button>${isNative ? `<a class="btn small ghost" href="${ANDROID_APK}" target="_blank" rel="noopener">Android app download</a>` : ""}</div>`}
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="upd-check">Check now</button>${isNative ? `<a class="btn small ghost" href="${ANDROID_APK}" target="_blank" rel="noopener">Android app download</a>` : ""}</div>`}
         <div id="upd-status">${Updater.status}</div>
         ${isNative ? `<div class="hint" style="margin:0">App updates install by themselves. You only need a new download from the Android page when the home-screen widgets change, and the update notes will say so.</div>` : ""}
       </article>
@@ -1745,13 +1793,14 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const fx = talentFx();
     const skillsHere = state.skills.filter(s => s.catId === talCat);
     const summary = [
-      Object.entries(fx.stat).filter(([, v]) => v).map(([k, v]) => `+${v} ${STATS[k].name}`).join(", "),
-      fx.gold ? `+${fx.gold}% dungeon gold` : "", fx.win ? `+${fx.win}% battle damage` : "",
-      fx.retreat ? `retreats keep ${30 + fx.retreat}% gold` : "", fx.trophy ? `+${fx.trophy}% trophy drops` : "",
+      ...Object.entries(fx.stat).filter(([, v]) => v).map(([k, v]) => `+${v} ${STATS[k].name}`),
+      ...Object.keys(FX_TEXT).filter(k => fx[k]).map(k => FX_TEXT[k](fx[k])),
+      fx.skills.length ? `Battle skills from talents: ${fx.skills.map(k => k.name).join(", ")}${fx.skills.length > MAX_TAL_SKILLS ? ` (pick which ${MAX_TAL_SKILLS} to bring under Battle skills in Adventure)` : ""}` : "",
       Object.keys(fx.disc).length ? "gear discounts" : ""
     ].filter(Boolean);
     return `<section style="display:grid;gap:12px">
-      <div class="section-head" style="margin:0"><h2>Talents</h2><span class="muted" style="font-size:13px">${summary.length ? "Active: " + esc(summary.join(" · ")) : "No talents learned yet"}</span></div>
+      <div class="section-head" style="margin:0"><h2>Talents</h2><span class="muted" style="font-size:13px">${summary.length ? `${summary.length} active effect${summary.length === 1 ? "" : "s"}` : "No talents learned yet"}</span></div>
+      ${summary.length ? `<details class="panel tal-sum"><summary>Active talent effects</summary><ul>${summary.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="hint" style="margin:0">Totals from every tree together. Some effects have a cap.</p></details>` : ""}
       <div class="tal-cats" role="tablist" aria-label="Talent trees">${cats.map(k => {
         const u = unspent(k.id);
         return `<button class="chip tal-chip" role="tab" data-act="tal-cat" data-id="${k.id}" aria-pressed="${k.id === talCat}">${esc(TALENT_TREES[k.id].short)}${u ? `<span class="tal-dot num" aria-label="${u} unspent">${u}</span>` : ""}</button>`;
@@ -1760,6 +1809,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         <div class="tal-head">
           <div>
             <h3>${esc(c.label)}</h3>
+            <div class="tal-style">${esc(T.style)}</div>
             <div class="muted" style="font-size:13px">Category level <b class="num" style="color:var(--ink)">${lv}</b> · ${skillsHere.map(s => `${esc(s.name)} ${earnedLv(s)}`).join(" + ")} · ${STATS[c.path].name}</div>
           </div>
           <div class="tal-pts"><b class="num">${free}</b><span>point${free === 1 ? "" : "s"} to spend</span></div>
@@ -1770,16 +1820,16 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         </div>
         ${have.length > pts ? `<div class="note warn">This category's level dropped after a session was removed, so your newest ${have.length - pts === 1 ? "talent is" : have.length - pts + " talents are"} resting until you earn the level back. Nothing is lost.</div>` : ""}
         <div class="tal-grid">${T.branches.map((br, b) => `
-          <div class="tal-col tal-${TAL_KIND[b]}">
+          <div class="tal-col tal-${br[1]}">
             <div class="tal-branch">${esc(br[0])}</div>
-            ${br[1].map((nm, r) => {
+            ${br[3].map(([nm], r) => {
               const id = talId(talCat, b, r), n = talNode(id), on = have.includes(id), live = active.includes(id), chk = canLearn(id);
               const st = on ? (live ? "on" : "rest") : chk.ok ? "ready" : (chk.wait && (r === 0 || have.includes(talId(talCat, b, r - 1))) && !(r === 3 && have.length < CAPSTONE_SPENT)) ? "next" : "locked";
               const eff = talEffText(n);
               const showT = n.title && live;
               return `<div class="tal-node ${st} ${r === 3 ? "cap" : ""}">
                 <button class="tal-btn" data-act="tal-learn" data-id="${id}" ${st === "ready" ? "" : `aria-disabled="true"`} aria-label="${esc(nm)}: ${esc(eff.join(", "))}. ${on ? "Learned" : chk.ok ? "Tap to learn" : esc(chk.why || "")}">
-                  ${talIcon(r === 3 ? "crown" : TAL_KIND[b])}
+                  ${talIcon(r === 3 ? "crown" : br[1])}
                   <b>${esc(nm)}</b>
                   <span class="tal-eff">${eff.map(esc).join("<br>")}</span>
                   <span class="tal-state">${on ? (live ? "Learned" : "Resting") : chk.ok ? "Tap to learn" : esc(chk.why || "")}</span>
@@ -1795,7 +1845,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
             : `<button class="btn small ghost" data-act="ask-tal-reset" ${have.length ? "" : "disabled"}>Reset tree (free)</button>`}
         </div>
       </article>
-      <p class="hint" style="margin:0">Your category level is all your ${esc(T.short.toLowerCase())} skill levels added together. Points come at category levels ${TALENT_AT.slice(0, 5).join(", ")} and on up to ${TALENT_AT[TALENT_AT.length - 1]}. Talents help your hero in dungeons and the shop but never add XP, so your levels always show real practice. Resetting a tree is free, so try things out.</p>
+      <p class="hint" style="margin:0">Your category level is all your ${esc(T.short.toLowerCase())} skill levels added together. Points come at category levels ${TALENT_AT.slice(0, 5).join(", ")} and on up to ${TALENT_AT[TALENT_AT.length - 1]}. Each tree plays differently: combat power, battle skills, treasure and shop perks. Talents never add XP, so your levels always show real practice. Resetting a tree is free, so try things out.</p>
     </section>`;
   }
   // ---------- Inventory tab ----------
@@ -1896,7 +1946,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     return `<div class="panel runlog" aria-live="polite">
       <div class="train-row"><h3>${esc(r.d.name)}</h3><span class="muted" style="font-size:13px">vs. ${esc(mon.name)}</span></div>
       <canvas id="battle" class="px battle" aria-label="Your hero fighting the ${esc(mon.name)}"></canvas>
-      ${r.encounters.slice(0, Math.min(r.step, 3)).map(e => `<div class="enc${e.sig ? " sig" : ""}"><span class="stat-chip">${e.sig ? "Signature · " : ""}${STATS[e.stat].name} ${e.value}</span><span>${esc(e.text)}</span></div>`).join("")}
       ${!done ? `<div class="muted" style="font-size:13px">Exploring…</div>` : `
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
         ${r.summary ? `<div class="muted" style="font-size:13px">${esc(r.summary)}${r.lucky ? ` · Lucky Find +${r.lucky}% gold` : ""}</div>` : ""}
@@ -1910,7 +1959,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 
   // ---------- Active combat ----------
   // Your hero auto-attacks. Path skills (one per path, unlocked at that path's combined Lv 5) and talent
-  // signature moves are buttons you tap, each on a cooldown. Stats set the baseline; good timing swings
+  // capstone skills are buttons you tap, each on a cooldown. Stats set the baseline; good timing swings
   // close fights. Battles pause when you leave the screen, and an interrupted battle refunds its key.
   const COMBAT_SKILLS = {
     body:   { key: "strike", name: "Power Strike", cd: 7,  desc: "A heavy blow for 1.8× damage", icon: "sword" },
@@ -1934,17 +1983,39 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   };
   const SK_PAL = { K: "currentColor", W: "#ffffff", Y: "#f2c14e", B: "#7ad0ff", R: "#d94a3a", G: "#9aa0ae" };
   const skillIcon = k => { let r = ""; (SKILL_ICONS[k] || SKILL_ICONS.star).forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== ".") r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${SK_PAL[ch]}"/>`; })); return `<svg viewBox="0 0 6 6" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; };
-  // Unlocked battle skills, class paths first, at most 3 path skills plus a signature move.
+  // Unlocked battle skills: up to 3 path skills (class paths first) plus up to 2 talent skills.
+  // Talent skills you bring into a fight: your picks first, then the rest in tree order, up to 2.
+  function talentLoadout() {
+    const pool = talentFx().skills, pick = (state.talSkills || []).map(k => pool.find(x => x.key === k)).filter(Boolean);
+    pool.forEach(x => { if (!pick.includes(x)) pick.push(x); });
+    return pick.slice(0, MAX_TAL_SKILLS);
+  }
+  function toggleTalSkill(key) {
+    const pool = talentFx().skills; if (!pool.some(x => x.key === key)) return;
+    let cur = talentLoadout().map(x => x.key);
+    if (cur.includes(key)) {
+      if (pool.length <= MAX_TAL_SKILLS) return;
+      cur = cur.filter(k => k !== key);
+      const alt = pool.find(x => x.key !== key && !cur.includes(x.key) && !(state.talSkills || []).includes(x.key)) || pool.find(x => x.key !== key && !cur.includes(x.key));
+      if (alt) cur.push(alt.key);
+    }
+    else { cur = [key, ...cur].slice(0, MAX_TAL_SKILLS); }
+    state.talSkills = cur; persist(); render();
+  }
   function battleSkills() {
     const cls = heroClass().paths, out = [];
     const order = Object.keys(COMBAT_SKILLS).sort((a, b) => (cls.includes(b) - cls.includes(a)) || (pathLevel(b) - pathLevel(a)));
     order.forEach(p => { if (out.length < 3 && pathLevel(p) >= SKILL_UNLOCK) out.push(Object.assign({ path: p, power: 1 + Math.min(0.25, pathLevel(p) / 400) }, COMBAT_SKILLS[p])); });
-    const sig = CATEGORIES.map(c => TALENT_TREES[c.id] && activeTalents(c.id).includes(talId(c.id, 2, 3)) ? c : null).find(Boolean);
-    if (sig) out.push({ key: "sig", path: sig.path, name: TALENT_TREES[sig.id].branches[2][1][3], cd: 15, desc: "Signature move: 3× damage", icon: "star", power: 1 });
+    talentLoadout().forEach(k => out.push(Object.assign({}, k)));
     return out;
   }
+  // A rough read of how much your combat talents help, used for the difficulty label only.
+  function talentEdge() {
+    const f = talentFx();
+    return Math.min(0.5, (f.atkDmg + f.atkSpeed + f.skillDmg / 2 + f.crit + f.critDmg / 5 + f.hp / 2 + f.dmgTaken / 2 + f.weaken / 2 + f.dodge / 2 + f.block / 3 + f.monSlow / 2) / 100);
+  }
   function difficulty(d, power) {
-    const r = power / d.rec * (1 + talentFx().win / 100);
+    const r = power / d.rec * (1 + talentEdge());
     return r >= 1.5 ? ["Easy", "good"] : r >= 1 ? ["Fair", "good"] : r >= 0.75 ? ["Hard", "mid"] : ["Deadly", "bad"];
   }
 
@@ -1955,9 +2026,16 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const r = Math.max(0.2, Math.min(4, st.power / d.rec));
     state.keysUsed += 1; state.battle = { dungeon: d.id, ts: Date.now() }; persist();
     const V = 0.75 + Math.random() * 0.55;                      // every monster rolls its own strength
-    bt = { d, st, tfx, r, t: 0, phase: "intro", heroHp: 400, heroMax: 400, monHp: Math.round(600 * V), monMax: Math.round(600 * V),
-      heroDmg: 22 * (0.55 + 0.45 * Math.min(r, 3)) * (1 + tfx.win / 100), monDmg: 18 * V / (0.5 + 0.5 * Math.min(r, 3)),
-      nextHero: 14, nextMon: 20, cds: {}, rally: 0, shield: 0, stun: 0, lucky: 0, heroAtk: -9, monAtk: -9, heroHit: -9, monHit: -9,
+    const heroMax = Math.round(400 * (1 + tfx.hp / 100)), base = 22 * (0.55 + 0.45 * Math.min(r, 3));
+    bt = { d, st, tfx, r, t: 0, phase: "intro", heroHp: heroMax, heroMax, monHp: Math.round(600 * V), monMax: Math.round(600 * V),
+      baseDmg: base, heroDmg: base * (1 + tfx.atkDmg / 100), skillMult: 1 + tfx.skillDmg / 100,
+      monDmg: 18 * V / (0.5 + 0.5 * Math.min(r, 3)) * (1 - tfx.dmgTaken / 100) * (1 - tfx.weaken / 100),
+      heroEvery: Math.max(5, HERO_EVERY / (1 + tfx.atkSpeed / 100)), monEvery: MON_EVERY * (1 + tfx.monSlow / 100),
+      critCh: 0.1 + tfx.crit / 100, critX: 2 + tfx.critDmg / 100, cdX: 1 - tfx.cdr / 100,
+      heavyCh: Math.max(0.05, 0.2 - tfx.heavyLess / 100),
+      nextHero: 14, nextMon: 20 + tfx.monDelay * 10, cds: {}, rally: 0, rallyX: 1.25, shield: 0, stun: 0, lucky: 0,
+      heroAtk: -9, monAtk: -9, heroHit: -9, monHit: -9, hits: 0, stacks: 0, first: true, wind: false, stand: false,
+      weak: 0, weakX: 1, burn: 0, burnDmg: 0, decoy: 0, turret: 0, turretDmg: 0, skip: 0, last: null,
       pops: [], fx: [], log: "Get ready…", skills: battleSkills(), used: 0 };
     runView = null;
     render();
@@ -1965,24 +2043,52 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     Sound.play("start");
   }
   const btPop = (text, x, y, col, big) => bt.pops.push({ text, x, y, col, big, ttl: 9 });
+  const btHeal = (b, frac) => { const h = Math.round(b.heroMax * frac * (1 + b.tfx.healPow / 100)); b.heroHp = Math.min(b.heroMax, b.heroHp + h); return h; };
+  const btStun = (b, secs) => { const t = Math.round(secs * 10 * (1 + b.tfx.ctrlDur / 100)); b.stun = Math.max(b.stun, t); b.nextMon = Math.max(b.nextMon, b.t + t); return t; };
+  const btBuff = secs => Math.round(secs * 10 * (1 + bt.tfx.buffDur / 100));
+  // Shared damage boosts: rally or feast buffs, rampage stacks, and executes on low-HP monsters.
+  const btMult = b => (b.rally ? b.rallyX : 1) * (1 + b.stacks * b.tfx.rampage / 100) * (b.monHp < b.monMax * 0.3 ? 1 + b.tfx.execute / 100 : 1);
   function stepBattle() {
     const b = bt; if (!b) { clearInterval(btTimer); return; }
     if (document.hidden || tab !== "dungeons") return;      // paused while you're away
     b.t++;
-    if (b.phase === "intro") { if (b.t >= 10) { b.phase = "fight"; b.log = "Fight! Your hero attacks on their own. Tap your skills when they're ready."; } }
+    const tf = b.tfx;
+    if (b.phase === "intro") { if (b.t >= 10) { b.phase = "fight"; b.log = "Fight! Your hero attacks on their own. Tap your skills when they're ready."; if (tf.firstStrike) b.nextHero = b.t + 1; } }
     else {
       Object.keys(b.cds).forEach(k => { if (b.cds[k] > 0) b.cds[k]--; });
-      if (b.rally > 0) b.rally--; if (b.stun > 0) b.stun--;
+      if (b.rally > 0) b.rally--; if (b.stun > 0) b.stun--; if (b.decoy > 0) b.decoy--;
+      if (b.weak > 0 && --b.weak === 0) b.weakX = 1;
+      if (b.burn > 0) { b.burn--; if (b.burn % 10 === 0) { const d = Math.round(b.burnDmg); b.monHp -= d; btPop("" + d, 50, 12, "#ff9a3a"); } }
+      if (b.turret > 0) { b.turret--; if (b.turret % 10 === 0) { const d = Math.round(b.turretDmg); b.monHp -= d; b.monHit = b.t; btPop("" + d, 48, 14, "#7ad0ff"); } }
+      if (tf.regen && b.t % 50 === 0 && b.heroHp < b.heroMax) { const h = btHeal(b, tf.regen / 100); btPop("+" + h, 14, 10, "#4fc58d"); }
       if (b.t >= b.nextHero) {
-        const crit = Math.random() < 0.1, dmg = Math.round(b.heroDmg * (0.8 + Math.random() * 0.4) * (b.rally ? 1.25 : 1) * (crit ? 2 : 1));
-        b.monHp -= dmg; b.heroAtk = b.t; b.monHit = b.t; b.nextHero = b.t + HERO_EVERY;
-        btPop((crit ? "CRIT " : "") + dmg, 46, 10, crit ? "#ffe58a" : "#ffffff", crit); Sound.play("hit");
+        b.hits++;
+        const crit = Math.random() < b.critCh, twice = tf.doubleEvery && b.hits % tf.doubleEvery === 0;
+        let dmg = b.heroDmg * (0.8 + Math.random() * 0.4) * btMult(b) * (crit ? b.critX : 1);
+        if (b.first) { dmg *= 1 + tf.firstStrike / 100; b.first = false; }
+        if (twice) dmg *= 2;
+        dmg = Math.round(dmg);
+        b.monHp -= dmg; b.heroAtk = b.t; b.monHit = b.t; b.nextHero = b.t + b.heroEvery;
+        if (tf.rampage && b.stacks < 10) b.stacks++;
+        if (tf.lifesteal) b.heroHp = Math.min(b.heroMax, b.heroHp + dmg * tf.lifesteal / 100);
+        if (tf.stunChance && Math.random() < tf.stunChance / 100) { btStun(b, 1); btPop("Stun", 50, 4, "#9aa0ae"); }
+        btPop((crit ? "CRIT " : "") + (twice ? "×2 " : "") + dmg, 46, 10, crit ? "#ffe58a" : "#ffffff", crit || twice); Sound.play("hit");
       }
       if (b.monHp > 0 && b.t >= b.nextMon) {
-        b.nextMon = b.t + MON_EVERY;
+        b.nextMon = b.t + b.monEvery;
         if (b.stun > 0) btPop("Stunned", 46, 8, "#9aa0ae");
+        else if (b.skip > 0) { b.skip--; btPop("Hesitates", 46, 8, "#9aa0ae"); }
         else if (b.shield > 0) { b.shield--; b.monAtk = b.t; btPop("Blocked", 16, 12, "#7ad0ff"); Sound.play("tap"); }
-        else { const heavy = Math.random() < 0.2, dmg = Math.round(b.monDmg * (0.8 + Math.random() * 0.4) * (heavy ? 2 : 1)); b.heroHp -= dmg; b.monAtk = b.t; b.heroHit = b.t; btPop((heavy ? "OUCH -" : "-") + dmg, 16, 12, heavy ? "#ff5a5a" : "#ff8a8a", heavy); Sound.play("hurt"); buzz(heavy ? 30 : 12); }
+        else if (b.decoy > 0 || (tf.dodge && Math.random() < tf.dodge / 100)) { b.monAtk = b.t; btPop("Miss", 16, 12, "#cfd6e4"); Sound.play("tap"); }
+        else {
+          const heavy = Math.random() < b.heavyCh, blocked = tf.block && Math.random() < tf.block / 100;
+          const dmg = Math.round(b.monDmg * b.weakX * (0.8 + Math.random() * 0.4) * (heavy ? 2 : 1) * (blocked ? 0.5 : 1));
+          b.heroHp -= dmg; b.monAtk = b.t; b.heroHit = b.t;
+          btPop((blocked ? "Block -" : heavy ? "OUCH -" : "-") + dmg, 16, 12, heavy ? "#ff5a5a" : "#ff8a8a", heavy); Sound.play("hurt"); buzz(heavy ? 30 : 12);
+          if (tf.thorns) b.monHp -= Math.round(dmg * tf.thorns / 100);
+          if (b.heroHp <= 0 && tf.lastStand && !b.stand) { b.stand = true; b.heroHp = 1; b.shield = Math.max(b.shield, 1); btPop("Last stand!", 14, 4, "#ffe58a", true); b.log = "Contingency Plan: you hang on with 1 HP!"; }
+          if (b.heroHp > 0 && tf.secondWind && !b.wind && b.heroHp < b.heroMax * 0.3) { b.wind = true; const h = btHeal(b, tf.secondWind / 100); btPop("Second wind +" + h, 14, 4, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); }
+        }
       }
       if (b.monHp <= 0) return endBattle(true);
       if (b.heroHp <= 0 || b.t > BT_MAX) return endBattle(false);
@@ -1991,21 +2097,44 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     b.fx.forEach(f => f.ttl--); b.fx = b.fx.filter(f => f.ttl > 0);
     updateBattleUI();
   }
+  // What a skill does. Kept apart from cooldowns so Encore can play a skill again.
+  function castSkill(b, sk, caster) {
+    const P = sk.power, key = sk.key;
+    const hit = mult => { const dmg = Math.round(b.baseDmg * mult * P * b.skillMult * btMult(b)); b.monHp -= dmg; b.monHit = b.t; b.heroAtk = b.t; return dmg; };
+    if (key === "strike") { btPop(hit(1.8) + "!", 44, 9, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 4 }); Sound.play("win"); buzz(25); }
+    if (key === "rally") { b.rally = Math.round(btBuff(3) * P); b.rallyX = 1.25; b.fx.push({ k: "notes", ttl: b.rally }); btPop("Rally!", 14, 6, "#ffe58a"); Sound.play("unlock"); }
+    if (key === "shield") { b.shield = Math.max(b.shield, 1); btPop("Shield", 14, 6, "#7ad0ff"); Sound.play("buy"); }
+    if (key === "repair") { const h = btHeal(b, 0.10 * P); btPop("+" + h, 14, 8, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); Sound.play("coin"); }
+    if (key === "trap") { btStun(b, 1.5 * P); btPop("Trapped!", 44, 8, "#9aa0ae"); Sound.play("buy"); }
+    if (key === "focus") { btPop(hit(1.5) + "", 44, 9, "#ffe58a", true); btHeal(b, 0.03 * P); b.fx.push({ k: "flash", ttl: 2 }); Sound.play("win"); }
+    if (key === "lucky") { hit(0.6); if (b.lucky < 3) b.lucky++; btPop("+5% gold", 44, 8, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); Sound.play("coin"); }
+    if (key.indexOf("t-") === 0) {                      // talent skills, built from their recipe
+      let mult = sk.mult || 0;
+      if (sk.rand) mult = sk.rand[0] + Math.random() * (sk.rand[1] - sk.rand[0]);
+      if (sk.exec40) mult = b.monHp < b.monMax * 0.4 ? sk.exec40[0] : sk.exec40[1];
+      if (mult) { const big = mult >= 2.5; btPop(hit(mult) + (big ? "!!" : "!"), 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 5 }); if (big) b.fx.push({ k: "flash", ttl: 3 }); }
+      if (sk.stun) { btStun(b, sk.stun); btPop("Stunned!", 46, 4, "#9aa0ae"); }
+      if (sk.weak) { b.weakX = 1 - sk.weak[0] / 100; b.weak = btBuff(sk.weak[1]); }
+      if (sk.burn) { b.burnDmg = b.baseDmg * sk.burn[0] * b.skillMult; b.burn = sk.burn[1] * 10; }
+      if (sk.heal) { const h = btHeal(b, sk.heal); btPop("+" + h, 14, 8, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); }
+      if (sk.buff) { b.rallyX = 1 + sk.buff[0] / 100; b.rally = btBuff(sk.buff[1]); b.fx.push({ k: "notes", ttl: b.rally }); }
+      if (sk.shieldHits) { b.shield = Math.max(b.shield, sk.shieldHits); btPop("Barricade ×" + sk.shieldHits, 12, 6, "#7ad0ff"); }
+      if (sk.decoy) { b.decoy = btBuff(sk.decoy); btPop("Decoy", 14, 6, "#cfd6e4"); }
+      if (sk.monSkip) { b.skip = sk.monSkip; btPop("Commanded!", 44, 6, "#cfd6e4"); }
+      if (sk.turret) { b.turretDmg = b.baseDmg * sk.turret[0] * b.skillMult; b.turret = sk.turret[1] * 10; btPop("Turret up", 14, 6, "#7ad0ff"); }
+      if (sk.reset) { Object.keys(b.cds).forEach(k => { if (k !== key && k !== caster) b.cds[k] = 0; }); btPop("Overdrive!", 14, 6, "#ffe58a", true); }
+      Sound.play(mult >= 2.5 ? "levelup" : mult ? "win" : "unlock"); buzz(mult ? [25, 30, 40] : 20);
+    }
+  }
   function useSkill(key) {
     const b = bt; if (!b || b.phase !== "fight") return;
     const sk = b.skills.find(s => s.key === key); if (!sk || (b.cds[key] || 0) > 0) return;
-    b.cds[key] = sk.cd * 10; b.used++;
-    const P = sk.power;
-    const hit = mult => { const dmg = Math.round(b.heroDmg * mult * P * (b.rally ? 1.25 : 1)); b.monHp -= dmg; b.monHit = b.t; b.heroAtk = b.t; return dmg; };
-    if (key === "strike") { btPop(hit(1.8) + "!", 44, 9, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 4 }); Sound.play("win"); buzz(25); }
-    if (key === "rally") { b.rally = Math.round(30 * P); b.fx.push({ k: "notes", ttl: b.rally }); btPop("Rally!", 14, 6, "#ffe58a"); Sound.play("unlock"); }
-    if (key === "shield") { b.shield = 1; btPop("Shield", 14, 6, "#7ad0ff"); Sound.play("buy"); }
-    if (key === "repair") { const h = Math.round(b.heroMax * 0.10 * P); b.heroHp = Math.min(b.heroMax, b.heroHp + h); btPop("+" + h, 14, 8, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); Sound.play("coin"); }
-    if (key === "trap") { b.stun = Math.round(15 * P); b.nextMon = Math.max(b.nextMon, b.t + b.stun); btPop("Trapped!", 44, 8, "#9aa0ae"); Sound.play("buy"); }
-    if (key === "focus") { btPop(hit(1.5) + "", 44, 9, "#ffe58a", true); const h = Math.round(b.heroMax * 0.03 * P); b.heroHp = Math.min(b.heroMax, b.heroHp + h); b.fx.push({ k: "flash", ttl: 2 }); Sound.play("win"); }
-    if (key === "lucky") { hit(0.6); if (b.lucky < 3) b.lucky++; btPop("+5% gold", 44, 8, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); Sound.play("coin"); }
-    if (key === "sig") { btPop(hit(3) + "!!", 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 5 }, { k: "flash", ttl: 3 }); Sound.play("levelup"); buzz([30, 30, 60]); }
-    b.log = `${sk.name}!`;
+    b.cds[key] = Math.round(sk.cd * 10 * b.cdX); b.used++;
+    if (sk.encore) {
+      const prev = b.last && b.skills.find(s => s.key === b.last);
+      if (!prev) { b.cds[key] = 20; b.used--; b.log = "Encore needs another skill played first."; updateBattleUI(); return; }
+      castSkill(b, prev, key); b.log = `Encore: ${prev.name} again!`;
+    } else { castSkill(b, sk); b.last = key; b.log = `${sk.name}!`; }
     if (b.monHp <= 0) return endBattle(true);
     updateBattleUI();
   }
@@ -2013,11 +2142,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const b = bt; clearInterval(btTimer); bt = null;
     const d = b.d, st = b.st, tfx = b.tfx;
     const roll = d.gold[0] + Math.random() * (d.gold[1] - d.gold[0]);
-    const gold = Math.round((win ? roll : d.gold[0] * (0.3 + tfx.retreat / 100)) * (1 + (fortunePct(st) + tfx.gold + b.lucky * 5) / 100));
+    const cache = win && tfx.cacheChance && Math.random() < tfx.cacheChance / 100;
+    const gold = Math.round((win ? roll : d.gold[0] * (0.3 + tfx.retreat / 100)) * (1 + (fortunePct(st) + tfx.gold + b.lucky * 5) / 100) * (cache ? 1.5 : 1));
     const trophy = win && Math.random() < 0.1 + tfx.trophy / 100 ? d.trophy : null;
     const snap = unlockSnapshot();
     let relic = null;
-    if (win && Math.random() < (RELIC_CHANCE[d.id] || 0.05)) {
+    if (win && Math.random() < (RELIC_CHANCE[d.id] || 0.05) * (1 + tfx.relicFind / 100)) {
       const pick = rollRelic();
       if (pick) {
         if (!state.relics) state.relics = {};
@@ -2027,7 +2157,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       }
     }
     let elixir = null;
-    if (win) { elixir = rollElixir(d.id); if (elixir) { if (!state.elixirs) state.elixirs = {}; state.elixirs[elixir] = elixirCount(elixir) + 1; } }
+    if (win) { elixir = rollElixir(d.id, 1 + tfx.elixirFind / 100); if (elixir) { if (!state.elixirs) state.elixirs = {}; state.elixirs[elixir] = elixirCount(elixir) + 1; } }
     { const c = qc(), w = wq(); c.runs++; w.runs++; c.skills += b.used; if (win) { c.wins++; w.wins++; } }
     delete state.battle;
     state.gold += gold;
@@ -2039,8 +2169,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (state.runs.length > 30) state.runs.length = 30;
     persist();
     const secs = Math.round(b.t / 10);
-    runView = { d, win, gold, trophy, relic, elixir, encounters: [], chance: 0, fortune: fortunePct(st), talGold: tfx.gold, lucky: b.lucky * 5, step: 3, t: 35, unlocks,
-      summary: `${win ? "Won" : "Retreated"} in ${secs}s · ${b.used} skill${b.used === 1 ? "" : "s"} used` };
+    runView = { d, win, gold, trophy, relic, elixir, fortune: fortunePct(st), talGold: tfx.gold, lucky: b.lucky * 5, step: 3, t: 35, unlocks,
+      summary: `${win ? "Won" : "Retreated"} in ${secs}s · ${b.used} skill${b.used === 1 ? "" : "s"} used${cache ? " · found a hidden cache (+50% gold)" : ""}` };
     const finish = () => { (win ? Sound.play("win") : Sound.play("lose")); setTimeout(() => Sound.play(relic ? "unlock" : "coin"), 450); if (relic) buzz([30, 50, 30, 50, 90]); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); };
     const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) { runView.t = BATTLE_FRAMES; runView.step = 4; render(); finish(); return; }
@@ -2069,15 +2199,18 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         : `<p class="hint" style="margin:0">Your hero fights on their own. Level any path to ${SKILL_UNLOCK} combined to unlock your first battle skill.</p>`}
     </div>`;
   }
+  const cdText = c => { const r = talentFx().cdr; return r ? `${+(c * (1 - r / 100)).toFixed(1)}s cooldown (${c}s base)` : `${c}s cooldown`; };
   function renderSkillBook() {
     const have = battleSkills(), cls = heroClass().paths;
     return `<article class="panel set-card skillbook">
       <h3>Battle skills</h3>
       <div class="sb-grid">${Object.entries(COMBAT_SKILLS).map(([p, sk]) => {
         const on = have.some(h => h.key === sk.key), lv = pathLevel(p), unlocked = lv >= SKILL_UNLOCK;
-        return `<div class="sb ${on ? "on" : unlocked ? "spare" : "locked"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(sk.desc)} · ${sk.cd}s cooldown</small><small class="sb-req">${on ? (cls.includes(p) ? "Equipped · your class path" : "Equipped") : unlocked ? "Unlocked · 3 skills max, class paths first" : `${PATHS[p].label} path Lv ${SKILL_UNLOCK} combined (now ${lv})`}</small></div></div>`;
+        return `<div class="sb ${on ? "on" : unlocked ? "spare" : "locked"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(sk.desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on ? (cls.includes(p) ? "Equipped · your class path" : "Equipped") : unlocked ? "Unlocked · 3 skills max, class paths first" : `${PATHS[p].label} path Lv ${SKILL_UNLOCK} combined (now ${lv})`}</small></div></div>`;
       }).join("")}</div>
-      <p class="hint" style="margin:0">Your hero attacks on their own. Tap skills during a battle (or press 1 to 4 on a keyboard). Each path has one skill, and your class paths come first. Learning the Tactics capstone in a talent tree adds its signature move as a bonus skill.</p>
+      ${(() => { const pool = talentFx().skills, on = talentLoadout().map(x => x.key); if (!pool.length) return "";
+        return `<h3 style="margin-top:4px">Talent skills</h3><div class="sb-grid">${pool.map(sk => `<div class="sb ${on.includes(sk.key) ? "on" : "spare"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(sk.desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on.includes(sk.key) ? "Equipped" : "Benched"}${pool.length > MAX_TAL_SKILLS ? ` · <button class="linkbtn" data-act="tal-skill" data-id="${sk.key}">${on.includes(sk.key) ? "Bench" : "Equip"}</button>` : ""}</small></div></div>`).join("")}</div>${pool.length > MAX_TAL_SKILLS ? `<p class="hint" style="margin:0">You know ${pool.length} talent skills. Bring any ${MAX_TAL_SKILLS} into a fight.</p>` : ""}`; })()}
+      <p class="hint" style="margin:0">Your hero attacks on their own. Tap skills during a battle (or press the number keys on a keyboard). Each path has one skill, and your class paths come first. Some talent capstones teach a new battle skill; you can bring up to 2 of them into a fight.</p>
     </article>`;
   }
   function updateBattleUI() {
@@ -2090,7 +2223,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     b.skills.forEach(s => {
       const el = document.getElementById("bts-" + s.key); if (!el) return;
       const cd = b.cds[s.key] || 0, ready = cd <= 0 && b.phase === "fight";
-      el.style.setProperty("--cd", (cd / (s.cd * 10)).toFixed(3));
+      el.style.setProperty("--cd", Math.min(1, cd / Math.max(1, Math.round(s.cd * 10 * b.cdX))).toFixed(3));
       el.classList.toggle("ready", ready); el.disabled = !ready;
       const sec = el.querySelector(".bt-sec"); if (sec) { const v = cd > 0 ? Math.ceil(cd / 10) + "s" : ""; if (sec.textContent !== v) sec.textContent = v; }
     });
@@ -2170,7 +2303,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     }
   }
   document.addEventListener("keydown", e => {
-    if (!bt || e.ctrlKey || e.metaKey || e.altKey || /input|textarea|select/i.test((e.target && e.target.tagName) || "")) return;
+    if (!bt || tab !== "dungeons" || bt.phase !== "fight" || e.ctrlKey || e.metaKey || e.altKey || document.querySelector("dialog[open]") || /input|textarea|select/i.test((e.target && e.target.tagName) || "")) return;
     const n = parseInt(e.key, 10); if (n >= 1 && n <= bt.skills.length) { e.preventDefault(); useSkill(bt.skills[n - 1].key); }
   });
 
@@ -2194,10 +2327,10 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     citadel: { small: 0.10, medium: 0.03, large: 0.01, grand: 0.002 },
     spire:   { small: 0.10, medium: 0.04, large: 0.015, grand: 0.005 }
   };
-  function rollElixir(did) {
+  function rollElixir(did, boost = 1) {
     const t = ELIXIR_DROPS[did]; if (!t) return null;
     let r = Math.random();
-    for (const k of ["grand", "large", "medium", "small"]) { if (t[k]) { if (r < t[k]) return k; r -= t[k]; } }
+    for (const k of ["grand", "large", "medium", "small"]) { if (t[k]) { const p = t[k] * boost; if (r < p) return k; r -= p; } }
     return null;
   }
   const elixirCount = k => (state.elixirs && state.elixirs[k]) || 0;
@@ -2211,17 +2344,19 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // One elixir at a time, each lasting 1 hour of practice. A stronger one can replace the active one,
   // but only after you confirm, since the old one's remaining minutes are lost.
   // Small and Medium elixirs can be bought, so boosting isn't only luck. Large and Grand stay rare finds.
+  const elixirPrice = e => e.price;                     // fixed prices: shop talents discount gear, not elixirs
   function buyElixir(k) {
     const e = ELIXIRS[k]; if (!e || !e.price) return;
-    if (state.gold < e.price) { toast(`You need ${e.price - state.gold} more gold.`); return; }
-    state.gold -= e.price; if (!state.elixirs) state.elixirs = {}; state.elixirs[k] = elixirCount(k) + 1;
+    const price = elixirPrice(e);
+    if (state.gold < price) { toast(`You need ${price - state.gold} more gold.`); return; }
+    state.gold -= price; if (!state.elixirs) state.elixirs = {}; state.elixirs[k] = elixirCount(k) + 1;
     Sound.play("buy"); toast(`Bought a <b>${esc(e.name)}</b>. Drink it from your Inventory when you're ready to practice.`);
     persist(); render();
   }
   function renderPotionShop() {
     return `<article class="panel gear-skill">
       <div class="gear-head"><h3>Elixirs</h3><span class="muted" style="font-size:13px">One works at a time · lasts 1 hour of practice</span></div>
-      <div class="gear-grid">${Object.entries(ELIXIRS).filter(([, e]) => e.price).map(([k, e]) => `<div class="item elix">${ElixirIcon(k, 40)}<b>${esc(e.name)}</b><span class="eff">+${e.pct}% XP for 1 hour of practice</span>${elixirCount(k) ? `<span class="req">You have ${elixirCount(k)}</span>` : ""}<button class="btn small ${state.gold >= e.price ? "primary" : ""}" data-act="buy-elixir" data-id="${k}" ${state.gold >= e.price ? "" : "disabled"}>Buy · ${e.price}g</button></div>`).join("")}</div>
+      <div class="gear-grid">${Object.entries(ELIXIRS).filter(([, e]) => e.price).map(([k, e]) => `<div class="item elix">${ElixirIcon(k, 40)}<b>${esc(e.name)}</b><span class="eff">+${e.pct}% XP for 1 hour of practice</span>${elixirCount(k) ? `<span class="req">You have ${elixirCount(k)}</span>` : ""}<button class="btn small ${state.gold >= elixirPrice(e) ? "primary" : ""}" data-act="buy-elixir" data-id="${k}" ${state.gold >= elixirPrice(e) ? "" : "disabled"}>Buy · ${elixirPrice(e)}g</button></div>`).join("")}</div>
       <p class="hint" style="margin:0">Spend gold to level a little faster, or save it for gear. Large and Grand elixirs can't be bought: find them deep in dungeons, or earn them from weekly quests and achievements.</p>
     </article>`;
   }
@@ -2274,7 +2409,14 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   ];
   const DAILY_GOLD = 10, DAILY_BONUS_GOLD = 20;         // up to 50 gold a day: a nudge, not an income
   // Today's 3 quests: two practice quests and one dungeon quest, chosen by the date so they stay put all day.
+  // Today's three quests are fixed once picked, so adding a skill mid-day can't swap them out.
   function dailyQuests() {
+    const c = qc();
+    if (c.ids && c.ids.length) { const got = c.ids.map(id => DAILY_POOL.find(q => q.id === id)).filter(Boolean); if (got.length === c.ids.length) return got; }
+    const fresh = pickDailies(); c.ids = fresh.map(q => q.id);
+    return fresh;
+  }
+  function pickDailies() {
     let seed = dayNum(dayKey()) * 2654435761 % 4294967296;
     const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
     const pick = (list, n) => { const out = [], pool = list.filter(q => !q.need || q.need()); while (out.length < n && pool.length) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]); return out; };
@@ -2423,9 +2565,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     return state.adv;
   }
   // Explored tiles as a bitstring, base64 packed.
-  let seenBits = null;
+  // Cached per hero: if the save is replaced (restore, sample, new hero), the cache starts over.
+  let seenBits = null, seenOwner = null;
+  let advPos = null, advPath = [], advAnim = null, advFrame = 0, advMsg = null;
   function seenGet() {
-    if (seenBits) return seenBits;
+    if (seenBits && seenOwner === adv()) return seenBits;
+    seenOwner = adv(); advPos = null; advPath = []; advMsg = null;
     seenBits = new Uint8Array(AW * AH);
     try { const raw = atob(adv().seen || ""); for (let i = 0; i < raw.length; i++) { const b = raw.charCodeAt(i); for (let k = 0; k < 8; k++) if (b & (1 << k)) seenBits[i * 8 + k] = 1; } } catch (e) {}
     return seenBits;
@@ -2435,7 +2580,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     for (let i = 0; i < bits.length; i += 8) { let b = 0; for (let k = 0; k < 8; k++) if (bits[i + k]) b |= 1 << k; s += String.fromCharCode(b); }
     adv().seen = btoa(s);
   }
-  function reveal(cx, cy, r = 3) {
+  function reveal(cx, cy, r = 3 + talentFx().reveal) {
     const bits = seenGet(); let n = 0;
     for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) {
       if (x < 0 || y < 0 || x >= AW || y >= AH || (x - cx) * (x - cx) + (y - cy) * (y - cy) > r * r + 1) continue;
@@ -2443,7 +2588,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     }
     return n;
   }
-  const exploredPct = () => { const b = seenGet(); let n = 0; for (let i = 0; i < b.length; i++) n += b[i]; return Math.round(n / ADV_WALKABLE * 100); };
+  const exploredPct = () => { const b = seenGet(); let n = 0; for (let i = 0; i < b.length; i++) if (b[i] && !"M~".includes(tileAt(i % AW, (i / AW) | 0))) n++; return Math.min(100, Math.round(n / ADV_WALKABLE * 100)); };
   const ADV_WALKABLE = (() => { let n = 0; for (let y = 0; y < AH; y++) for (let x = 0; x < AW; x++) if (!"M~".includes(tileAt(x, y))) n++; return n; })();
 
   // --- Tile art: clean GBA-era style (original tiles). Flat colors, tufts on a regular grid,
@@ -2591,7 +2736,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (t === "5") { P(c, px + 4, py, 8, 16, "#c9d1e1"); P(c, px + 4, py, 8, 2, "#4a6fd6"); P(c, px + 3, py + 2, 10, 1, "#3350a8"); P(c, px + 6, py + 11, 4, 5, "#3350a8"); P(c, px + 7, py + 5, 2, 2, "#7ad0ff"); P(c, px + 4, py, 1, 16, "#8a94a6"); }
     if (t === "6") { P(c, px + 5, py, 6, 16, "#3a1d5a"); P(c, px + 4, py + 4, 8, 12, "#3a1d5a"); P(c, px + 6, py + 6, 4, 6, f % 8 < 4 ? "#c89cf2" : "#9a58d8"); P(c, px + 7, py + 1, 2, 2, "#f4f0ff"); }
   }
-  let advPos = null, advPath = [], advAnim = null, advFrame = 0, advMsg = null;
   function advStep() {
     const a = adv();
     if (!advPos) advPos = { x: a.x, y: a.y, fx: a.x, fy: a.y };
@@ -2602,6 +2746,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       advPos.fx = nx[0]; advPos.fy = nx[1]; advPos.x = nx[0]; advPos.y = nx[1]; a.x = nx[0]; a.y = nx[1]; advPath.shift();
       reveal(a.x, a.y);
       if (!advPath.length) arrive();
+      else { const p = poiAt(a.x, a.y); if (p && p.t === "chest" && !a.chests[p.id]) { advPath = []; arrive(); } }   // stop to open chests you walk over
     } else { advPos.fx += Math.sign(dx) * sp; advPos.fy += Math.sign(dy) * sp; }
     advFrame++;
     paintMap();
@@ -2637,7 +2782,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     seenSave();
     if (p && p.t === "chest" && !a.chests[p.id]) {
       a.chests[p.id] = dayKey();
-      if (typeof p.reward === "number") { state.gold += p.reward; toast(`You opened a chest: <b>+${p.reward} gold</b>`); Sound.play("coin"); }
+      if (typeof p.reward === "number") { const g = Math.round(p.reward * (1 + talentFx().chestGold / 100)); state.gold += g; toast(`You opened a chest: <b>+${g} gold</b>`); Sound.play("coin"); }
       else { if (!state.elixirs) state.elixirs = {}; state.elixirs[p.reward] = elixirCount(p.reward) + 1; toast(`You opened a chest: <b>${esc(ELIXIRS[p.reward].name)}</b>!`, "", 4500); Sound.play("unlock"); }
       buzz(20);
     }
@@ -2724,6 +2869,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   });
   document.addEventListener("keydown", e => {
     if (tab !== "dungeons" || bt || runView || !document.getElementById("advmap")) return;
+    if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector("dialog[open]")) return;
     if (/input|textarea|select/i.test((e.target && e.target.tagName) || "")) return;
     const k = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
     if (!k) return; e.preventDefault();
@@ -3735,59 +3881,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 
   // Paint one frame of a dungeon battle. 64x46 world, 4 px per pixel.
   const BATTLE_FRAMES = 46;
-  function paintBattle(cv, rv) {
-    const W = 64, H = 40, s = 6, f = rv.t;
-    cv.width = W * s; cv.height = H * s;
-    const c = cv.getContext("2d"); c.imageSmoothingEnabled = false;
-    drawBackdrop(c, DUNGEON_SCENE[rv.d.id] || "dungeon", W, H, s, f);
-    const gy = Math.round(H * 0.78), m = MONSTERS[rv.d.id] || MONSTERS.cellar;
-    const enc = Math.min(2, Math.floor(f / 12)), k = f % 12, done = f >= 36;
-    // hero
-    let hx = 0, heroFlash = false;
-    if (!done) { if (k === 1) hx = 4; if (k === 2) hx = 9; if (k === 3) hx = 8; if (k === 4) hx = 4; if (k === 7 || k === 8) heroFlash = !rv.win && enc === 2; }
-    let heroAlpha = 1;
-    if (done && !rv.win) { hx = -Math.min(14, (f - 36) * 2); heroAlpha = Math.max(0, 1 - (f - 36) / 8); }
-    const hg = miniHero(heroLook(), f, { walk: !done && k >= 1 && k <= 4 || (done && !rv.win) });
-    if (heroFlash) hg.forEach(r => r.forEach((v, x) => { if (v && v !== OUTLINE) r[x] = "#ffb0b0"; }));
-    const hop = done && rv.win ? (f % 4 < 2 ? -2 : 0) : (!done && k === 2 ? -1 : 0);
-    blit(c, hg, 10 + hx, gy - 17 + hop, s, heroAlpha, 1);
-    // monster
-    const mg = monsterGrid(m, !done && (k === 3 || k === 4));
-    const Z = 1, mw = mg[0].length * Z, mh = mg.length * Z, mx = W - mw - 10 + (!done && (k === 3) ? 1 : 0) + (!done && k === 7 ? -5 : 0);
-    const bob = (f % 6 < 3 ? 0 : -1) + (rv.d.id === "library" || rv.d.id === "citadel" || rv.d.id === "spire" ? -5 : 0);
-    const my = gy - mh + 1 + bob;
-    const hpLeft = rv.win ? Math.max(0, 1 - (Math.min(3, enc + (k >= 3 ? 1 : 0))) / 3) : Math.max(0.3, 1 - (Math.min(3, enc + (k >= 3 ? 1 : 0))) * 0.23);
-    if (!(done && rv.win)) {
-      blit(c, mg, mx, my, s, 1, Z);
-      // HP bar
-      c.fillStyle = OUTLINE; c.fillRect((mx) * s, (my - 4) * s, mw * s, 3 * s);
-      c.fillStyle = "#3d4152"; c.fillRect((mx + 1) * s, (my - 3) * s, (mw - 2) * s, s);
-      c.fillStyle = hpLeft > .5 ? "#4fc58d" : hpLeft > .25 ? "#e2a521" : "#d94a3a"; c.fillRect((mx + 1) * s, (my - 3) * s, Math.round((mw - 2) * hpLeft) * s, s);
-    } else {
-      // poof, then a treasure chest with coins
-      const p = f - 36;
-      if (p < 4) { c.fillStyle = "#e9e4d8"; [[0, 0], [3, -2], [6, 1], [2, 3], [8, -1]].forEach(([dx, dy]) => { const r = 2 + p; c.fillRect((mx + 3 + dx - r / 2) * s, (my + 5 + dy - r / 2) * s, r * s, r * s); }); }
-      else {
-        const cx = W - 22, cy = gy - 6;
-        const chest = ["..AAAAAAAA..", ".ALLLLLLLLA.", "AaaaaaaaaaaA", "AAAAAGGAAAAA", "AaaaaGGaaaaA", "AaaaaaaaaaaA", "AAAAAAAAAAAA"];
-        const g = makeGrid(); chest.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] !== ".") g[y][x] = { A: "#8a5a34", a: "#6b4220", L: "#b07840", G: "#f2c14e" }[row[x]]; });
-        blit(c, g.slice(0, 7).map(r => r.slice(0, 12)), cx, cy, s);
-        if (p >= 5) { c.fillStyle = "#ffe58a"; c.fillRect((cx + 1) * s, (cy - 1) * s, 10 * s, s); }
-        for (let i = 0; i < 6; i++) { const t = p - 5 - i * .5; if (t > 0) { const x = cx + 5 + Math.round(Math.cos(i * 1.1) * t * 1.4), y = cy - Math.round(t * 2.2 - t * t * 0.12); c.fillStyle = "#f2c14e"; c.fillRect(x * s, y * s, 2 * s, 2 * s); c.fillStyle = "#b8860b"; c.fillRect((x + 1) * s, (y + 1) * s, s, s); } }
-      }
-    }
-    // damage numbers and impact
-    if (!done && k >= 3 && k <= 8) {
-      const dmg = rv.encounters[enc] ? rv.encounters[enc].value || 1 : 1;
-      c.font = `bold ${s * 5}px "Pixelify Sans", monospace`; c.textAlign = "center";
-      const ty = (my - 6 - (k - 3)) * s;
-      c.fillStyle = OUTLINE; c.fillText("-" + dmg, (mx + mw / 2) * s + 2, ty + 2);
-      c.fillStyle = "#ffe58a"; c.fillText("-" + dmg, (mx + mw / 2) * s, ty);
-      if (k === 3) { c.fillStyle = "#ffffff"; [[-3, -3], [3, -4], [0, 3], [4, 2], [-4, 1]].forEach(([dx, dy]) => c.fillRect((mx + 2 + dx) * s, (my + mh / 2 + dy) * s, 2 * s, 2 * s)); }
-    }
-    if (done && !rv.win) { c.font = `bold ${s * 5}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("RETREAT!", W / 2 * s + 2, 8 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("RETREAT!", W / 2 * s, 8 * s); }
-    if (done && rv.win && f - 36 >= 4) { c.font = `bold ${s * 5}px "Pixelify Sans", monospace`; c.textAlign = "center"; c.fillStyle = OUTLINE; c.fillText("VICTORY!", W / 2 * s + 2, 8 * s + 2); c.fillStyle = "#ffe58a"; c.fillText("VICTORY!", W / 2 * s, 8 * s); }
-  }
 
   // ---------- App themes ----------
   // Each class has a theme that unlocks when the skills on its path add up to 10 levels.
@@ -4092,7 +4185,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
             <option value="auto" ${!ap.show[sl] || ap.show[sl] === "auto" ? "selected" : ""}>Auto</option>
             ${bySlot[sl].map(o => `<option value="${o.id}" ${ap.show[sl] === o.id ? "selected" : ""}>${esc(o.name)}</option>`).join("")}
             <option value="none" ${ap.show[sl] === "none" ? "selected" : ""}>Hide</option></select></div>`).join("")}</div>`
-        : `<p class="hint" style="margin:0">Gear you buy appears on your hero. Practice to unlock items, run dungeons for gold, then buy them in the Gear tab.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>`}
+        : `<p class="hint" style="margin:0">Gear you buy appears on your hero. Practice to unlock items, run dungeons for gold, then buy them in the Shop.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>`}
       </article>
     </section>`;
   }
@@ -4107,7 +4200,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const xp = el * (t.type === "lesson" ? LESSON_MULT : 1) + rested + (ae ? Math.min(el, ae.left) * (t.type === "lesson" ? LESSON_MULT : 1) * ae.pct / 100 : 0);
     const shards = Math.max(0, Math.min(Math.floor(el), DAILY_SHARD_CAP - shardsOnDay(dayKey())));
     const total = totalXp(s) + xp;
-    return { s, xp, rested: pool > 0 && rested < pool, p: progress(total), shards, keys: Math.floor((state.keyShards + shards) / SHARDS_PER_KEY) - state.keysUsed, rem: (state.keyShards + shards) % SHARDS_PER_KEY };
+    return { s, xp, rested: pool > 0 && rested < pool, p: progress(total), shards, keys: Math.max(0, Math.floor((state.keyShards + shards) / SHARDS_PER_KEY) - state.keysUsed), rem: state.keyShards + shards < state.keysUsed * SHARDS_PER_KEY ? 0 : (state.keyShards + shards) % SHARDS_PER_KEY };
   }
 
   function renderTraining() {
@@ -4285,8 +4378,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           <li>Every minute of practice earns 1 key shard, and 10 shards make a dungeon key, so no minute is wasted. Up to 15 keys a day. Keys open dungeon runs, where your hero earns gold for gear.</li>
           <li>Past Lv 100, every 60,000 XP (1,000 solo hours) earns a mastery star. Legend is 600,000 XP.</li>
           <li>Categories help you find skills. You level each skill on its own.</li>
-          <li>Each category grows a talent tree. Add up your skill levels in a category to get its category level, and you earn talent points at category levels ${TALENT_AT.join(", ")}. Talents boost stats, dungeon odds, gold and gear prices, never XP. Resetting a tree is free.</li>
-          <li>Behind the scenes, every skill feeds a path (Music, Body, Mind, Craft, Tech, Spirit or Life). Your class comes from your top one or two paths by total time.</li>
+          <li>Each category grows a talent tree. Add up your skill levels in a category to get its category level, and you earn talent points at category levels ${TALENT_AT.join(", ")}. Each tree plays differently: combat effects, new battle skills, gold, loot and shop discounts, never XP. Resetting a tree is free.</li>
+          <li>Behind the scenes, every skill feeds a path (Music, Body, Mind, Craft, Tech, Spirit or Life). Your class comes from your top one or two paths by XP.</li>
         </ul>
       </div></details>`;
   }
@@ -4557,11 +4650,13 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "run": runDungeon(id); break;
       case "close-run": runView = null; render(); break;
       case "bt-skill": useSkill(id); break;
+      case "tal-skill": toggleTalSkill(id); break;
       case "drink": drinkElixir(id); break;
       case "drink-replace": drinkElixir(id, true); break;
       case "buy-elixir": buyElixir(id); break;
       case "feedback": openFeedback("feedback"); break;
       case "upd-go": Updater.go(); break;
+      case "upd-check": Updater.update(); break;
       case "toggle-autoupd": { state.settings.autoUpdate = !Updater.auto(); persist(); render(); if (Updater.auto()) Updater.check(false); break; }
       case "cel-close": closeCelebrate(); break;
       case "cel-talents": closeCelebrate(); talCat = id; tab = "talents"; try { localStorage.setItem("levelup.tab", tab); } catch (e) {} render(); { const col = document.querySelector(".col"); if (col && window.matchMedia("(max-width: 820px)").matches) col.scrollIntoView({ block: "start" }); } break;

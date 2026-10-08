@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.13.0 — 2026-10-08 (build 2026-10-08.15)
+
+Talent trees, rebuilt. Every category now plays differently, WoW-style.
+
+- Each tree has three themed branches, and each capstone gives a title. Health is a warrior (Arms, Fury, Protection). Language is a wordmage (spell power, cooldowns, control). Tech is an engineer (Overclock, Gadgets, Automation). Life skills is a pathfinder (treasure, thrift, a well-stocked kit). Instrument, Cooking, Trade, Art, Study and Science each have their own style too.
+- New combat effects: attack speed, critical chance and damage, skill damage, shorter cooldowns, executes, lifesteal, rampage stacks, double strikes, block, dodge, thorns, regeneration, stronger heals, slower or weaker monsters, longer stuns and buffs, first-strike bonuses, Second Wind and a last stand.
+- 16 new battle skills from capstones: Power Chord, Encore, Word of Power, Command, Mortal Strike, Flambé, Banquet, Hammerfall, Barricade, Masterpiece, Decoy, Overdrive, Turret, Checkmate, Unstable Flask and Emergency Kit. Bring up to 2 into a fight; choose which under Battle skills in Adventure.
+- Treasure and utility talents: more dungeon gold, gear discounts, better elixir and Radiant relic finds, bonus key shards from sessions of 10+ minutes, hidden caches after wins, more gold from map chests, and a wider view on the map.
+- Effects are capped across all trees, so no build runs away with the game. Talents still never add XP.
+- Talents you already learned stay learned, and their new effects apply right away. Resetting a tree is still free if you want to rethink your build.
+
+Sanity pass fixes:
+
+- Deleting a session that paid for keys you already spent now leaves a small shard debt that your next practice repays, instead of letting keys be earned twice.
+- Today's daily quests no longer change mid-day when you add a skill or unlock a battle skill.
+- Deleting a session that used up an elixir gives those elixir minutes back.
+- "Explored" on the map now stops at 100%, and the map resets properly when you restore a backup or switch heroes.
+- Walking over a chest now opens it.
+- Attack-speed bonuses now always count, even small ones.
+- Settings "Check now" checks for updates (it could open the install prompt instead).
+- Keyboard: Ctrl/Cmd shortcuts no longer move your hero on the map, and battle number keys only work during a fight on screen.
+- Elixirs keep fixed prices (Small 25g, Medium 75g); shop talents discount gear.
+- Updated rules and hint text, and removed leftover code from the old dice-roll dungeons.
+
 ## v0.12.2 — 2026-10-08 (build 2026-10-08.14)
 
 - Map trees no longer look like they float: trunks now rise into the canopies and stand on a ground shadow. Pines got the same fix.
