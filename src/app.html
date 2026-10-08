@@ -417,6 +417,13 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .frame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .frame-grid .bd canvas { width: 56px; height: 56px; border-radius: 2px; }
 .frame-grid .bd.locked canvas { filter: saturate(.55) brightness(.85); opacity: .8; }
+/* inventory */
+.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: grid; place-items: center; padding: 0; }
+.icon-btn:hover { color: var(--ink); border-color: var(--muted); }
+.icon-btn svg { width: 19px; height: 19px; }
+.item.inv .seg.ver { margin-top: 4px; justify-self: start; }
+.item.inv .seg.ver button { padding: 2px 9px; font-size: 12px; }
+.relic-count { color: #1fa89b; }
 /* relics */
 .relic-name { background: linear-gradient(90deg, #1fa89b, #b14fd0, #1fa89b); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: relicShine 4s linear infinite; }
 .item.relic { border-color: #5fe3d6; background: linear-gradient(160deg, color-mix(in srgb, #5fe3d6 14%, var(--panel)), color-mix(in srgb, #e08cf2 12%, var(--panel))); }
@@ -556,7 +563,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 <div class="wrap">
   <header class="top">
     <div class="brand"><canvas id="logo" class="px logo" aria-hidden="true"></canvas><h1>Level <b>UP</b></h1><span id="build-tag">Prototype</span></div>
-    <div class="top-actions"><button class="btn small" data-act="install-go">Install app</button><button class="btn small ghost hide-phone" data-act="feedback">Send feedback</button><span class="pill" id="save-pill">Loading…</span></div>
+    <div class="top-actions"><button class="btn small" data-act="install-go">Install app</button><button class="btn small ghost hide-phone" data-act="feedback">Send feedback</button><span class="pill" id="save-pill">Loading…</span><button class="icon-btn" data-act="tab" data-tab="settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button></div>
   </header>
   <div id="app"><div class="panel onboard"><p class="muted">Loading your hero…</p></div></div>
 </div>
@@ -838,7 +845,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   let editingName = false;
   let editVet = null;
   let tab = "train";
-  try { const t = localStorage.getItem("levelup.tab"); if (t === "gear" || t === "dungeons" || t === "settings" || t === "hero" || t === "talents") tab = t; } catch (e) {}
+  try { const t = localStorage.getItem("levelup.tab"); if (["gear", "dungeons", "settings", "hero", "talents", "inventory"].includes(t)) tab = t; } catch (e) {}
   let confirm = null;              // { kind, id } for inline confirmations
   let pick = new Map();            // onboarding selections: name -> {cat, tips, prior}
 
@@ -927,7 +934,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     }
     if (state.keyShards == null) state.keyShards = 0;
     if (state.keysUsed == null) state.keysUsed = 0;
-    ["owned", "equipped", "trophies", "tipVotes", "talents", "relics"].forEach(k => { if (!state[k] || typeof state[k] !== "object") state[k] = {}; });
+    if (state.relics) Object.keys(state.relics).forEach(k => { const m = /^relic:(.+):(\d)$/.exec(k); if (m) { const r = state.relics[k]; delete state.relics[k]; const id = m[1] + ":" + m[2]; state.relics[id] = { day: r.day, dungeon: r.dungeon }; state.owned[id] = state.owned[id] || true; } });
+    ["owned", "equipped", "trophies", "tipVotes", "talents", "relics", "relicOff"].forEach(k => { if (!state[k] || typeof state[k] !== "object") state[k] = {}; });
     if (!Array.isArray(state.runs)) state.runs = [];
     if (!state.days || typeof state.days !== "object") { state.days = {}; state.sessions.forEach(x => addDay(x.day, x.skillId, x.min)); }
     if (!state.stats || typeof state.stats !== "object") state.stats = { clears: state.runs.filter(r => r.win).length, runs: state.runs.length };
@@ -1204,7 +1212,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     let relic = null;
     if (win && Math.random() < (RELIC_CHANCE[d.id] || 0.05)) {
       const pick = rollRelic();
-      if (pick) { if (!state.relics) state.relics = {}; state.relics[relicId(pick.s.id, pick.t)] = { skillId: pick.s.id, tier: pick.t, day: dayKey(), dungeon: d.id }; relic = { id: relicId(pick.s.id, pick.t), name: "Radiant " + gearFor(pick.s)[pick.t].name, skill: pick.s.name, sprite: lookFor(gearFor(pick.s)[pick.t]) }; }
+      if (pick) {
+        if (!state.relics) state.relics = {};
+        state.relics[pick.it.id] = { day: dayKey(), dungeon: d.id };
+        if (state.relicOff) delete state.relicOff[pick.it.id];
+        relic = { id: pick.it.id, name: "Radiant " + pick.it.name, base: pick.it.name, skill: pick.s.name, sprite: lookFor(pick.it) };
+      }
     }
     state.keysUsed += 1; state.gold += gold;
     if (!state.stats) state.stats = { clears: 0, runs: 0 };
@@ -1238,7 +1251,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const s = skillById(id);
     state.skills = state.skills.filter(k => k.id !== id);
     state.sessions = state.sessions.filter(x => x.skillId !== id);
-    Object.keys(state.relics || {}).forEach(k => { if (state.relics[k].skillId === id) delete state.relics[k]; });
+    Object.keys(state.relics || {}).forEach(k => { if (k.split(":")[0] === id) delete state.relics[k]; });
     Object.keys(state.days || {}).forEach(d => { if (state.days[d][id] != null) addDay(d, id, -state.days[d][id]); });
     if (state.timer && state.timer.skillId === id) state.timer = null;
     if (open === id) open = null;
@@ -1314,11 +1327,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
             <button class="tab" role="tab" data-act="tab" data-tab="train" aria-selected="${tab === "train"}">${tabIcon("train")}<span>Training</span></button>
             <button class="tab" role="tab" data-act="tab" data-tab="hero" aria-selected="${tab === "hero"}">${tabIcon("hero")}<span>Hero</span></button>
             <button class="tab" role="tab" data-act="tab" data-tab="talents" aria-selected="${tab === "talents"}">${tabIcon("talents")}<span>Talents</span>${totalUnspent() ? `<span class="cnt" title="Talent points to spend">${totalUnspent()}</span>` : ""}</button>
-            <button class="tab" role="tab" data-act="tab" data-tab="gear" aria-selected="${tab === "gear"}">${tabIcon("gear")}<span>Gear</span>${state.gold ? `<span class="cnt cnt-gold">${state.gold.toLocaleString()}g</span>` : ""}</button>
+            <button class="tab" role="tab" data-act="tab" data-tab="inventory" aria-selected="${tab === "inventory"}">${tabIcon("inventory")}<span>Inventory</span></button>
+            <button class="tab" role="tab" data-act="tab" data-tab="gear" aria-selected="${tab === "gear"}">${tabIcon("shop")}<span>Shop</span>${state.gold ? `<span class="cnt cnt-gold">${state.gold.toLocaleString()}g</span>` : ""}</button>
             <button class="tab" role="tab" data-act="tab" data-tab="dungeons" aria-selected="${tab === "dungeons"}">${tabIcon("dungeons")}<span>Dungeons</span>${keysAvail() ? `<span class="cnt" title="Dungeon keys">${keysAvail()}<span class="cnt-u"> key${keysAvail() === 1 ? "" : "s"}</span></span>` : ""}</button>
-            <button class="tab" role="tab" data-act="tab" data-tab="settings" aria-selected="${tab === "settings"}">${tabIcon("settings")}<span>Settings</span></button>
           </div>
-          ${tab === "hero" ? renderHeroTab() : tab === "talents" ? renderTalents() : tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
+          ${tab === "hero" ? renderHeroTab() : tab === "talents" ? renderTalents() : tab === "inventory" ? renderInventory() : tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
           <section>
             <div class="section-head"><h2>Skill tracks</h2><button class="btn small" data-act="open-add">+ Add skill</button></div>
             <div class="skills">${CATEGORIES.map(c => {
@@ -1338,7 +1351,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.3";
+  const BUILD = "2026-10-08.4";
   const APP_VERSION = "0.8.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
@@ -1512,6 +1525,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     hero: '<circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>',
     gear: '<path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/>',
     dungeons: '<path d="M5 21V10a7 7 0 0 1 14 0v11z"/><path d="M12 14v3"/>',
+    inventory: '<path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 12h6"/>',
+    shop: '<path d="M4 9l1.5-5h13L20 9"/><path d="M4 9h16v2a3 3 0 0 1-5.3 1.9A3 3 0 0 1 12 14a3 3 0 0 1-2.7-1.1A3 3 0 0 1 4 11z"/><path d="M5.5 13.5V20h13v-6.5"/>',
     talents: '<path d="M12 21v-6M12 15l-6-5M12 15l6-5M12 15V9"/><circle cx="6" cy="8" r="2.2"/><circle cx="18" cy="8" r="2.2"/><circle cx="12" cy="6.5" r="2.2"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
   };
@@ -1687,12 +1702,48 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       <p class="hint" style="margin:0">Your category level is all your ${esc(T.short.toLowerCase())} skill levels added together. Points come at category levels ${TALENT_AT.slice(0, 5).join(", ")} and on up to ${TALENT_AT[TALENT_AT.length - 1]}. Talents help your hero in dungeons and the shop but never add XP, so your levels always show real practice. Resetting a tree is free, so try things out.</p>
     </section>`;
   }
+  // ---------- Inventory tab ----------
+  // Everything you've earned: gear by skill (equip it, pick Regular or Radiant), trophies, and later consumables.
+  function renderInventory() {
+    const owned = state.skills.map(s => ({ s, items: gearFor(s).filter(it => state.owned[it.id]) })).filter(x => x.items.length);
+    const nOwned = owned.reduce((n, x) => n + x.items.length, 0), nRelic = relicList().length;
+    const tro = DUNGEONS.filter(d => state.trophies[d.id]);
+    return `<section style="display:grid;gap:12px">
+      <div class="section-head" style="margin:0"><h2>Inventory</h2><span class="muted" style="font-size:13px"><b class="num">${nOwned}</b> item${nOwned === 1 ? "" : "s"} · <b class="num relic-count">${nRelic}</b> Radiant · <b class="num">${tro.reduce((n, d) => n + state.trophies[d.id], 0)}</b> trophies</span></div>
+      ${owned.length ? owned.map(({ s, items }) => {
+        const eq = state.equipped[s.id];
+        return `<article class="panel gear-skill">
+          <div class="gear-head"><h3>${esc(s.name)}</h3><span class="muted" style="font-size:13px">Lv <b class="num">${earnedLv(s)}</b> · ${STATS[s.cat].name}</span></div>
+          <div class="gear-grid">${items.map(it => {
+            const on = eq === it.id, rad = hasRelic(it.id), shows = showsRelic(it.id), look = lookFor(it);
+            return `<div class="item inv ${on ? "equipped" : ""} ${shows ? "relic" : ""}">
+              <canvas class="px item-ic" data-icon="${look}:${shownTier(it)}" data-size="40" aria-hidden="true"></canvas>
+              <b class="${shows ? "relic-name" : ""}">${shows ? "Radiant " : ""}${esc(it.name)}</b>
+              <span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>
+              ${rad ? `<div class="seg ver" role="group" aria-label="Version"><button data-act="relic-ver" data-id="${it.id}" data-val="0" aria-pressed="${!shows}">Regular</button><button data-act="relic-ver" data-id="${it.id}" data-val="1" aria-pressed="${shows}">Radiant</button></div>`
+                : `<span class="req">Radiant version: not found yet</span>`}
+              ${on ? `<span class="req" style="color:var(--xp);font-weight:700">Equipped</span>` : `<button class="btn small" data-act="equip" data-id="${it.id}">Equip</button>`}
+            </div>`;
+          }).join("")}</div>
+        </article>`;
+      }).join("") : `<article class="panel set-card"><h3>No gear yet</h3><p class="hint" style="margin:0">Practice to unlock gear, run dungeons for gold, then buy items in the Shop. Everything you buy lands here.</p><div><button class="btn small primary" data-act="tab" data-tab="gear">Open the Shop</button></div></article>`}
+      <p class="hint" style="margin:0">Equip one item per skill for its stat bonus. Your hero wears your best items automatically, and you can change what shows in the Hero tab. Every dungeon win has a small chance to drop the Radiant version of an item you own (4% in the Goblin Cellar up to 15% in the Endless Spire). Radiant is a look, not a power boost.</p>
+      <article class="panel gear-skill">
+        <div class="gear-head"><h3>Trophies</h3><span class="muted" style="font-size:13px">Rare dungeon drops</span></div>
+        ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">None yet. Each dungeon has a 1 in 10 chance to drop its trophy when you win.</p>`}
+      </article>
+      <article class="panel gear-skill">
+        <div class="gear-head"><h3>Consumables</h3></div>
+        <p class="hint" style="margin:0">Empty for now. Potions and elixirs will live here once they arrive.</p>
+      </article>
+    </section>`;
+  }
   // ---------- Gear tab ----------
   function renderGear() {
     const tro = DUNGEONS.filter(d => state.trophies[d.id]);
     return `<section style="display:grid;gap:12px">
-      <div class="section-head" style="margin:0"><h2>Gear</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${state.gold.toLocaleString()}</b> gold</span></div>
-      <p class="hint" style="margin:0">Each skill unlocks gear as you level it. Buy it with dungeon gold. One item per skill can be equipped, and its bonus adds to that skill's stat.</p>
+      <div class="section-head" style="margin:0"><h2>Shop</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${state.gold.toLocaleString()}</b> gold</span></div>
+      <p class="hint" style="margin:0">Each skill unlocks gear as you level it. Buy it with dungeon gold, and it goes to your Inventory. One item per skill can be equipped, and its bonus adds to that skill's stat. Items you own can turn up in their Radiant version in dungeons.</p>
       ${CATEGORIES.flatMap(c => state.skills.filter(s => s.catId === c.id)).map(s => {
         const lv = earnedLv(s), eq = state.equipped[s.id];
         return `<article class="panel gear-skill">
@@ -1709,16 +1760,6 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           }).join("")}</div>
         </article>`;
       }).join("")}
-      ${(() => { const rl = relicList(), possible = state.skills.reduce((n, s) => n + gearFor(s).length, 0);
-        return `<article class="panel gear-skill relics">
-        <div class="gear-head"><h3>Relics</h3><span class="muted" style="font-size:13px"><b class="num">${rl.length}</b> of ${possible} found</span></div>
-        ${rl.length ? `<div class="gear-grid">${rl.map(r => `<div class="item relic"><canvas class="px item-ic" data-icon="${r.sprite}:${RELIC_TIER}" data-size="40" aria-hidden="true"></canvas><b class="relic-name">${esc(r.name)}</b><span class="req">${esc(r.skill.name)} · found ${dayLabel(r.day)}</span></div>`).join("")}</div>` : ""}
-        <p class="hint" style="margin:0">Winning a dungeon can drop a Radiant relic: a shining version of gear one of your skills has unlocked. Deeper dungeons drop them more often (4% in the Goblin Cellar up to 15% in the Endless Spire). Relics are for show, and they appear on your hero automatically.</p>
-      </article>`; })()}
-      <article class="panel gear-skill">
-        <div class="gear-head"><h3>Trophies</h3><span class="muted" style="font-size:13px">Rare dungeon drops</span></div>
-        ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">None yet. Each dungeon has a 1 in 10 chance to drop its trophy when you win.</p>`}
-      </article>
     </section>`;
   }
 
@@ -1754,8 +1795,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       ${!done ? `<div class="muted" style="font-size:13px">Exploring…</div>` : `
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
         <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune || r.talGold ? ` <span class="muted">(includes ${[r.fortune ? `Fortune +${r.fortune}%` : "", r.talGold ? `talents +${r.talGold}%` : ""].filter(Boolean).join(" and ")})</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
-        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">From your ${esc(r.relic.skill)} practice. It now shines on your hero.</div></div></div>` : ""}
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
+        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}). It's on your hero now. Switch versions anytime in your Inventory.</div></div></div>` : ""}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${r.relic ? `<button class="btn small" data-act="tab" data-tab="inventory">Open inventory</button>` : ""}<button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
     </div>`;
   }
 
@@ -2465,8 +2506,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function appearance() { if (!state.appearance) state.appearance = defaultAppearance(); if (!state.appearance.show) state.appearance.show = {}; if (!BACKDROPS[state.appearance.bg] || !bdUnlocked(state.appearance.bg)) state.appearance.bg = "meadow"; return state.appearance; }
   function ownedLooks() {
     const out = [];
-    state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const sp = lookFor(it); if (S[sp]) out.push({ id: it.id, name: it.name, sprite: sp, slot: S[sp].slot, tier: it.tier, skill: s }); } }));
-    relicList().forEach(r => { if (S[r.sprite]) out.push({ id: r.id, name: r.name, sprite: r.sprite, slot: S[r.sprite].slot, tier: RELIC_TIER, rank: 5.5 + r.tier / 10, skill: r.skill }); });
+    state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const sp = lookFor(it); if (S[sp]) out.push({ id: it.id, name: (showsRelic(it.id) ? "Radiant " : "") + it.name, sprite: sp, slot: S[sp].slot, tier: shownTier(it), rank: it.tier + (showsRelic(it.id) ? 0.5 : 0), skill: s }); } }));
     return out;
   }
   function heroItems() {
@@ -2486,7 +2526,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   const RUN_SKILLS = ["running", "cycling", "swimming", "climbing", "martial-arts"];
   function trainingLook(s, frame) {
     const sl = slugOf(s.name), best = gearFor(s).filter(it => state.owned[it.id]).sort((a, b) => b.tier - a.tier)[0];
-    const tier = best ? best.tier : 0, ownLook = best ? lookFor(best) : null;
+    const tier = best ? shownTier(best) : 0, ownLook = best ? lookFor(best) : null;
     let act = "bob", prop = null;
     if (s.catId === "instrument") {
       const inst = GEAR_BY_SKILL[s.name] ? (sl === "drums" ? "drum" : sl === "singing" ? "mic" : "guitar") : (INSTRUMENT_LOOK[sl] || "guitar");
@@ -2793,28 +2833,28 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   const unlockedBackdrops = () => Object.keys(BACKDROPS).filter(bdUnlocked);
 
 
-  // ---------- Relics (rare skill drops) ----------
-  // Winning a dungeon can drop a Radiant relic: a prismatic version of one of your skills' unlocked gear.
-  // Relics are cosmetic trophies of real practice: the skill must already have that gear tier unlocked.
+  // ---------- Relics (rare Radiant versions of gear you own) ----------
+  // Once you've bought an item, every dungeon win has a small chance to drop its Radiant version
+  // (deeper dungeons, better odds). A relic is an alternate look for that same item: switch between
+  // Regular and Radiant in the Inventory. Cosmetic only.
   const RELIC_TIER = 6;
   const RELIC_CHANCE = { cellar: 0.04, ruins: 0.06, library: 0.08, forge: 0.10, citadel: 0.12, spire: 0.15 };
-  const relicId = (sid, t) => `relic:${sid}:${t}`;
+  const hasRelic = itemId => !!(state.relics && state.relics[itemId]);
+  const showsRelic = itemId => hasRelic(itemId) && !(state.relicOff && state.relicOff[itemId]);
+  const shownTier = it => showsRelic(it.id) ? RELIC_TIER : it.tier;
   function relicList() {
     const out = [];
     Object.entries(state.relics || {}).forEach(([id, r]) => {
-      const s = skillById(r.skillId); if (!s) return;
-      const base = gearFor(s)[r.tier]; if (!base) return;
-      out.push({ id, skill: s, tier: r.tier, base, name: "Radiant " + base.name, sprite: lookFor(base), day: r.day, dungeon: r.dungeon });
+      const s = skillById(id.split(":")[0]); if (!s) return;
+      const base = gearFor(s).find(g => g.id === id); if (!base) return;
+      out.push({ id, skill: s, base, name: "Radiant " + base.name, sprite: lookFor(base), day: r.day, dungeon: r.dungeon });
     });
-    return out.sort((a, b) => (b.day || "").localeCompare(a.day || "") || b.tier - a.tier);
+    return out.sort((a, b) => (b.day || "").localeCompare(a.day || "") || b.base.tier - a.base.tier);
   }
-  // Pick a relic you don't have yet, weighted toward your most practiced skills.
+  // Pick an owned item that has no Radiant version yet, weighted toward your most practiced skills.
   function rollRelic() {
     const pool = [];
-    state.skills.forEach(s => {
-      const lv = earnedLv(s);
-      gearFor(s).forEach((it, t) => { if (lv >= it.lv && !(state.relics || {})[relicId(s.id, t)]) pool.push({ s, t, w: Math.max(1, lv) * (1 + t * 0.5) }); });
-    });
+    state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id] && !hasRelic(it.id)) pool.push({ it, s, w: Math.max(1, earnedLv(s)) * (1 + it.tier * 0.5) }); }));
     if (!pool.length) return null;
     let r = Math.random() * pool.reduce((n, p) => n + p.w, 0);
     for (const p of pool) { if ((r -= p.w) <= 0) return p; }
@@ -3482,6 +3522,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "tal-reset": confirm = null; resetTree(id); break;
       case "tal-title": state.title = state.title === id ? null : id; persist(); render(); break;
       case "equip": equipItem(id); break;
+      case "relic-ver": { if (!hasRelic(id)) break; if (!state.relicOff) state.relicOff = {}; if (b.dataset.val === "1") delete state.relicOff[id]; else state.relicOff[id] = true; Sound.play("tap"); persist(); render(); break; }
       case "run": runDungeon(id); break;
       case "close-run": runView = null; render(); break;
       case "feedback": openFeedback("feedback"); break;

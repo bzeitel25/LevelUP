@@ -17,7 +17,7 @@ Design rules that every feature follows:
 | v0.5 | Android app with real home-screen widgets |
 | v0.6 | Talent trees: one per category, with titles and signature moves |
 | v0.7 | Portrait frames and the Progress view (weekly chart and per-skill time) |
-| v0.8 | Rare relics: Radiant drops tied to your real skills, plus the Relic Hunter frame |
+| v0.8 | Inventory tab, Radiant relic versions of gear you own (switch Regular or Radiant), Relic Hunter frame |
 
 ## Next up
 
@@ -43,20 +43,25 @@ Bruno wants combat to be something you play, not something that plays itself.
   - Whether a battle can be lost.
   - How tapping well changes win chance and gold, while practice stays the main source of power.
 
-### 2. Adventure mode
+### 2. Consumables
+
+- Potions and elixirs in the Inventory (for example XP boost elixirs), earned in play and never sold.
+- Before XP boosts ship, decide how they stay honest next to "levels mean real practice" (for example, small and earned only through practice).
+
+### 3. Adventure mode
 
 - A world map with quest chains, from Adventure level 1 to 100, built on top of dungeons.
 - Rare drops tied to real skills.
 
-### 3. Verified practice
+### 4. Verified practice
 
 - Private, on-device checks that sync with apps like Health Connect.
 - Verified time counts for a little more. The honor system stays the default.
 
-### 4. Group adventures
+### 5. Group adventures
 
 - Party up with friends. This needs accounts and a small backend.
 
-### 5. iPhone widgets
+### 6. iPhone widgets
 
 - The WidgetKit code is written, in mobile/native/ios. Building it needs a Mac.

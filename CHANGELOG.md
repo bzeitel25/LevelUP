@@ -1,16 +1,17 @@
 # Changelog
 
-## v0.8.0 — 2026-10-08 (build 2026-10-08.3)
+## v0.8.0 — 2026-10-08 (build 2026-10-08.4)
 
-Rare relics.
+Inventory and Radiant relics.
 
-- Winning a dungeon can drop a Radiant relic: a prismatic version of gear one of your skills has already unlocked (for example, Radiant Electric Six-String from your Guitar practice). Deeper dungeons drop them more often: 4% in the Goblin Cellar up to 15% in the Endless Spire. The drop favors your most practiced skills.
-- A relic shows on your hero automatically, with a shimmering sparkle, and appears in the dungeon result with its own reveal.
-- New Relics collection in the Gear tab shows each relic, the skill it came from, and when you found it. Relics are cosmetic.
+- New Inventory tab: all the gear you've bought, grouped by skill. Equip items for their stat bonus from here. It also holds your trophies and an empty Consumables section, ready for potions and elixirs later.
+- Radiant relics: once you've bought an item, every dungeon win has a small chance to drop its Radiant version. Deeper dungeons give better odds: 4% in the Goblin Cellar up to 15% in the Endless Spire. Drops favor your most practiced skills.
+- Each item with a Radiant version gets a Regular / Radiant switch in the Inventory. Radiant items shine on your hero with a prismatic sparkle, and they're cosmetic only. A new find shows its Radiant version right away.
 - New Relic Hunter portrait frame, for finding 5 relics.
+- Navigation: Gear is now the Shop, and Settings moved to the gear button in the header, so the phone bar fits Training, Hero, Talents, Inventory, Shop and Dungeons.
 - Fix: unlocks earned in a dungeon (themes, backdrops, frames) are now announced reliably.
 - The Android app now builds and publishes: https://github.com/bzeitel25/LevelUP/releases/download/android/LevelUP.apk
-- New ROADMAP.md, with active combat (tap skills on cooldowns) as the next big item.
+- New ROADMAP.md. Next up: active combat (tap skills on cooldowns), then consumables.
 
 ## v0.7.0 — 2026-10-08 (build 2026-10-08.2)
 
