@@ -417,6 +417,15 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .frame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .frame-grid .bd canvas { width: 56px; height: 56px; border-radius: 2px; }
 .frame-grid .bd.locked canvas { filter: saturate(.55) brightness(.85); opacity: .8; }
+/* relics */
+.relic-name { background: linear-gradient(90deg, #1fa89b, #b14fd0, #1fa89b); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: relicShine 4s linear infinite; }
+.item.relic { border-color: #5fe3d6; background: linear-gradient(160deg, color-mix(in srgb, #5fe3d6 14%, var(--panel)), color-mix(in srgb, #e08cf2 12%, var(--panel))); }
+.relic-drop { display: flex; gap: 12px; align-items: center; border: 2px solid #5fe3d6; border-radius: 10px; padding: 10px 12px; background: linear-gradient(160deg, color-mix(in srgb, #5fe3d6 16%, var(--panel)), color-mix(in srgb, #e08cf2 14%, var(--panel))); animation: celin .4s cubic-bezier(.2,1.4,.4,1); }
+.relic-drop .item-ic { width: 48px; height: 48px; flex: none; }
+.relic-drop b { font-size: 16px; }
+.relic-kicker { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+@keyframes relicShine { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .relic-name, .relic-drop { animation: none; } }
 /* talents */
 .cel-acts { display: grid; gap: 6px; justify-items: center; }
 .tal-cats { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -918,7 +927,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     }
     if (state.keyShards == null) state.keyShards = 0;
     if (state.keysUsed == null) state.keysUsed = 0;
-    ["owned", "equipped", "trophies", "tipVotes", "talents"].forEach(k => { if (!state[k] || typeof state[k] !== "object") state[k] = {}; });
+    ["owned", "equipped", "trophies", "tipVotes", "talents", "relics"].forEach(k => { if (!state[k] || typeof state[k] !== "object") state[k] = {}; });
     if (!Array.isArray(state.runs)) state.runs = [];
     if (!state.days || typeof state.days !== "object") { state.days = {}; state.sessions.forEach(x => addDay(x.day, x.skillId, x.min)); }
     if (!state.stats || typeof state.stats !== "object") state.stats = { clears: state.runs.filter(r => r.win).length, runs: state.runs.length };
@@ -1191,19 +1200,24 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const roll = d.gold[0] + Math.random() * (d.gold[1] - d.gold[0]);
     const gold = Math.round((win ? roll : d.gold[0] * (0.3 + tfx.retreat / 100)) * (1 + (fortunePct(st) + tfx.gold) / 100));
     const trophy = win && Math.random() < 0.1 + tfx.trophy / 100 ? d.trophy : null;
+    const snap = unlockSnapshot();
+    let relic = null;
+    if (win && Math.random() < (RELIC_CHANCE[d.id] || 0.05)) {
+      const pick = rollRelic();
+      if (pick) { if (!state.relics) state.relics = {}; state.relics[relicId(pick.s.id, pick.t)] = { skillId: pick.s.id, tier: pick.t, day: dayKey(), dungeon: d.id }; relic = { id: relicId(pick.s.id, pick.t), name: "Radiant " + gearFor(pick.s)[pick.t].name, skill: pick.s.name, sprite: lookFor(gearFor(pick.s)[pick.t]) }; }
+    }
     state.keysUsed += 1; state.gold += gold;
     if (!state.stats) state.stats = { clears: 0, runs: 0 };
     state.stats.runs += 1; if (win) state.stats.clears += 1;
     if (trophy) state.trophies[d.id] = (state.trophies[d.id] || 0) + 1;
-    const snap = unlockSnapshot();
-    state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, day: dayKey(), ts: Date.now() });
+    state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, relic: relic ? relic.name : null, day: dayKey(), ts: Date.now() });
     const unlocks = unlockDiff(snap);
     if (state.runs.length > 30) state.runs.length = 30;
     persist();
-    runView = { d, win, gold, trophy, encounters, chance, fortune: fortunePct(st), talGold: tfx.gold, step: 0, t: 0, unlocks };
+    runView = { d, win, gold, trophy, relic, encounters, chance, fortune: fortunePct(st), talGold: tfx.gold, step: 0, t: 0, unlocks };
     clearInterval(runTimer);
     const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const finish = () => { (win ? Sound.play("win") : Sound.play("lose")); setTimeout(() => Sound.play("coin"), 450); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); };
+    const finish = () => { (win ? Sound.play("win") : Sound.play("lose")); setTimeout(() => Sound.play(relic ? "unlock" : "coin"), 450); if (relic) buzz([30, 50, 30, 50, 90]); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); };
     if (reduce) { runView.t = BATTLE_FRAMES; runView.step = 4; render(); finish(); return; }
     render();
     runTimer = setInterval(() => {
@@ -1224,6 +1238,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const s = skillById(id);
     state.skills = state.skills.filter(k => k.id !== id);
     state.sessions = state.sessions.filter(x => x.skillId !== id);
+    Object.keys(state.relics || {}).forEach(k => { if (state.relics[k].skillId === id) delete state.relics[k]; });
     Object.keys(state.days || {}).forEach(d => { if (state.days[d][id] != null) addDay(d, id, -state.days[d][id]); });
     if (state.timer && state.timer.skillId === id) state.timer = null;
     if (open === id) open = null;
@@ -1323,8 +1338,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.2";
-  const APP_VERSION = "0.7.0";
+  const BUILD = "2026-10-08.3";
+  const APP_VERSION = "0.8.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1694,6 +1709,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           }).join("")}</div>
         </article>`;
       }).join("")}
+      ${(() => { const rl = relicList(), possible = state.skills.reduce((n, s) => n + gearFor(s).length, 0);
+        return `<article class="panel gear-skill relics">
+        <div class="gear-head"><h3>Relics</h3><span class="muted" style="font-size:13px"><b class="num">${rl.length}</b> of ${possible} found</span></div>
+        ${rl.length ? `<div class="gear-grid">${rl.map(r => `<div class="item relic"><canvas class="px item-ic" data-icon="${r.sprite}:${RELIC_TIER}" data-size="40" aria-hidden="true"></canvas><b class="relic-name">${esc(r.name)}</b><span class="req">${esc(r.skill.name)} · found ${dayLabel(r.day)}</span></div>`).join("")}</div>` : ""}
+        <p class="hint" style="margin:0">Winning a dungeon can drop a Radiant relic: a shining version of gear one of your skills has unlocked. Deeper dungeons drop them more often (4% in the Goblin Cellar up to 15% in the Endless Spire). Relics are for show, and they appear on your hero automatically.</p>
+      </article>`; })()}
       <article class="panel gear-skill">
         <div class="gear-head"><h3>Trophies</h3><span class="muted" style="font-size:13px">Rare dungeon drops</span></div>
         ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">None yet. Each dungeon has a 1 in 10 chance to drop its trophy when you win.</p>`}
@@ -1719,7 +1740,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       }).join("")}
       ${state.runs.length ? `<div><div class="section-head"><h2 style="font-size:16px">Recent runs</h2></div><div class="panel run-hist" style="padding:6px 16px">${state.runs.slice(0, 6).map(r => {
         const d = DUNGEONS.find(x => x.id === r.dungeon);
-        return `<div><span>${dayLabel(r.day)} · ${esc(d ? d.name : "Dungeon")}${r.trophy ? ` · <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</span><span class="num" style="color:${r.win ? "var(--good)" : "var(--muted)"}">${r.win ? "Cleared" : "Retreated"} · +${r.gold}g</span></div>`;
+        return `<div><span>${dayLabel(r.day)} · ${esc(d ? d.name : "Dungeon")}${r.trophy ? ` · <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}${r.relic ? ` · <b class="relic-name">${esc(r.relic)}</b>` : ""}</span><span class="num" style="color:${r.win ? "var(--good)" : "var(--muted)"}">${r.win ? "Cleared" : "Retreated"} · +${r.gold}g</span></div>`;
       }).join("")}</div></div>` : ""}
       <p class="hint" style="margin:0">A run plays out from your hero's stats. If you retreat you still keep some gold, and you never lose anything except the key. Talents can raise your odds and your gold.</p>
     </section>`;
@@ -1733,6 +1754,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       ${!done ? `<div class="muted" style="font-size:13px">Exploring…</div>` : `
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
         <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune || r.talGold ? ` <span class="muted">(includes ${[r.fortune ? `Fortune +${r.fortune}%` : "", r.talGold ? `talents +${r.talGold}%` : ""].filter(Boolean).join(" and ")})</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
+        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">From your ${esc(r.relic.skill)} practice. It now shines on your hero.</div></div></div>` : ""}
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
     </div>`;
   }
@@ -1816,7 +1838,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   const TIER_PAL = [
     { A: "#a0703a", a: "#6e4a22", L: "#c99d66" }, { A: "#8a94a4", a: "#5a6272", L: "#b9c1cd" },
     { A: "#c77a30", a: "#8a4f18", L: "#eba35e" }, { A: "#4f86d6", a: "#2f5a9e", L: "#94bdf2" },
-    { A: "#9a58d8", a: "#64349e", L: "#c89cf2" }, { A: "#f0bd3e", a: "#b8860b", L: "#ffe7a0" }
+    { A: "#9a58d8", a: "#64349e", L: "#c89cf2" }, { A: "#f0bd3e", a: "#b8860b", L: "#ffe7a0" },
+    { A: "#5fe3d6", a: "#c45be0", L: "#f2fffd" }
   ];
   const FIXED = {
     O: OUTLINE, Z: "#f6f3ea", z: "#cfc8b4", Q: "#efe2c2", q: "#cbb98e", X: "#2e3142", x: "#1f2230",
@@ -2127,6 +2150,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     // legendary sparkle
     const legend = Object.values(items).some(it => it && it.tier === 5);
     if (legend) [[3, 5], [28, 18], [4, 27]].forEach(([x, y], i) => { if ((f + i) % 3 !== 2) { put(g, x, y, FIXED.Y); put(g, x + 1, y + 1, FIXED.W); } });
+    const relic = Object.values(items).some(it => it && it.tier === RELIC_TIER);
+    if (relic) {
+      const spots = [[2, 9], [28, 6], [27, 24], [3, 21], [29, 14], [1, 31]], cols = ["#5fe3d6", "#f2fffd", "#e08cf2"];
+      [0, 2, 4].forEach((o, i) => { const [x, y] = spots[(Math.floor(f / 2) + o) % spots.length], c = cols[(f + i) % 3]; put(g, x, y, c); if ((f + i) % 2 === 0) { put(g, x - 1, y, c); put(g, x + 1, y, c); put(g, x, y - 1, c); put(g, x, y + 1, c); put(g, x, y, "#ffffff"); } });
+    }
     return g;
   }
   function paintGrid(canvas, g, opts = {}) {
@@ -2438,6 +2466,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function ownedLooks() {
     const out = [];
     state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const sp = lookFor(it); if (S[sp]) out.push({ id: it.id, name: it.name, sprite: sp, slot: S[sp].slot, tier: it.tier, skill: s }); } }));
+    relicList().forEach(r => { if (S[r.sprite]) out.push({ id: r.id, name: r.name, sprite: r.sprite, slot: S[r.sprite].slot, tier: RELIC_TIER, rank: 5.5 + r.tier / 10, skill: r.skill }); });
     return out;
   }
   function heroItems() {
@@ -2447,7 +2476,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     Object.keys(SLOT_NAMES).forEach(sl => {
       const list = bySlot[sl] || [], pick = ap.show[sl];
       if (pick === "none") return;
-      const chosen = pick && pick !== "auto" ? list.find(o => o.id === pick) : list.slice().sort((a, b) => b.tier - a.tier)[0];
+      const chosen = pick && pick !== "auto" ? list.find(o => o.id === pick) : list.slice().sort((a, b) => (b.rank ?? b.tier) - (a.rank ?? a.tier))[0];
       if (chosen) items[sl] = { sprite: chosen.sprite, tier: chosen.tier, id: chosen.id };
     });
     return items;
@@ -2763,6 +2792,35 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
   const unlockedBackdrops = () => Object.keys(BACKDROPS).filter(bdUnlocked);
 
+
+  // ---------- Relics (rare skill drops) ----------
+  // Winning a dungeon can drop a Radiant relic: a prismatic version of one of your skills' unlocked gear.
+  // Relics are cosmetic trophies of real practice: the skill must already have that gear tier unlocked.
+  const RELIC_TIER = 6;
+  const RELIC_CHANCE = { cellar: 0.04, ruins: 0.06, library: 0.08, forge: 0.10, citadel: 0.12, spire: 0.15 };
+  const relicId = (sid, t) => `relic:${sid}:${t}`;
+  function relicList() {
+    const out = [];
+    Object.entries(state.relics || {}).forEach(([id, r]) => {
+      const s = skillById(r.skillId); if (!s) return;
+      const base = gearFor(s)[r.tier]; if (!base) return;
+      out.push({ id, skill: s, tier: r.tier, base, name: "Radiant " + base.name, sprite: lookFor(base), day: r.day, dungeon: r.dungeon });
+    });
+    return out.sort((a, b) => (b.day || "").localeCompare(a.day || "") || b.tier - a.tier);
+  }
+  // Pick a relic you don't have yet, weighted toward your most practiced skills.
+  function rollRelic() {
+    const pool = [];
+    state.skills.forEach(s => {
+      const lv = earnedLv(s);
+      gearFor(s).forEach((it, t) => { if (lv >= it.lv && !(state.relics || {})[relicId(s.id, t)]) pool.push({ s, t, w: Math.max(1, lv) * (1 + t * 0.5) }); });
+    });
+    if (!pool.length) return null;
+    let r = Math.random() * pool.reduce((n, p) => n + p.w, 0);
+    for (const p of pool) { if ((r -= p.w) <= 0) return p; }
+    return pool[pool.length - 1];
+  }
+
   // ---------- Portrait frames ----------
   // Pixel borders around your hero, drawn in the same pixel grid as the art (4 px thick, 7x7 corner ornaments).
   // Unlocked by total level, by each path's combined levels, and by feats. Cosmetic only.
@@ -2794,6 +2852,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     steward: { name: "Steward's Coin",   pal: ["#4a7a3a", "#78ad5c", "#2f5226", "#f2c14e"], corner: "coin", req: { path: "life", lv: 20 } },
     delver:  { name: "Dungeon Delver",   pal: ["#4a4d5e", "#6e7287", "#2a2c38", "#ff8a3a"], corner: "boss", studs: 4, req: { clears: 10 } },
     laureate:{ name: "Laureate",         pal: ["#d9a521", "#f5d77a", "#8a6a0a", "#4fc58d"], corner: "leaf", studs: 6, req: { capstone: true } },
+    radiant: { name: "Relic Hunter",     pal: ["#2a9a9a", "#5fe3d6", "#1a5f66", "#e08cf2"], corner: "star", studs: 4, req: { relics: 5 } },
     legend:  { name: "Legend",           pal: ["#1d1a2b", "#3a3550", "#0d0b14", "#ffe58a"], corner: "star", studs: 3, req: { skillLv: 100 } }
   };
   const pathLevel = p => state.skills.filter(s => s.cat === p).reduce((n, s) => n + earnedLv(s), 0);
@@ -2804,6 +2863,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (q.clears) return dungeonClears() >= q.clears;
     if (q.capstone) return CATEGORIES.some(c => TALENT_TREES[c.id] && activeTalents(c.id).some(id => /4$/.test(id)));
     if (q.skillLv) return state.skills.some(s => earnedLv(s) >= q.skillLv);
+    if (q.relics) return Object.keys(state.relics || {}).length >= q.relics;
     return false;
   }
   function frameReq(k) {
@@ -2813,6 +2873,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (q.clears) return `Clear ${q.clears} dungeons`;
     if (q.capstone) return "Learn a talent capstone";
     if (q.skillLv) return `Any skill Lv ${q.skillLv}`;
+    if (q.relics) return `Find ${q.relics} relics`;
     return "";
   }
   const unlockedFrames = () => Object.keys(FRAMES).filter(frameUnlocked);
