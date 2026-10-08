@@ -22,31 +22,38 @@ Design rules that every feature follows:
 | v0.9 | Hero art upgrade: lighting, colored outlines, 7 eye styles, 7 mouths, 5 cheek options, 4 new hairstyles |
 | v0.10 | Active combat: auto-attacks plus tappable path skills on cooldowns, signature moves, HP bars, full-art hero in battle |
 | v0.11 | XP elixirs (+5% to +25%), daily and weekly quests (no FOMO, rewards arrive on their own), 37 achievements |
+| v0.11.x | One elixir at a time (1 hour each, confirm before replacing), lower quest gold (up to 50 a day), buy Small and Medium elixirs |
+| v0.12 | Adventure v1: a single-player overworld with 6 regions, region gates, fog of war, chests and signs, and dungeons on the map |
+| v0.13 | Talent trees rebuilt: themed branches per category (warrior, wordmage, engineer, pathfinder and more), 16 capstone battle skills, treasure and utility perks, plus a full sanity pass |
 
 ## Next up
 
-### 1. More consumables
+### 1. Adventure v2
 
-- Battle potions (heal or shield once per fight), earned in play and never sold.
+- Caves: small side dungeons hidden around the map.
+- Missions: short quest chains from signposts and villagers (for example, clear a dungeon 3 times, then face its boss).
+- Bosses: one per region, with special attacks you need to block or stun at the right moment.
+- Battle potions (heal or shield once per fight) as loot, earned in play and never sold.
 
-### 2. Adventure mode
+### 2. Online world (MMO-style)
 
-- A world map with quest chains, from Adventure level 1 to 100, built on top of dungeons.
-- Rare drops tied to real skills.
+- Start with accounts and a small backend, so heroes live online and sync across devices.
+- See other players' heroes, titles and achievements.
+- Shared "meet" maps and exploration areas where players see each other walking around.
+- Later: parties for group adventures and co-op bosses.
 
 ### 3. Verified practice
 
 - Private, on-device checks that sync with apps like Health Connect.
 - Verified time counts for a little more. The honor system stays the default.
 
-### 4. Group adventures
+### 4. Combat follow-ups
 
-- Party up with friends. This needs accounts and a small backend.
+- More skills per path that unlock at higher path levels (pick which ones to equip, like talent skills already do).
 
-### 5. Combat follow-ups
+### 5. Classes
 
-- More skills per path that unlock at higher path levels (pick which ones to equip).
-- Boss fights with special attacks to dodge or block.
+- Player-chosen classes from combined skill levels, with neutral starters and a new Nature/Explorer category (pets, outdoors). Designed in the Class Compendium doc; waiting on its open questions.
 
 ### 6. iPhone widgets
 
