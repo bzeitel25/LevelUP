@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-08.13",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-08.14",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -1406,8 +1406,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.13";
-  const APP_VERSION = "0.12.1";
+  const BUILD = "2026-10-08.14";
+  const APP_VERSION = "0.12.2";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -2528,20 +2528,21 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function drawTree(c, px, py, x, y) {
     const dark = regionAt(x, y).floor === "f";
     const g = dark ? ["#2f8040", "#246030", "#48a050", "#7cc870"] : ["#40a048", "#2c7a38", "#60c058", "#98e080"];
-    // shadow, trunk
-    P(c, px + 3, py + 14, 10, 2, "rgba(0,0,0,.18)");
-    P(c, px + 6, py + 10, 4, 5, "#7a4a28"); P(c, px + 6, py + 10, 1, 5, "#a06838"); P(c, px + 5, py + 14, 6, 1, "#5a3418");
+    // ground shadow, then a trunk that rises into the canopy
+    P(c, px + 2, py + 14, 12, 2, "rgba(0,0,0,.2)"); P(c, px + 4, py + 13, 8, 1, "rgba(0,0,0,.12)");
+    P(c, px + 5, py + 8, 6, 7, "#183820"); P(c, px + 6, py + 8, 4, 6, "#7a4a28"); P(c, px + 6, py + 8, 1, 6, "#a06838"); P(c, px + 9, py + 8, 1, 6, "#5a3418");
+    P(c, px + 5, py + 14, 2, 1, "#5a3418"); P(c, px + 9, py + 14, 2, 1, "#5a3418");
     // canopy: outlined rounded blob, 18 wide, reaching 6px above the tile
     const rows = ["....OOOOOOOO....", "..OOMMMMMMMMOO..", ".OMMLLLMMMMMMMO.", "OMMLHHLLMMMMMMMO", "OMLHHLLLMMMMDMMO", "OMMLLLMMMMMDDMMO", "OMMMMMMMMMDDMMMO", "OMMMMMDMMMMMMMDO", ".OMMMDDMMMMMDDO.", ".ODMMMMMMMMMDDO.", "..ODDMMMMMMDDO..", "...OODDDDDDOO...", ".....OOOOOO....."];
     const pal = { O: "#183820", M: g[0], D: g[1], L: g[2], H: g[3] };
-    rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 6 + ry, 1, 1, pal[ch]); }));
+    rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 4 + ry, 1, 1, pal[ch]); }));
   }
   function drawPine(c, px, py) {
-    P(c, px + 3, py + 14, 10, 2, "rgba(0,40,80,.15)");
-    P(c, px + 7, py + 11, 2, 4, "#6a4020");
+    P(c, px + 2, py + 14, 12, 2, "rgba(0,40,80,.18)");
+    P(c, px + 6, py + 9, 4, 6, "#143828"); P(c, px + 7, py + 9, 2, 5, "#6a4020");
     const rows = [".......OO.......", "......OWWO......", ".....OMWWMO.....", "....OMMMMMMO....", "...OWMMMMMWWO...", "....OMMMMMMO....", "...OMMMMMMMMO...", "..OWWMMMMMMWWO..", "...OMMMMMMMMO...", "..OMMMMMMMMMMO..", ".OMMMMMMMMMMMMO.", "..OOOOOOOOOOOO.."];
     const pal = { O: "#143828", M: "#2a6a48", W: "#ffffff" };
-    rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 3 + ry, 1, 1, ch === "M" && rx < 7 && ry % 3 === 1 ? "#3a8a5a" : pal[ch]); }));
+    rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 1 + ry, 1, 1, ch === "M" && rx < 7 && ry % 3 === 1 ? "#3a8a5a" : pal[ch]); }));
   }
   function drawTile(c, px, py, x, y, f) {
     const t = tileAt(x, y);

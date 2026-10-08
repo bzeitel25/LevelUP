@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.12.2 — 2026-10-08 (build 2026-10-08.14)
+
+- Map trees no longer look like they float: trunks now rise into the canopies and stand on a ground shadow. Pines got the same fix.
+
 ## v0.12.1 — 2026-10-08 (build 2026-10-08.13)
 
 Cleaner, GBA-style map art.
