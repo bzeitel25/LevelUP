@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.10.0 — 2026-10-08 (build 2026-10-08.7)
+
+Active combat.
+
+- Dungeon battles are now live: your hero auto-attacks while you tap skills, each on its own cooldown. Fights last about 15 to 30 seconds, with HP bars, damage numbers and heavy monster hits to watch for.
+- One skill per path, unlocked when that path's skills add up to Lv 5. You carry up to 3, your class paths first:
+  - Power Strike (Body): 1.8× hit, 7s cooldown.
+  - Rally Song (Music): +25% damage for 3s, 9s.
+  - Rune Shield (Mind): blocks the next hit, 10s.
+  - Quick Repair (Craft): heals 10%, 10s.
+  - Gadget Trap (Tech): stuns for 1.5s, 10s.
+  - Focus (Spirit): 1.5× hit plus a little healing, 8s.
+  - Lucky Find (Life): a jab plus +5% gold (up to 3 times), 8s.
+- The Tactics capstone in a talent tree adds your signature move as a bonus skill (3× damage, 15s).
+- Keyboard shortcuts 1 to 4 trigger skills on desktop.
+- Balance: your stats still set the baseline. In an even fight the auto-attacks alone win a bit over half the time, and good tapping makes a win likely. Every monster rolls its own strength, so no two fights are the same. Dungeons now show a difficulty (Easy, Fair, Hard, Deadly) in place of a win percentage, and the talent bonus that raised win chance now raises battle damage.
+- The full, detailed hero now fights in battle (gear and expression included) and cheers beside the treasure chest on a win.
+- Fair play: battles pause when you leave the screen, and if the app closes mid-fight, the key is returned.
+- New Battle skills list in the Dungeons tab shows every skill and how to unlock it.
+
 ## v0.9.0 — 2026-10-08 (build 2026-10-08.6)
 
 Hero art upgrade.

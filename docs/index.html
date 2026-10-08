@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-08.6",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-08.7",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -453,6 +453,38 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .item.inv .seg.ver { margin-top: 4px; justify-self: start; }
 .item.inv .seg.ver button { padding: 2px 9px; font-size: 12px; }
 .relic-count { color: #1fa89b; }
+/* active combat */
+.bt-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bt-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; font-size: 12.5px; }
+.bt-bar span { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bt-bar b { font-size: 12px; color: var(--muted); }
+.bt-track { grid-column: 1 / -1; height: 10px; border: 2px solid var(--ink); border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.bt-track i { display: block; height: 100%; width: 100%; background: linear-gradient(180deg, #7be3a8, #3fae74); transition: width .15s linear; }
+.bt-bar.mon .bt-track i { background: linear-gradient(180deg, #ff9c8a, #d94a3a); }
+.bt-log { font-size: 13.5px; font-weight: 600; min-height: 1.4em; }
+.bt-skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.bt-skill { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; border: 2px solid var(--line); background: var(--panel); border-radius: 10px; padding: 9px 10px; min-height: 64px; touch-action: manipulation; }
+.bt-skill .bt-ic { grid-row: 1 / 3; width: 30px; height: 30px; color: var(--ink); }
+.bt-skill .bt-ic svg, .sb .bt-ic svg { width: 100%; height: 100%; display: block; }
+.bt-skill b { font-size: 14px; line-height: 1.15; }
+.bt-skill small { font-size: 11px; color: var(--muted); line-height: 1.25; }
+.bt-skill .bt-cd { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--cd, 0) * 100%); background: color-mix(in srgb, var(--ink) 22%, transparent); pointer-events: none; }
+.bt-skill .bt-sec { position: absolute; right: 8px; top: 6px; font-family: var(--f-display); font-size: 15px; font-weight: 700; color: var(--ink); }
+.bt-skill kbd { position: absolute; right: 7px; bottom: 5px; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; font-family: inherit; }
+.bt-skill.ready { border-color: var(--xp-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--xp-fill) 25%, transparent); cursor: pointer; }
+.bt-skill.ready:active { transform: translateY(1px) scale(.97); }
+.bt-skill:disabled { cursor: default; opacity: 1; }
+.bt-skill:not(.ready) b, .bt-skill:not(.ready) .bt-ic { opacity: .55; }
+.skillbook .sb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.sb { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; border: 1.5px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.sb .bt-ic { width: 28px; height: 28px; color: var(--ink); }
+.sb b { font-size: 14px; display: block; }
+.sb small { display: block; font-size: 12px; color: var(--muted); line-height: 1.3; }
+.sb .sb-req { margin-top: 2px; font-weight: 600; }
+.sb.on { border-color: var(--xp-fill); background: color-mix(in srgb, var(--xp-fill) 10%, var(--panel)); }
+.sb.on .sb-req { color: var(--xp); }
+.sb.locked { opacity: .6; border-style: dashed; }
+@media (max-width: 520px) { .bt-skills { grid-template-columns: 1fr 1fr; } .bt-skill small { display: none; } .bt-skill { min-height: 54px; } }
 /* relics */
 .relic-name { background: linear-gradient(90deg, #1fa89b, #b14fd0, #1fa89b); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: relicShine 4s linear infinite; }
 .item.relic { border-color: #5fe3d6; background: linear-gradient(160deg, color-mix(in srgb, #5fe3d6 14%, var(--panel)), color-mix(in srgb, #e08cf2 12%, var(--panel))); }
@@ -1113,7 +1145,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (f.stat) out.push(`+${f.stat} ${st}`);
     if (f.gold) out.push(`+${f.gold}% dungeon gold`);
     if (f.disc) out.push(`${TALENT_TREES[n.cat].short} gear ${f.disc}% cheaper`);
-    if (f.win) out.push(`+${f.win}% win chance`);
+    if (f.win) out.push(`+${f.win}% battle damage`);
     if (f.retreat) out.push(`Keep +${f.retreat}% gold when you retreat`);
     if (f.trophy) out.push(`+${f.trophy}% trophy drops`);
     if (f.move) out.push("Signature move in battle");
@@ -1218,62 +1250,10 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 
   let runView = null, runTimer = null;
   function runDungeon(did) {
-    const d = DUNGEONS.find(x => x.id === did); if (!d || runView && runView.step < 4) return;
+    const d = DUNGEONS.find(x => x.id === did); if (!d || bt || runView && runView.step < 4) return;
     if (keysAvail() < 1) { toast("No keys yet. Practice 10 minutes to earn one."); return; }
-    const st = heroStats();
-    if (!dungeonOpen(d, st.power)) return;
-    const chance = chanceFor(d, st.power), win = Math.random() < chance;
-    const weights = Object.entries(st.total).filter(([, v]) => v > 0);
-    const pickStat = () => { if (!weights.length) return "body"; let r = Math.random() * weights.reduce((n, [, v]) => n + v, 0); for (const [k, v] of weights) { if ((r -= v) <= 0) return k; } return weights[0][0]; };
-    const used = new Set();
-    const tfx = talentFx();
-    const encounters = [0, 1, 2].map(() => {
-      let k = pickStat(), lines = ENCOUNTERS[k].filter(t => !used.has(t));
-      if (!lines.length) { const alt = Object.keys(ENCOUNTERS).filter(x => ENCOUNTERS[x].some(t => !used.has(t))); k = alt.find(x => st.total[x] > 0) || alt[0]; lines = ENCOUNTERS[k].filter(t => !used.has(t)); }
-      const text = lines[Math.floor(Math.random() * lines.length)]; used.add(text);
-      return { stat: k, value: Math.max(1, st.total[k]), text };
-    });
-    if (tfx.moves.length) { const mv = tfx.moves[Math.floor(Math.random() * tfx.moves.length)]; encounters[1] = { stat: mv.path, value: Math.max(1, st.total[mv.path]), text: mv.text, sig: true }; }
-    const roll = d.gold[0] + Math.random() * (d.gold[1] - d.gold[0]);
-    const gold = Math.round((win ? roll : d.gold[0] * (0.3 + tfx.retreat / 100)) * (1 + (fortunePct(st) + tfx.gold) / 100));
-    const trophy = win && Math.random() < 0.1 + tfx.trophy / 100 ? d.trophy : null;
-    const snap = unlockSnapshot();
-    let relic = null;
-    if (win && Math.random() < (RELIC_CHANCE[d.id] || 0.05)) {
-      const pick = rollRelic();
-      if (pick) {
-        if (!state.relics) state.relics = {};
-        state.relics[pick.it.id] = { day: dayKey(), dungeon: d.id };
-        if (state.relicOff) delete state.relicOff[pick.it.id];
-        relic = { id: pick.it.id, name: "Radiant " + pick.it.name, base: pick.it.name, skill: pick.s.name, sprite: lookFor(pick.it) };
-      }
-    }
-    state.keysUsed += 1; state.gold += gold;
-    if (!state.stats) state.stats = { clears: 0, runs: 0 };
-    state.stats.runs += 1; if (win) state.stats.clears += 1;
-    if (trophy) state.trophies[d.id] = (state.trophies[d.id] || 0) + 1;
-    state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, relic: relic ? relic.name : null, day: dayKey(), ts: Date.now() });
-    const unlocks = unlockDiff(snap);
-    if (state.runs.length > 30) state.runs.length = 30;
-    persist();
-    runView = { d, win, gold, trophy, relic, encounters, chance, fortune: fortunePct(st), talGold: tfx.gold, step: 0, t: 0, unlocks };
-    clearInterval(runTimer);
-    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const finish = () => { (win ? Sound.play("win") : Sound.play("lose")); setTimeout(() => Sound.play(relic ? "unlock" : "coin"), 450); if (relic) buzz([30, 50, 30, 50, 90]); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); };
-    if (reduce) { runView.t = BATTLE_FRAMES; runView.step = 4; render(); finish(); return; }
-    render();
-    runTimer = setInterval(() => {
-      const rv = runView; if (!rv) { clearInterval(runTimer); return; }
-      rv.t += 1;
-      const k = rv.t % 12, enc = Math.floor(rv.t / 12);
-      if (rv.t < 36 && k === 3) { Sound.play("hit"); buzz(15); }
-      if (rv.t < 36 && k === 7 && !rv.win && enc === 2) Sound.play("hurt");
-      if (rv.t === 36) finish();
-      const step = rv.t < 36 ? enc + (k >= 3 ? 1 : 0) : 4;
-      if (step !== rv.step) { rv.step = step; render(); }
-      else { const cv = document.getElementById("battle"); if (cv) paintBattle(cv, rv); }
-      if (rv.t >= BATTLE_FRAMES) clearInterval(runTimer);
-    }, 110);
+    if (!dungeonOpen(d, heroStats().power)) return;
+    startBattle(d);
   }
 
   function removeSkill(id) {
@@ -1380,8 +1360,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.6";
-  const APP_VERSION = "0.9.0";
+  const BUILD = "2026-10-08.7";
+  const APP_VERSION = "0.10.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1454,7 +1434,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       if (manual || Updater.safe()) Updater.apply();
       else { Updater.say(`Version ${esc(latest.build)} is ready. It installs the next time you leave the app.`, "good"); if (tab === "settings") render(); }
     },
-    safe() { return !document.querySelector("dialog[open]") && !(runView && runView.step < 4) && !celebrateView && !editingName && !restoreOpen; },
+    safe() { return !document.querySelector("dialog[open]") && !bt && !(runView && runView.step < 4) && !celebrateView && !editingName && !restoreOpen; },
     async apply() {
       Updater.say(`<span class="spin"></span>Updating to the newest version…`, "good");
       try { localStorage.setItem("levelup.updatedFrom", BUILD); } catch (e) {}
@@ -1720,7 +1700,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const skillsHere = state.skills.filter(s => s.catId === talCat);
     const summary = [
       Object.entries(fx.stat).filter(([, v]) => v).map(([k, v]) => `+${v} ${STATS[k].name}`).join(", "),
-      fx.gold ? `+${fx.gold}% dungeon gold` : "", fx.win ? `+${fx.win}% win chance` : "",
+      fx.gold ? `+${fx.gold}% dungeon gold` : "", fx.win ? `+${fx.win}% battle damage` : "",
       fx.retreat ? `retreats keep ${30 + fx.retreat}% gold` : "", fx.trophy ? `+${fx.trophy}% trophy drops` : "",
       Object.keys(fx.disc).length ? "gear discounts" : ""
     ].filter(Boolean);
@@ -1835,17 +1815,17 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 
   // ---------- Dungeons tab ----------
   function renderDungeons() {
-    const st = heroStats(), keys = keysAvail(), busy = runView && runView.step < 4, fp = fortunePct(st) + talentFx().gold;
+    const st = heroStats(), keys = keysAvail(), busy = bt || runView && runView.step < 4, fp = fortunePct(st) + talentFx().gold;
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Dungeons</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${keys}</b> key${keys === 1 ? "" : "s"} · power <b class="num">${st.power}</b>${fp ? ` · +${fp}% gold` : ""}</span></div>
-      ${runView ? renderRun() : ""}
-      ${keys < 1 && !runView ? `<p class="hint" style="margin:0">You're out of keys. Every 10 minutes of practice earns one.</p>` : ""}
+      ${bt || runView ? renderRun() : ""}
+      ${!bt && !runView ? renderSkillBook() : ""}
+      ${keys < 1 && !runView && !bt ? `<p class="hint" style="margin:0">You're out of keys. Every 10 minutes of practice earns one.</p>` : ""}
       ${DUNGEONS.map(d => {
-        const open = dungeonOpen(d, st.power), ch = Math.round(chanceFor(d, st.power) * 100);
-        const cls = ch >= 70 ? "good" : ch >= 45 ? "mid" : "bad";
+        const open = dungeonOpen(d, st.power), [dl, cls0] = difficulty(d, st.power);
         return `<article class="panel dun ${open ? "" : "locked"}">
           <div><h3>${esc(d.name)}</h3>
-            <div class="dun-meta"><span>Suggested power <b>${d.rec}</b></span>${open ? `<span>Win chance <b class="chance ${cls}">${ch}%</b></span><span>Gold <b>${d.gold[0]}–${d.gold[1]}</b></span>` : `<span>Opens at power <b>${Math.ceil(d.rec * 0.5)}</b></span>`}</div></div>
+            <div class="dun-meta"><span>Suggested power <b>${d.rec}</b></span>${open ? `<span>Difficulty <b class="chance ${cls0}">${dl}</b></span><span>Gold <b>${d.gold[0]}–${d.gold[1]}</b></span>` : `<span>Opens at power <b>${Math.ceil(d.rec * 0.5)}</b></span>`}</div></div>
           ${open ? `<button class="btn ${keys ? "primary" : ""}" data-act="run" data-id="${d.id}" ${keys && !busy ? "" : "disabled"}>Run · 1 key</button>` : `<span class="muted" style="font-size:13px">Locked</span>`}
         </article>`;
       }).join("")}
@@ -1853,10 +1833,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         const d = DUNGEONS.find(x => x.id === r.dungeon);
         return `<div><span>${dayLabel(r.day)} · ${esc(d ? d.name : "Dungeon")}${r.trophy ? ` · <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}${r.relic ? ` · <b class="relic-name">${esc(r.relic)}</b>` : ""}</span><span class="num" style="color:${r.win ? "var(--good)" : "var(--muted)"}">${r.win ? "Cleared" : "Retreated"} · +${r.gold}g</span></div>`;
       }).join("")}</div></div>` : ""}
-      <p class="hint" style="margin:0">A run plays out from your hero's stats. If you retreat you still keep some gold, and you never lose anything except the key. Talents can raise your odds and your gold.</p>
+      <p class="hint" style="margin:0">Your stats set how hard your hero hits and how much they can take, and your skills turn close fights. If your hero falls you retreat with some gold, and you never lose anything except the key.</p>
     </section>`;
   }
   function renderRun() {
+    if (bt) return renderBattle();
     const r = runView, done = r.step >= 4, mon = MONSTERS[r.d.id] || MONSTERS.cellar;
     return `<div class="panel runlog" aria-live="polite">
       <div class="train-row"><h3>${esc(r.d.name)}</h3><span class="muted" style="font-size:13px">vs. ${esc(mon.name)}</span></div>
@@ -1864,11 +1845,276 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       ${r.encounters.slice(0, Math.min(r.step, 3)).map(e => `<div class="enc${e.sig ? " sig" : ""}"><span class="stat-chip">${e.sig ? "Signature · " : ""}${STATS[e.stat].name} ${e.value}</span><span>${esc(e.text)}</span></div>`).join("")}
       ${!done ? `<div class="muted" style="font-size:13px">Exploring…</div>` : `
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? "Dungeon cleared!" : "Retreated safely"}</div>
+        ${r.summary ? `<div class="muted" style="font-size:13px">${esc(r.summary)}${r.lucky ? ` · Lucky Find +${r.lucky}% gold` : ""}</div>` : ""}
         <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune || r.talGold ? ` <span class="muted">(includes ${[r.fortune ? `Fortune +${r.fortune}%` : "", r.talGold ? `talents +${r.talGold}%` : ""].filter(Boolean).join(" and ")})</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
         ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}). It's on your hero now. Switch versions anytime in your Inventory.</div></div></div>` : ""}
         <div style="display:flex;gap:8px;flex-wrap:wrap">${r.relic ? `<button class="btn small" data-act="tab" data-tab="inventory">Open inventory</button>` : ""}<button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
     </div>`;
   }
+
+
+  // ---------- Active combat ----------
+  // Your hero auto-attacks. Path skills (one per path, unlocked at that path's combined Lv 5) and talent
+  // signature moves are buttons you tap, each on a cooldown. Stats set the baseline; good timing swings
+  // close fights. Battles pause when you leave the screen, and an interrupted battle refunds its key.
+  const COMBAT_SKILLS = {
+    body:   { key: "strike", name: "Power Strike", cd: 7,  desc: "A heavy blow for 1.8× damage", icon: "sword" },
+    music:  { key: "rally",  name: "Rally Song",   cd: 9,  desc: "+25% damage for 3 seconds", icon: "note" },
+    mind:   { key: "shield", name: "Rune Shield",  cd: 10, desc: "Blocks the next hit", icon: "rune" },
+    craft:  { key: "repair", name: "Quick Repair", cd: 10, desc: "Heals 10% of your HP", icon: "heart" },
+    tech:   { key: "trap",   name: "Gadget Trap",  cd: 10, desc: "Stuns the monster for 1.5 seconds", icon: "gear" },
+    spirit: { key: "focus",  name: "Focus",        cd: 8,  desc: "A 1.5× strike that heals a little", icon: "eye" },
+    life:   { key: "lucky",  name: "Lucky Find",   cd: 8,  desc: "A quick jab and +5% gold (up to 3 times)", icon: "coin" }
+  };
+  const SKILL_UNLOCK = 5;
+  const SKILL_ICONS = {
+    sword: ["....KK", "...KWK", "..KWK.", "KKWK..", ".KK...", "K.K..."],
+    note:  ["..KKKK", "..KYYK", "..K..K", "KKK.KK", "KYK.KY", "KKK.KK"],
+    rune:  ["KKKKKK", "KBBBBK", "KBKKBK", "KBBKBK", "KBBBBK", "KKKKKK"],
+    heart: [".KK.KK", "KRRKRR", "KRRRRR", ".KRRRK", "..KRK.", "...K.."],
+    gear:  [".K.K.K", "KKKKKK", ".KG.GK", "KKG.GK", ".KKKK.", ".K.K.."],
+    eye:   [".KKKK.", "KWWWWK", "KWKKWK", "KWKKWK", "KWWWWK", ".KKKK."],
+    coin:  [".KKKK.", "KYYYYK", "KYKYYK", "KYKYYK", "KYYYYK", ".KKKK."],
+    star:  ["..KK..", "..YY..", "KYYYYK", ".KYYK.", ".YKKY.", "Y....Y"]
+  };
+  const SK_PAL = { K: "currentColor", W: "#ffffff", Y: "#f2c14e", B: "#7ad0ff", R: "#d94a3a", G: "#9aa0ae" };
+  const skillIcon = k => { let r = ""; (SKILL_ICONS[k] || SKILL_ICONS.star).forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== ".") r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${SK_PAL[ch]}"/>`; })); return `<svg viewBox="0 0 6 6" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; };
+  // Unlocked battle skills, class paths first, at most 3 path skills plus a signature move.
+  function battleSkills() {
+    const cls = heroClass().paths, out = [];
+    const order = Object.keys(COMBAT_SKILLS).sort((a, b) => (cls.includes(b) - cls.includes(a)) || (pathLevel(b) - pathLevel(a)));
+    order.forEach(p => { if (out.length < 3 && pathLevel(p) >= SKILL_UNLOCK) out.push(Object.assign({ path: p, power: 1 + Math.min(0.25, pathLevel(p) / 400) }, COMBAT_SKILLS[p])); });
+    const sig = CATEGORIES.map(c => TALENT_TREES[c.id] && activeTalents(c.id).includes(talId(c.id, 2, 3)) ? c : null).find(Boolean);
+    if (sig) out.push({ key: "sig", path: sig.path, name: TALENT_TREES[sig.id].branches[2][1][3], cd: 15, desc: "Signature move: 3× damage", icon: "star", power: 1 });
+    return out;
+  }
+  function difficulty(d, power) {
+    const r = power / d.rec * (1 + talentFx().win / 100);
+    return r >= 1.5 ? ["Easy", "good"] : r >= 1 ? ["Fair", "good"] : r >= 0.75 ? ["Hard", "mid"] : ["Deadly", "bad"];
+  }
+
+  let bt = null, btTimer = null;
+  const BT_TICK = 100, HERO_EVERY = 10, MON_EVERY = 15, BT_MAX = 900;
+  function startBattle(d) {
+    const st = heroStats(), tfx = talentFx();
+    const r = Math.max(0.2, Math.min(4, st.power / d.rec));
+    state.keysUsed += 1; state.battle = { dungeon: d.id, ts: Date.now() }; persist();
+    const V = 0.75 + Math.random() * 0.55;                      // every monster rolls its own strength
+    bt = { d, st, tfx, r, t: 0, phase: "intro", heroHp: 400, heroMax: 400, monHp: Math.round(600 * V), monMax: Math.round(600 * V),
+      heroDmg: 22 * (0.55 + 0.45 * Math.min(r, 3)) * (1 + tfx.win / 100), monDmg: 18 * V / (0.5 + 0.5 * Math.min(r, 3)),
+      nextHero: 14, nextMon: 20, cds: {}, rally: 0, shield: 0, stun: 0, lucky: 0, heroAtk: -9, monAtk: -9, heroHit: -9, monHit: -9,
+      pops: [], fx: [], log: "Get ready…", skills: battleSkills(), used: 0 };
+    runView = null;
+    render();
+    clearInterval(btTimer); btTimer = setInterval(stepBattle, BT_TICK);
+    Sound.play("start");
+  }
+  const btPop = (text, x, y, col, big) => bt.pops.push({ text, x, y, col, big, ttl: 9 });
+  function stepBattle() {
+    const b = bt; if (!b) { clearInterval(btTimer); return; }
+    if (document.hidden || tab !== "dungeons") return;      // paused while you're away
+    b.t++;
+    if (b.phase === "intro") { if (b.t >= 10) { b.phase = "fight"; b.log = "Fight! Your hero attacks on their own. Tap your skills when they're ready."; } }
+    else {
+      Object.keys(b.cds).forEach(k => { if (b.cds[k] > 0) b.cds[k]--; });
+      if (b.rally > 0) b.rally--; if (b.stun > 0) b.stun--;
+      if (b.t >= b.nextHero) {
+        const crit = Math.random() < 0.1, dmg = Math.round(b.heroDmg * (0.8 + Math.random() * 0.4) * (b.rally ? 1.25 : 1) * (crit ? 2 : 1));
+        b.monHp -= dmg; b.heroAtk = b.t; b.monHit = b.t; b.nextHero = b.t + HERO_EVERY;
+        btPop((crit ? "CRIT " : "") + dmg, 46, 10, crit ? "#ffe58a" : "#ffffff", crit); Sound.play("hit");
+      }
+      if (b.monHp > 0 && b.t >= b.nextMon) {
+        b.nextMon = b.t + MON_EVERY;
+        if (b.stun > 0) btPop("Stunned", 46, 8, "#9aa0ae");
+        else if (b.shield > 0) { b.shield--; b.monAtk = b.t; btPop("Blocked", 16, 12, "#7ad0ff"); Sound.play("tap"); }
+        else { const heavy = Math.random() < 0.2, dmg = Math.round(b.monDmg * (0.8 + Math.random() * 0.4) * (heavy ? 2 : 1)); b.heroHp -= dmg; b.monAtk = b.t; b.heroHit = b.t; btPop((heavy ? "OUCH -" : "-") + dmg, 16, 12, heavy ? "#ff5a5a" : "#ff8a8a", heavy); Sound.play("hurt"); buzz(heavy ? 30 : 12); }
+      }
+      if (b.monHp <= 0) return endBattle(true);
+      if (b.heroHp <= 0 || b.t > BT_MAX) return endBattle(false);
+    }
+    b.pops.forEach(p => { p.ttl--; p.y -= 0.6; }); b.pops = b.pops.filter(p => p.ttl > 0);
+    b.fx.forEach(f => f.ttl--); b.fx = b.fx.filter(f => f.ttl > 0);
+    updateBattleUI();
+  }
+  function useSkill(key) {
+    const b = bt; if (!b || b.phase !== "fight") return;
+    const sk = b.skills.find(s => s.key === key); if (!sk || (b.cds[key] || 0) > 0) return;
+    b.cds[key] = sk.cd * 10; b.used++;
+    const P = sk.power;
+    const hit = mult => { const dmg = Math.round(b.heroDmg * mult * P * (b.rally ? 1.25 : 1)); b.monHp -= dmg; b.monHit = b.t; b.heroAtk = b.t; return dmg; };
+    if (key === "strike") { btPop(hit(1.8) + "!", 44, 9, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 4 }); Sound.play("win"); buzz(25); }
+    if (key === "rally") { b.rally = Math.round(30 * P); b.fx.push({ k: "notes", ttl: b.rally }); btPop("Rally!", 14, 6, "#ffe58a"); Sound.play("unlock"); }
+    if (key === "shield") { b.shield = 1; btPop("Shield", 14, 6, "#7ad0ff"); Sound.play("buy"); }
+    if (key === "repair") { const h = Math.round(b.heroMax * 0.10 * P); b.heroHp = Math.min(b.heroMax, b.heroHp + h); btPop("+" + h, 14, 8, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); Sound.play("coin"); }
+    if (key === "trap") { b.stun = Math.round(15 * P); b.nextMon = Math.max(b.nextMon, b.t + b.stun); btPop("Trapped!", 44, 8, "#9aa0ae"); Sound.play("buy"); }
+    if (key === "focus") { btPop(hit(1.5) + "", 44, 9, "#ffe58a", true); const h = Math.round(b.heroMax * 0.03 * P); b.heroHp = Math.min(b.heroMax, b.heroHp + h); b.fx.push({ k: "flash", ttl: 2 }); Sound.play("win"); }
+    if (key === "lucky") { hit(0.6); if (b.lucky < 3) b.lucky++; btPop("+5% gold", 44, 8, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); Sound.play("coin"); }
+    if (key === "sig") { btPop(hit(3) + "!!", 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 5 }, { k: "flash", ttl: 3 }); Sound.play("levelup"); buzz([30, 30, 60]); }
+    b.log = `${sk.name}!`;
+    if (b.monHp <= 0) return endBattle(true);
+    updateBattleUI();
+  }
+  function endBattle(win) {
+    const b = bt; clearInterval(btTimer); bt = null;
+    const d = b.d, st = b.st, tfx = b.tfx;
+    const roll = d.gold[0] + Math.random() * (d.gold[1] - d.gold[0]);
+    const gold = Math.round((win ? roll : d.gold[0] * (0.3 + tfx.retreat / 100)) * (1 + (fortunePct(st) + tfx.gold + b.lucky * 5) / 100));
+    const trophy = win && Math.random() < 0.1 + tfx.trophy / 100 ? d.trophy : null;
+    const snap = unlockSnapshot();
+    let relic = null;
+    if (win && Math.random() < (RELIC_CHANCE[d.id] || 0.05)) {
+      const pick = rollRelic();
+      if (pick) {
+        if (!state.relics) state.relics = {};
+        state.relics[pick.it.id] = { day: dayKey(), dungeon: d.id };
+        if (state.relicOff) delete state.relicOff[pick.it.id];
+        relic = { id: pick.it.id, name: "Radiant " + pick.it.name, base: pick.it.name, skill: pick.s.name, sprite: lookFor(pick.it) };
+      }
+    }
+    delete state.battle;
+    state.gold += gold;
+    if (!state.stats) state.stats = { clears: 0, runs: 0 };
+    state.stats.runs += 1; if (win) state.stats.clears += 1;
+    if (trophy) state.trophies[d.id] = (state.trophies[d.id] || 0) + 1;
+    state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, relic: relic ? relic.name : null, day: dayKey(), ts: Date.now() });
+    const unlocks = unlockDiff(snap);
+    if (state.runs.length > 30) state.runs.length = 30;
+    persist();
+    const secs = Math.round(b.t / 10);
+    runView = { d, win, gold, trophy, relic, encounters: [], chance: 0, fortune: fortunePct(st), talGold: tfx.gold, lucky: b.lucky * 5, step: 3, t: 35, unlocks,
+      summary: `${win ? "Won" : "Retreated"} in ${secs}s · ${b.used} skill${b.used === 1 ? "" : "s"} used` };
+    const finish = () => { (win ? Sound.play("win") : Sound.play("lose")); setTimeout(() => Sound.play(relic ? "unlock" : "coin"), 450); if (relic) buzz([30, 50, 30, 50, 90]); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); };
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { runView.t = BATTLE_FRAMES; runView.step = 4; render(); finish(); return; }
+    render();
+    clearInterval(runTimer);
+    runTimer = setInterval(() => {
+      const rv = runView; if (!rv) { clearInterval(runTimer); return; }
+      rv.t += 1;
+      if (rv.t === 36) finish();
+      if (rv.t === 37) { rv.step = 4; render(); }
+      else { const cv = document.getElementById("battle"); if (cv) paintOutro(cv, rv); }
+      if (rv.t >= BATTLE_FRAMES) clearInterval(runTimer);
+    }, 110);
+  }
+  function renderBattle() {
+    const b = bt, mon = MONSTERS[b.d.id] || MONSTERS.cellar;
+    return `<div class="panel runlog bt-live">
+      <div class="train-row"><h3>${esc(b.d.name)}</h3><span class="muted" style="font-size:13px">vs. ${esc(mon.name)}</span></div>
+      <div class="bt-bars">
+        <div class="bt-bar hero"><span>${esc(state.heroName || "Hero")}</span><div class="bt-track"><i id="bt-hero-hp"></i></div><b class="num" id="bt-hero-n"></b></div>
+        <div class="bt-bar mon"><span>${esc(mon.name)}</span><div class="bt-track"><i id="bt-mon-hp"></i></div><b class="num" id="bt-mon-n"></b></div>
+      </div>
+      <canvas id="battle" class="px battle" aria-label="Your hero fighting the ${esc(mon.name)}"></canvas>
+      <div class="bt-log" id="bt-log" aria-live="polite">${esc(b.log)}</div>
+      ${b.skills.length ? `<div class="bt-skills">${b.skills.map((s, i) => `<button class="bt-skill" data-act="bt-skill" data-id="${s.key}" id="bts-${s.key}" aria-label="${esc(s.name)}: ${esc(s.desc)}"><span class="bt-ic">${skillIcon(s.icon)}</span><b>${esc(s.name)}</b><small>${esc(s.desc)}</small><span class="bt-cd"></span><span class="bt-sec num"></span><kbd class="hide-phone">${i + 1}</kbd></button>`).join("")}</div>`
+        : `<p class="hint" style="margin:0">Your hero fights on their own. Level any path to ${SKILL_UNLOCK} combined to unlock your first battle skill.</p>`}
+    </div>`;
+  }
+  function renderSkillBook() {
+    const have = battleSkills(), cls = heroClass().paths;
+    return `<article class="panel set-card skillbook">
+      <h3>Battle skills</h3>
+      <div class="sb-grid">${Object.entries(COMBAT_SKILLS).map(([p, sk]) => {
+        const on = have.some(h => h.key === sk.key), lv = pathLevel(p), unlocked = lv >= SKILL_UNLOCK;
+        return `<div class="sb ${on ? "on" : unlocked ? "spare" : "locked"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(sk.desc)} · ${sk.cd}s cooldown</small><small class="sb-req">${on ? (cls.includes(p) ? "Equipped · your class path" : "Equipped") : unlocked ? "Unlocked · 3 skills max, class paths first" : `${PATHS[p].label} path Lv ${SKILL_UNLOCK} combined (now ${lv})`}</small></div></div>`;
+      }).join("")}</div>
+      <p class="hint" style="margin:0">Your hero attacks on their own. Tap skills during a battle (or press 1 to 4 on a keyboard). Each path has one skill, and your class paths come first. Learning the Tactics capstone in a talent tree adds its signature move as a bonus skill.</p>
+    </article>`;
+  }
+  function updateBattleUI() {
+    const b = bt; if (!b) return;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, v)) + "%"; };
+    const txt = (id, v) => { const el = document.getElementById(id); if (el && el.textContent !== v) el.textContent = v; };
+    set("bt-hero-hp", b.heroHp / b.heroMax * 100); set("bt-mon-hp", b.monHp / b.monMax * 100);
+    txt("bt-hero-n", Math.max(0, Math.round(b.heroHp)) + ""); txt("bt-mon-n", Math.max(0, Math.round(b.monHp)) + "");
+    txt("bt-log", b.log);
+    b.skills.forEach(s => {
+      const el = document.getElementById("bts-" + s.key); if (!el) return;
+      const cd = b.cds[s.key] || 0, ready = cd <= 0 && b.phase === "fight";
+      el.style.setProperty("--cd", (cd / (s.cd * 10)).toFixed(3));
+      el.classList.toggle("ready", ready); el.disabled = !ready;
+      const sec = el.querySelector(".bt-sec"); if (sec) { const v = cd > 0 ? Math.ceil(cd / 10) + "s" : ""; if (sec.textContent !== v) sec.textContent = v; }
+    });
+    const cv = document.getElementById("battle"); if (cv) paintFight(cv, b);
+  }
+  // Battle scene: 128x80 world at 3 px per pixel, so the full detailed hero fights. Monsters are drawn at 2x.
+  const BW = 128, BH = 80, BS = 3, BGY = 66;
+  function sceneBase(c, d, f) { drawBackdrop(c, DUNGEON_SCENE[d.id] || "dungeon", BW, BH, BS, Math.floor(f / 2)); }
+  function monsterPos(d, mg, f, lungeX) {
+    const mw = mg[0].length * 2, mh = mg.length * 2;
+    const fly = d.id === "library" || d.id === "citadel" || d.id === "spire";
+    return { mw, mh, mx: BW - mw - 14 + (lungeX || 0), my: BGY - mh + 2 + (f % 10 < 5 ? 0 : -1) + (fly ? -10 : 0) };
+  }
+  function bigText(c, tx, y, col) { c.textAlign = "center"; c.font = `bold ${BS * 13}px "Pixelify Sans", ui-monospace, monospace`; c.fillStyle = OUTLINE; c.fillText(tx, BW / 2 * BS + 3, y * BS + 3); c.fillStyle = col || "#ffe58a"; c.fillText(tx, BW / 2 * BS, y * BS); }
+  function paintFight(cv, b) {
+    const f = b.t, s = BS;
+    if (cv.width !== BW * s) { cv.width = BW * s; cv.height = BH * s; }
+    const c = cv.getContext("2d"); c.imageSmoothingEnabled = false;
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const shake = !reduce && f - b.heroHit < 2 ? (f % 2 ? 2 : -2) : 0;
+    c.save(); c.translate(shake * s, 0);
+    sceneBase(c, b.d, f);
+    const m = MONSTERS[b.d.id] || MONSTERS.cellar;
+    // hero (full art)
+    const lunge = f - b.heroAtk < 3 ? [5, 9, 4][f - b.heroAtk] : 0;
+    const hg = renderHero(heroLook({ frame: Math.floor(f / 2), pose: "idle" }));
+    if (f - b.heroHit < 2) hg.forEach(r => r.forEach((v, x) => { if (v && v !== OUTLINE) r[x] = "#ffb0b0"; }));
+    const hx = 12 + lunge, hy = BGY - 38 + (b.phase === "fight" && f % 8 >= 4 ? -1 : 0);
+    blit(c, hg, hx, hy, s);
+    if (b.shield > 0) { c.strokeStyle = "#7ad0ff"; c.lineWidth = s * 2; c.globalAlpha = 0.7 + 0.3 * Math.sin(f / 2); c.beginPath(); c.ellipse((hx + 16) * s, (hy + 21) * s, 20 * s, 24 * s, 0, 0, Math.PI * 2); c.stroke(); c.globalAlpha = 1; }
+    // monster
+    const mg = monsterGrid(m, f - b.monHit < 2);
+    const mLunge = f - b.monAtk < 3 ? [-6, -12, -4][f - b.monAtk] : 0;
+    const { mw, mh, mx, my } = monsterPos(b.d, mg, f, mLunge);
+    blit(c, mg, mx, my, s, b.stun > 0 ? 0.75 : 1, 2);
+    if (b.stun > 0) { c.fillStyle = "#ffe58a"; [0, 1, 2].forEach(i => { const a = f / 3 + i * 2.1; c.fillRect((mx + mw / 2 + Math.cos(a) * 10) * s, (my - 4 + Math.sin(a) * 3) * s, 2 * s, 2 * s); }); }
+    // effects
+    b.fx.forEach(e => {
+      if (e.k === "slash") { c.fillStyle = "#ffffff"; for (let i = 0; i < 8; i++) c.fillRect((mx + 4 + i * 3) * s, (my + mh - 6 - i * 3) * s, 3 * s, 2 * s); }
+      if (e.k === "flash") { c.fillStyle = "rgba(255,255,255,.35)"; c.fillRect(-10 * s, 0, (BW + 20) * s, BH * s); }
+      if (e.k === "heal") { c.fillStyle = "#4fc58d"; [[2, 10], [28, 6], [16, 0]].forEach(([dx, dy], i) => { const y = hy + dy - (6 - e.ttl) * 2 - i; c.fillRect((hx + dx) * s, y * s, 2 * s, 6 * s); c.fillRect((hx + dx - 2) * s, (y + 2) * s, 6 * s, 2 * s); }); }
+      if (e.k === "notes" && f % 6 < 4) { c.fillStyle = "#ffe58a"; [[0, 4], [30, 8]].forEach(([dx, dy], i) => { const y = hy + dy - ((f + i * 3) % 6) * 2; c.fillRect((hx + dx) * s, y * s, 2 * s, 6 * s); c.fillRect((hx + dx + 2) * s, y * s, 2 * s, 2 * s); c.fillRect((hx + dx - 2) * s, (y + 4) * s, 4 * s, 2 * s); }); }
+      if (e.k === "coins") { c.fillStyle = "#f2c14e"; for (let i = 0; i < 4; i++) { const t = 6 - e.ttl + i * 0.5; c.fillRect((mx + mw / 2 - 14 - t * 4 + i * 2) * s, (my + 8 - t * 3 + t * t * 0.4) * s, 3 * s, 3 * s); } }
+    });
+    if (b.rally > 0) { c.fillStyle = "#ffe58a"; c.fillRect((hx + 2) * s, (hy + 40) * s, 28 * s, s); }
+    // floating numbers
+    c.textAlign = "center";
+    b.pops.forEach(p => { const sz = p.big ? 12 : 10; c.font = `bold ${s * sz}px "Pixelify Sans", ui-monospace, monospace`; c.globalAlpha = Math.min(1, p.ttl / 4); c.fillStyle = OUTLINE; c.fillText(p.text, p.x * 2 * s + 3, p.y * 2 * s + 3); c.fillStyle = p.col; c.fillText(p.text, p.x * 2 * s, p.y * 2 * s); c.globalAlpha = 1; });
+    if (b.phase === "intro") bigText(c, b.t < 6 ? "READY?" : "FIGHT!", 26);
+    c.restore();
+  }
+  // Ending: the hero cheers beside a treasure chest, or backs out of the dungeon.
+  function paintOutro(cv, rv) {
+    const f = rv.t, s = BS, p = f - 36;
+    if (cv.width !== BW * s) { cv.width = BW * s; cv.height = BH * s; }
+    const c = cv.getContext("2d"); c.imageSmoothingEnabled = false;
+    sceneBase(c, rv.d, f);
+    const m = MONSTERS[rv.d.id] || MONSTERS.cellar, mg = monsterGrid(m, false), { mw, mh, mx, my } = monsterPos(rv.d, mg, f, 0);
+    if (rv.win) {
+      const hg = renderHero(heroLook({ frame: f, pose: "cheer" }));
+      blit(c, hg, 12, BGY - 38, s);
+      if (p < 3) { c.fillStyle = "#e9e4d8"; [[0, 0], [6, -4], [12, 2], [4, 6], [16, -2]].forEach(([dx, dy]) => { const r = 4 + p * 3; c.fillRect((mx + 6 + dx - r / 2) * s, (my + mh / 2 + dy - r / 2) * s, r * s, r * s); }); }
+      else {
+        const cx = BW - 44, cy = BGY - 13;
+        const chest = ["..AAAAAAAA..", ".ALLLLLLLLA.", "AaaaaaaaaaaA", "AAAAAGGAAAAA", "AaaaaGGaaaaA", "AaaaaaaaaaaA", "AAAAAAAAAAAA"];
+        const g = chest.map(row => [...row].map(ch => ch === "." ? null : { A: "#8a5a34", a: "#6b4220", L: "#b07840", G: "#f2c14e" }[ch]));
+        blit(c, g, cx, cy, s, 1, 2);
+        if (p >= 4) { c.fillStyle = "#ffe58a"; c.fillRect((cx + 2) * s, (cy - 2) * s, 20 * s, 2 * s); }
+        for (let i = 0; i < 7; i++) { const t = p - 4 - i * .4; if (t > 0) { const x = cx + 10 + Math.round(Math.cos(i * 1.1) * t * 3), y = cy - Math.round(t * 4.4 - t * t * 0.25); c.fillStyle = "#f2c14e"; c.fillRect(x * s, y * s, 3 * s, 3 * s); c.fillStyle = "#fff6c8"; c.fillRect(x * s, y * s, s, s); } }
+        bigText(c, "VICTORY!", 18);
+      }
+    } else {
+      blit(c, mg, mx, my, s, 1, 2);
+      const hx = 12 - Math.min(30, p * 4), alpha = Math.max(0, 1 - p / 8);
+      blit(c, renderHero(heroLook({ frame: f, pose: "idle" })), hx, BGY - 38, s, alpha);
+      bigText(c, "RETREAT!", 18);
+    }
+  }
+  document.addEventListener("keydown", e => {
+    if (!bt || e.ctrlKey || e.metaKey || e.altKey || /input|textarea|select/i.test((e.target && e.target.tagName) || "")) return;
+    const n = parseInt(e.key, 10); if (n >= 1 && n <= bt.skills.length) { e.preventDefault(); useSkill(bt.skills[n - 1].key); }
+  });
 
   // ---------- Widget ----------
   // Quick start picks the skill you practiced most recently (or your first skill).
@@ -3690,6 +3936,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "relic-ver": { if (!hasRelic(id)) break; if (!state.relicOff) state.relicOff = {}; if (b.dataset.val === "1") delete state.relicOff[id]; else state.relicOff[id] = true; Sound.play("tap"); persist(); render(); break; }
       case "run": runDungeon(id); break;
       case "close-run": runView = null; render(); break;
+      case "bt-skill": useSkill(id); break;
       case "feedback": openFeedback("feedback"); break;
       case "upd-go": Updater.go(); break;
       case "toggle-autoupd": { state.settings.autoUpdate = !Updater.auto(); persist(); render(); if (Updater.auto()) Updater.check(false); break; }
@@ -3841,7 +4088,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     try { applyTheme(); } catch (e) {}
     baseRender();
     try { paintPixels(); } catch (e) { console.error(e); }
-    try { const cv = document.getElementById("battle"); if (cv && runView) paintBattle(cv, runView); } catch (e) { console.error(e); }
+    try { const cv = document.getElementById("battle"); if (cv && bt) updateBattleUI(); else if (cv && runView) paintOutro(cv, runView); } catch (e) { console.error(e); }
     try { paintQR(); } catch (e) {}
     if (lastGain) {
       const card = document.querySelector(`[data-skill="${lastGain.skillId}"]`);
@@ -3908,6 +4155,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       }
       render(); handleHash();
       if (pendingLaunch) pendingLaunch.then(u => { if (u) routeLink(u); });
+      if (state.battle) { state.keysUsed = Math.max(0, state.keysUsed - 1); delete state.battle; persist(); render(); toast("Your last battle was interrupted, so its key is back."); }
       try {
         localStorage.removeItem("levelup.shell.trying");
         const from = localStorage.getItem("levelup.updatedFrom");
