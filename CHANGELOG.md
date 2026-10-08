@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.11.3 — 2026-10-08 (build 2026-10-08.11)
+
+- Cheaper elixirs: Small XP Elixir 25 gold (was 80), Medium 75 gold (was 220).
+
 ## v0.11.2 — 2026-10-08 (build 2026-10-08.10)
 
 Quest gold and an elixir shop.

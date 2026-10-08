@@ -1364,8 +1364,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.10";
-  const APP_VERSION = "0.11.2";
+  const BUILD = "2026-10-08.11";
+  const APP_VERSION = "0.11.3";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -2135,8 +2135,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // Friendly boosts, never pressure: daily quests refresh each day and nothing carries over or is lost,
   // rewards arrive on their own (no claiming), and achievements count totals, never streaks.
   const ELIXIRS = {
-    small:  { name: "Small XP Elixir",  pct: 5,  min: 60, col: "#7ad0ff", price: 80 },
-    medium: { name: "Medium XP Elixir", pct: 10, min: 60, col: "#4fc58d", price: 220 },
+    small:  { name: "Small XP Elixir",  pct: 5,  min: 60, col: "#7ad0ff", price: 25 },
+    medium: { name: "Medium XP Elixir", pct: 10, min: 60, col: "#4fc58d", price: 75 },
     large:  { name: "Large XP Elixir",  pct: 15, min: 60, col: "#c89cf2" },
     grand:  { name: "Grand XP Elixir",  pct: 25, min: 60, col: "#f2c14e" }
   };
