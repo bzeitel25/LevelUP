@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.9.0 — 2026-10-08 (build 2026-10-08.6)
+
+Hero art upgrade.
+
+- New lighting on the hero: soft light from the top-left gives the face, hair, clothes and shoes real volume. Outlines take a deep shade of the color they wrap in place of flat black, and the fringe casts a soft shadow on the forehead.
+- Bigger, more expressive eyes, with 7 styles: Round, Sparkle, Sleepy, Fierce, Happy, Wink and Dot.
+- 7 mouths: Smile, Grin, Neutral, Open, Cat, Smirk and Blep. 5 cheek options: Blush, Freckles, Both, Bandage and None.
+- The hero blinks now and then, and always grins with happy eyes when celebrating a level-up.
+- 4 new hairstyles: Swoop (side-swept), Curly, Mohawk and Twin tails, for 11 in all.
+- Outfit details: a neckline, sleeve cuffs and a shirt hem.
+- Face colors adapt to skin tone, so eyes and mouths stay clear on every skin.
+- "Surprise me" now mixes expressions too. Every existing hero keeps their look, with the new Round eyes and Smile as defaults.
+
 ## v0.8.1 — 2026-10-08 (build 2026-10-08.5)
 
 Automatic updates.

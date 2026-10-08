@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-08.5",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-08.6",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -1380,8 +1380,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.5";
-  const APP_VERSION = "0.8.1";
+  const BUILD = "2026-10-08.6";
+  const APP_VERSION = "0.9.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1944,7 +1944,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     ["Ocean", "#3a6fc8", "#284f93"], ["Royal", "#7a4ac8", "#573493"], ["Teal", "#2f9e96", "#1f716b"],
     ["Charcoal", "#3d4152", "#2a2d3a"], ["Snow", "#eceef4", "#c2c6d4"], ["Rose", "#e07a9a", "#b0566f"], ["Earth", "#8a5a34", "#653f22"]
   ];
-  const HAIR_STYLES = ["Short", "Long", "Spiky", "Bun", "Ponytail", "Puffy", "Buzz"];
+  const HAIR_STYLES = ["Short", "Long", "Spiky", "Bun", "Ponytail", "Puffy", "Buzz", "Swoop", "Curly", "Mohawk", "Twin tails"];
   // Tier finishes: worn, iron, bronze, sapphire, amethyst, legendary gold.
   const TIER_PAL = [
     { A: "#a0703a", a: "#6e4a22", L: "#c99d66" }, { A: "#8a94a4", a: "#5a6272", L: "#b9c1cd" },
@@ -1965,8 +1965,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     "..........OOOOOO", "........OOSSSSSS", ".......OSSSSSSSS", "......OSSSSSSSSS", "......OSSSSSSSSS",
     ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OSSSSSSSSSS",
     ".....OSSSSSSSSSS", ".....OSSSSSSSSSS", ".....OsSSSSSSSSS", "......OsSSSSSSSS", "......OssSSSSSSS",
-    ".......OOsSSSSSS", ".........OOOOOOO", ".........OTTTTTT", "........OTTTTTTT", ".......OtTTTTTTT",
-    ".......OtTtTTTTT", ".......OtTtTTTTT", ".......OUUOTTTTT", ".......OUUOTTTTT", "........OOOTTTTT",
+    ".......OOsSSSSSS", ".........OOOOOOO", ".........OTTTTTS", "........OTTTTTTt", ".......OtTTTTTTT",
+    ".......OtTtTTTTT", ".......OtttTTTTT", ".......OUUOTTTTT", ".......OUUOTTTTT", "........OOOttttt",
     "..........OPPPPP", "..........OPPPpp", "..........OPPpO.", "..........OPPpO.", ".........OKKKKO.",
     ".........OkkkkO.", "..........OOOO..", "................", "................", "................"
   ]);
@@ -1986,6 +1986,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   HAIR.Long = HAIR.Short.slice(0, 15).concat(mirror(["....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", "....OHh.........", ".....OO........."]));
   HAIR.Bun = mirror(["..............OO", ".............OHj", ".............OHH"]).concat(HAIR.Short.slice(3));
   HAIR.Ponytail = HAIR.Short;
+  HAIR.Swoop = ["................................", "................................", "................................", "..........OOOOOOOOOOOO..........", "........OOHHHHHHHHHHHHOO........", ".......OHHHHHHHHHHHjjHHHO.......", "......OHHjHHHHHHHjjHHHjHHO......", ".....OHHHHHHHHHjjHHHHHHjHHO.....", "....OHHHHHHHHjjHHHHHHHHHjHHO....", "....OHHHHHHHHHHHHHHHHHHHHHHO....", "....OHHHHHHHHHHHHHHHHHhhHHHO....", "....OHHHHHHHHHHHHhhhh....HHO....", "....OHHHHHhhhh............HO....", "....OHHhh.................hO....", "....OHh....................O....", ".....O.........................."];
+  HAIR.Curly = mirror(["................", "..........OO.OOO", "........OOHHOHHH", "......OOHHjHHHjH", ".....OHHjHHHjHHH", "....OHHHHHHHHHHH", "...OHjHHHjHHHHjH", "...OHHHHHHHHHHHH", "..OHHHjHHHHjHHHH", "..OHHHHHHHHHHHHH", "..OHjHHHhHHHhHHH", "..OHHHh.h.hh.h..", "..OHHh..........", "...OHh..........", "...OHh..........", "..OHHO..........", "..OHO...........", "...O............"]);
+  HAIR.Mohawk = mirror(["..............OO", ".............OHj", ".............OHj", "............OHHj", "............OHHH", "..........OOOHHH", "........OO.h.OHH", ".......O.h.h.OHH", "......O.h.h.hOHH", "......O.......OH", "..............OH", "...............O"]);
+  HAIR["Twin tails"] = HAIR.Short;
+  const TWIN = { y: 8, rows: ["..OO.", ".OGGO", "OHHjO", "OHHHO", "OHjHO", "OHHhO", "OHHhO", ".OHhO", ".OHhO", ".OHhO", "..OhO", "..OO."] };
   const PONYTAIL = { x: 25, y: 8, rows: ["..OO", ".OHHO", "OHHhO", "OHHhO", ".OHhO", ".OHhO", ".OHhO", "..OhO", "..OO"] };
 
   // ---------- Sprite library ----------
@@ -2189,6 +2194,90 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function drawRows(g, pal, rows, dx = 0, dy = 0, y0 = 0) {
     rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) { const ch = row[rx]; if (ch !== ".") put(g, rx + dx, ry + y0 + dy, pal[ch]); } });
   }
+
+  // ---------- Hero art v2: lighting, colored outlines, expressive faces ----------
+  // Light comes from the top-left: fills facing it get a highlight, fills facing away get their shadow tone.
+  // Outlines take a deep version of the color they wrap (selective outlining), so the hero reads softer and richer.
+  const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const rgb2hex = c => "#" + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+  const tone = (h, amt) => { if (!h || h[0] !== "#" || h.length !== 7) return h; const c = hex2rgb(h); return rgb2hex(amt >= 0 ? c.map(v => v + (255 - v) * amt) : c.map(v => v * (1 + amt))); };
+  const deepen = (h, base) => { if (!h || h[0] !== "#" || h.length !== 7) return OUTLINE; const c = hex2rgb(h), o = hex2rgb(base || OUTLINE); return rgb2hex(c.map((v, i) => v * 0.32 + o[i] * 0.68)); };
+  const SHADE_OF = { S: "s", T: "t", P: "p", K: "k", U: "s", H: "h", j: "H" };
+  const FILL = new Set(["S", "s", "T", "t", "P", "p", "K", "k", "U", "H", "h", "j"]);
+  // Draw sprite rows with lighting + selective outlines. keys (optional) records what each cell is.
+  function drawLit(g, pal, rows, dx, dy, keys) {
+    const at = (x, y) => (rows[y] && rows[y][x]) || ".";
+    rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) {
+      const ch = row[x]; if (ch === ".") continue;
+      let col = pal[ch];
+      if (ch === "O") {
+        const nb = [at(x, y + 1), at(x + 1, y), at(x - 1, y), at(x, y - 1)].find(c => FILL.has(c));
+        col = nb ? deepen(pal[nb]) : OUTLINE;
+      } else if (SHADE_OF[ch]) {
+        const edgeR = !FILL.has(at(x + 1, y)) || !FILL.has(at(x, y + 1));
+        const edgeL = !FILL.has(at(x - 1, y)) || !FILL.has(at(x, y - 1));
+        if (edgeR && !edgeL && ch !== "j") col = pal[SHADE_OF[ch]] || tone(col, -0.18);
+        else if (edgeL && !edgeR) col = ch === "H" ? (pal.j || tone(col, 0.2)) : tone(col, ch === "S" || ch === "U" ? 0.16 : 0.14);
+      }
+      put(g, x + dx, y + dy, col);
+      if (keys && y + dy >= 0 && y + dy < AV_H && x + dx >= 0 && x + dx < AV_W) keys[y + dy][x + dx] = ch;
+    } });
+  }
+  // Faces. Eyes are 3x4 at x 9 and x 20, y 12; mouths sit at y 17.
+  // L lash, W shine, I iris, i light iris, P pupil.
+  const EYE_STYLES = {
+    Round:   ["LLL", "WPP", "IPP", "IiI"],
+    Sparkle: ["LLL", "WWP", "IPW", "IiI"],
+    Sleepy:  ["...", "LLL", "IPP", "IiI"],
+    Fierce:  ["L..", "LLL", "WPP", "IiI"],
+    Happy:   ["...", ".L.", "L.L", "..."],
+    Wink:    ["LLL", "WPP", "IPP", "IiI"],
+    Dot:     ["...", "LL.", "LL.", "..."]
+  };
+  const EYE_NAMES = Object.keys(EYE_STYLES);
+  // V line, R mouth inside, T tongue, W teeth. Drawn from x 14 (5-wide ones from x 13).
+  const MOUTHS = {
+    Smile:   { x: 14, rows: ["V..V", ".VV."] },
+    Grin:    { x: 14, rows: ["VVVV", "VWWV", ".RR."] },
+    Neutral: { x: 15, rows: ["VV"] },
+    Open:    { x: 15, rows: ["VV", "RR"] },
+    Cat:     { x: 13, rows: ["V.V.V", ".V.V."] },
+    Smirk:   { x: 14, rows: ["...V", "VVV."] },
+    Blep:    { x: 14, rows: ["VVVV", ".TT."] }
+  };
+  const MOUTH_NAMES = Object.keys(MOUTHS);
+  const CHEEKS = ["Blush", "Freckles", "Both", "Bandage", "None"];
+  function drawFace(g0, pal, ap, by, f, pose, keys) {
+    const g = g0;
+    const put = (gg, x, y, c) => { if (x >= 0 && x < AV_W && y >= 0 && y < AV_H && c) { g0[y][x] = c; if (keys) keys[y][x] = "F"; } };
+    const lum = h => { const c = hex2rgb(h); return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; };
+    const darkSkin = lum(pal.S) < 0.42;
+    const iris = pal.E, eyePal = { L: deepen(iris, "#120c18"), W: "#ffffff", I: tone(iris, darkSkin ? 0.35 : 0.12), i: tone(iris, darkSkin ? 0.7 : 0.55), P: tone(iris, darkSkin ? -0.65 : -0.5) };
+    let es = EYE_NAMES[ap.eyeStyle || 0] || "Round", ms = MOUTH_NAMES[ap.mouth || 0] || "Smile";
+    if (pose === "cheer") { es = "Happy"; ms = "Grin"; }
+    const blink = (pose === "train" || pose === "idle") && f % 23 === 22 && es !== "Happy";
+    [[9, false], [20, true]].forEach(([ex, right]) => {
+      let rows = EYE_STYLES[es];
+      if (es === "Wink" && right) rows = EYE_STYLES.Happy;
+      if (blink) rows = ["...", "...", "LLL", "..."];
+      rows.forEach((row, ry) => [...row].forEach((ch, rx) => {
+        if (ch === ".") return;
+        let x = ex + rx;
+        if (es === "Fierce" && right) x = ex + (2 - rx);           // mirror the angled lid
+        if (es === "Dot" && right) x = ex + rx + 1;
+        put(g, x, 12 + ry + by, eyePal[ch]);
+      }));
+    });
+    // cheeks
+    const ck = CHEEKS[ap.cheeks || 0] || "Blush";
+    if (ck === "Blush" || ck === "Both") [[7, 16], [8, 16], [23, 16], [24, 16]].forEach(([x, y], i) => put(g, x, y + by, i % 3 === 0 ? tone(FIXED.B, 0.3) : FIXED.B));
+    if (ck === "Freckles" || ck === "Both") [[8, 15], [10, 17], [7, 17], [23, 15], [21, 17], [24, 17]].forEach(([x, y]) => put(g, x, y + by, tone(pal.S, -0.32)));
+    if (ck === "Bandage") { [[21, 17], [22, 17], [23, 17], [24, 17]].forEach(([x, y], i) => put(g, x, y + by, i === 0 || i === 3 ? "#e8cfa4" : "#f6e7c8")); put(g, 22, 18 + by, "#e8cfa4"); put(g, 23, 16 + by, "#e8cfa4"); [[7, 16], [8, 16]].forEach(([x, y]) => put(g, x, y + by, FIXED.B)); }
+    // mouth
+    const m = MOUTHS[ms] || MOUTHS.Smile, mPal = { V: darkSkin ? "#2a1018" : "#7a3040", R: darkSkin ? "#8a2438" : "#b8364e", T: "#f08aa0", W: "#ffffff" };
+    m.rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") put(g, m.x + rx, 17 + ry + by, mPal[ch]); }));
+  }
+
   // look = { ap, items: { slot: { sprite, tier } }, pose, frame, prop }
   function renderHero(look) {
     const ap = look.ap || defaultAppearance();
@@ -2210,13 +2299,10 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     let rows = BASE;
     if (pose === "train" && act === "run" && f % 2 === 0) rows = BASE.slice(0, 30).concat(LEGS_RUN[0]);
     if (pose === "cheer") rows = BASE.slice(0, 22).concat(CHEER_TORSO, BASE.slice(30));
-    drawRows(g, recol, rows, 0, by);
+    const keys = makeGrid();
+    drawLit(g, recol, rows, 0, by, keys);
     // face
-    const ey = 13 + by;
-    [[10, ey], [20, ey]].forEach(([x, y]) => { put(g, x, y, FIXED.W); put(g, x + 1, y, recol.E); for (let k = 1; k < 3; k++) { put(g, x, y + k, recol.E); put(g, x + 1, y + k, recol.E); } });
-    if (pose === "train" && f % 16 === 15) { [[10, ey], [20, ey]].forEach(([x, y]) => { for (let k = 0; k < 3; k++) { put(g, x, y + k, recol.S); put(g, x + 1, y + k, recol.S); } put(g, x, y + 2, recol.E); put(g, x + 1, y + 2, recol.E); }); }
-    [[8, 16], [9, 16], [22, 16], [23, 16]].forEach(([x, y]) => put(g, x, y + by, FIXED.B));
-    put(g, 15, 17 + by, FIXED.V); put(g, 16, 17 + by, FIXED.V);
+    drawFace(g, recol, ap, by, f, pose, keys);
     layer("body"); layer("feet"); layer("belt"); layer("neck");
     const back = items.back && S[items.back.sprite];
     if (back && back.strap) drawPart(g, recol, TIER_PAL[items.back.tier] || TIER_PAL[0], { pts: line(10, 22, 21, 29, "a"), outline: false }, 0, by);
@@ -2224,8 +2310,14 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (back && back.front) layer("back", true);
     // hair
     const hs = HAIR_STYLES[ap.hairStyle] || "Short";
-    drawRows(g, recol, HAIR[hs], 0, by);
-    if (hs === "Ponytail") drawRows(g, recol, PONYTAIL.rows, PONYTAIL.x, PONYTAIL.y + by);
+    drawLit(g, recol, HAIR[hs], 0, by, keys);
+    if (hs === "Ponytail") drawLit(g, recol, PONYTAIL.rows, PONYTAIL.x, PONYTAIL.y + by, keys);
+    if (hs === "Twin tails") { drawLit(g, Object.assign({}, recol, { G: FIXED.R }), TWIN.rows, 0, TWIN.y + by, keys); drawLit(g, Object.assign({}, recol, { G: FIXED.R }), TWIN.rows.map(r => r.split("").reverse().join("")), 27, TWIN.y + by, keys); }
+    // the fringe casts a soft shadow onto the forehead
+    for (let x = 5; x < 27; x++) for (let y = 6 + by; y < 17 + by; y++) {
+      const k = keys[y] && keys[y][x], below = keys[y + 1] && keys[y + 1][x];
+      if ((k === "H" || k === "h" || k === "j") && below === "S") { if (y + 1 < 12 + by) put(g, x, y + 1, tone(recol.S, -0.1)); break; }
+    }
     if (pose === "cheer") { const wave = f % 6 < 3 ? 0 : -1; [CHEER_ARM, CHEER_ARM.map(([x, y, ch]) => [31 - x, y, ch])].forEach((arm, side) => drawPart(g, recol, TIER_PAL[0], { pts: arm.map(([x, y, ch]) => [x, y + (side ? wave : -1 - wave), ch]), outline: true }, 0, by)); }
     layer("head"); layer("face"); layer("hands"); layer("front");
     // held item (or training prop), with a little motion while training
@@ -2545,7 +2637,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   BACKDROPS.library.req = { cat: "language", lv: 15 };
   BACKDROPS.library.alt = { cat: "science", lv: 15 };
 
-  function defaultAppearance() { return { skin: 1, hairStyle: 0, hairColor: 1, eyes: 0, shirt: 3, pants: 6, bg: "meadow", show: {} }; }
+  function defaultAppearance() { return { skin: 1, hairStyle: 0, hairColor: 1, eyes: 0, eyeStyle: 0, mouth: 0, cheeks: 0, shirt: 3, pants: 6, bg: "meadow", show: {} }; }
 
   // Render one item on its own, cropped to its pixels (for gear cards).
   function itemIcon(canvas, sprite, tier, size = 40) {
@@ -3108,7 +3200,10 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           <div class="field"><span class="lbl">Hair style</span><div class="chips">${HAIR_STYLES.map((h, i) => `<button class="chip" data-act="ap-set" data-key="hairStyle" data-val="${i}" aria-pressed="${ap.hairStyle === i}">${h}</button>`).join("")}</div></div>
           ${swatchRow("Hair color", "hairColor", HAIR_COLORS, v => v[1], v => v[0])}
           ${swatchRow("Skin", "skin", SKINS, v => v[0], (v, i) => "Tone " + (i + 1))}
-          ${swatchRow("Eyes", "eyes", EYE_COLORS, v => v[1], v => v[0])}
+          <div class="field"><span class="lbl">Eyes</span><div class="chips">${EYE_NAMES.map((h, i) => `<button class="chip" data-act="ap-set" data-key="eyeStyle" data-val="${i}" aria-pressed="${(ap.eyeStyle || 0) === i}">${h}</button>`).join("")}</div></div>
+          <div class="field"><span class="lbl">Mouth</span><div class="chips">${MOUTH_NAMES.map((h, i) => `<button class="chip" data-act="ap-set" data-key="mouth" data-val="${i}" aria-pressed="${(ap.mouth || 0) === i}">${h}</button>`).join("")}</div></div>
+          <div class="field"><span class="lbl">Cheeks</span><div class="chips">${CHEEKS.map((h, i) => `<button class="chip" data-act="ap-set" data-key="cheeks" data-val="${i}" aria-pressed="${(ap.cheeks || 0) === i}">${h}</button>`).join("")}</div></div>
+          ${swatchRow("Eye color", "eyes", EYE_COLORS, v => v[1], v => v[0])}
           ${swatchRow("Shirt", "shirt", CLOTH, v => v[1], v => v[0])}
           ${swatchRow("Pants", "pants", CLOTH, v => v[1], v => v[0])}
           <div class="field"><span class="lbl">Backdrop · ${unlockedBackdrops().length} of ${Object.keys(BACKDROPS).length} unlocked</span><div class="bd-grid">${[...Object.entries(BACKDROPS).filter(([k]) => bdUnlocked(k)), ...Object.entries(BACKDROPS).filter(([k]) => !bdUnlocked(k))].map(([k, b]) => { const open = bdUnlocked(k); return `<button class="bd ${open ? "" : "locked"}" data-act="ap-bg" data-val="${k}" aria-pressed="${ap.bg === k}" ${open ? "" : "disabled"} title="${esc(open ? b.name : "Unlock: " + reqText(b.req))}"><canvas class="px" data-bd="${k}" aria-hidden="true"></canvas><span>${esc(b.name)}</span>${open ? "" : `<small>${esc(reqText(b.req))}</small>`}</button>`; }).join("")}</div></div>
@@ -3609,7 +3704,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "ap-bg": { if (!bdUnlocked(b.dataset.val)) break; appearance().bg = b.dataset.val; persist(); render(); break; }
       case "ap-random": {
         const ap = appearance(), r = n => Math.floor(Math.random() * n);
-        Object.assign(ap, { skin: r(SKINS.length), hairStyle: r(HAIR_STYLES.length), hairColor: r(HAIR_COLORS.length), eyes: r(EYE_COLORS.length), shirt: r(CLOTH.length), pants: r(CLOTH.length) });
+        Object.assign(ap, { skin: r(SKINS.length), hairStyle: r(HAIR_STYLES.length), hairColor: r(HAIR_COLORS.length), eyes: r(EYE_COLORS.length), eyeStyle: r(EYE_NAMES.length), mouth: r(MOUTH_NAMES.length), cheeks: r(CHEEKS.length), shirt: r(CLOTH.length), pants: r(CLOTH.length) });
         persist(); render(); break;
       }
       case "portrait": savePortrait(); break;

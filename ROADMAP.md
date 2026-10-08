@@ -18,6 +18,8 @@ Design rules that every feature follows:
 | v0.6 | Talent trees: one per category, with titles and signature moves |
 | v0.7 | Portrait frames and the Progress view (weekly chart and per-skill time) |
 | v0.8 | Inventory tab, Radiant relic versions of gear you own (switch Regular or Radiant), Relic Hunter frame |
+| v0.8.1 | Automatic updates on the web and in the Android app |
+| v0.9 | Hero art upgrade: lighting, colored outlines, 7 eye styles, 7 mouths, 5 cheek options, 4 new hairstyles |
 
 ## Next up
 
