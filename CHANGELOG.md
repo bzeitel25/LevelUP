@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.6.0 — 2026-10-08 (build 2026-10-08.1)
+
+Talent trees.
+
+- New Talents tab: one talent tree per category (Instrument, Language, Health, Cooking, Trade, Art, Tech, Study, Science, Life skills), each with its own names.
+  - Category level = all your skill levels in that category added together. Talent points come at category levels 3, 6, 10, 15, 20, 25, 30, 40, 50, 60, 75 and 90 (12 per tree).
+  - Three branches per tree: Power (stat bonuses), Fortune (dungeon gold, cheaper gear for that category, trophy drops) and Tactics (win chance, more gold when you retreat).
+  - Each branch ends in a capstone that needs 6 points in the tree first. Capstones grant a title to show under your class, and the Tactics capstone adds a signature move that appears in dungeon battles.
+  - Talents never add XP, so levels always mean real practice. Totals are capped: +25% gold, +10% win chance, +30% retreat gold, +15% trophy drops.
+  - Resetting a tree is free. If removing a session lowers a category level, the newest extra talents rest until you earn the level back. Nothing is lost.
+- Level-up celebrations announce new talent points, with a "Spend talent point" button that opens the right tree.
+- The character sheet shows talent bonuses in gold next to gear bonuses (green).
+- The Settings download button opens the Android releases page instead of a dead link.
+- Android build fix: the CI now uses the Android SDK built into GitHub's runners (the setup step was failing, so no APK was published).
+- Phone bottom bar fits six tabs: the gold badge hides on phones and the key badge shows just the number.
+
 ## v0.5.0 — 2026-10-07 (build 2026-10-07.7)
 
 Real home-screen widgets.
