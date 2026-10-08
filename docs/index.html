@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-08.12",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-08.13",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -1406,8 +1406,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.12";
-  const APP_VERSION = "0.12.0";
+  const BUILD = "2026-10-08.13";
+  const APP_VERSION = "0.12.1";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -2446,70 +2446,139 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   const exploredPct = () => { const b = seenGet(); let n = 0; for (let i = 0; i < b.length; i++) n += b[i]; return Math.round(n / ADV_WALKABLE * 100); };
   const ADV_WALKABLE = (() => { let n = 0; for (let y = 0; y < AH; y++) for (let x = 0; x < AW; x++) if (!"M~".includes(tileAt(x, y))) n++; return n; })();
 
-  // --- Tile art (16x16, procedural, deterministic per tile) ---
+  // --- Tile art: clean GBA-era style (original tiles). Flat colors, tufts on a regular grid,
+  // crisp path and shore edges, round outlined trees that overlap the row above. No random noise. ---
   const hsh = (x, y, k = 0) => { let h = (x * 374761393 + y * 668265263 + k * 2246822519) >>> 0; h = (h ^ (h >>> 13)) * 1274126177 >>> 0; return (h ^ (h >>> 16)) / 4294967296; };
-  const FLOORS = {
-    ".": ["#5cb85c", "#4ea64f", "#78cc6c"], ",": ["#5cb85c", "#4ea64f", "#78cc6c"], "f": ["#3f8f44", "#347a39", "#4fa354"],
-    "v": ["#6cc46a", "#5db35c", "#8bd685"], "d": ["#6a5f7a", "#5a5068", "#7d7290"], "r": ["#5a4a44", "#4a3c37", "#6e5a52"],
-    "n": ["#e8eef6", "#d2dceb", "#ffffff"], ":": ["#c9a46a", "#b38f58", "#dcbb83"]
+  const GRASS = {
+    ".": { b: "#78c850", d: "#58a838", l: "#98e070" },
+    ",": { b: "#78c850", d: "#58a838", l: "#98e070" },
+    "f": { b: "#5aa848", d: "#3f8a36", l: "#78c060" },
+    "v": { b: "#88d460", d: "#68b448", l: "#a8ec80" }
   };
+  const GROUND = {
+    ":": { b: "#e8c888", d: "#c8a060", l: "#f8e0a8" },
+    "d": { b: "#9890b0", d: "#7a7298", l: "#b0a8c8" },
+    "r": { b: "#a07858", d: "#806048", l: "#b89070" },
+    "n": { b: "#f0f6ff", d: "#c8d8f0", l: "#ffffff" }
+  };
+  const FLOORS = Object.assign({}, GRASS, GROUND);
   function floorFor(x, y) { const t = tileAt(x, y); return FLOORS[t] ? t : regionAt(x, y).floor; }
-  function drawFloor(c, px, py, x, y, ft) {
-    const [b, d, l] = FLOORS[ft] || FLOORS["."];
-    c.fillStyle = b; c.fillRect(px, py, TS, TS);
-    for (let i = 0; i < 6; i++) { const rx = Math.floor(hsh(x, y, i) * 15), ry = Math.floor(hsh(x, y, i + 9) * 15); c.fillStyle = i % 2 ? d : l; c.fillRect(px + rx, py + ry, ft === ":" ? 2 : 1, ft === "." || ft === "f" || ft === "v" ? 2 : 1); }
-    if (ft === "r" && hsh(x, y, 3) < 0.4) { c.fillStyle = "#e8642c"; c.fillRect(px + Math.floor(hsh(x, y, 4) * 14), py + Math.floor(hsh(x, y, 5) * 14), 1, 1); }
-  }
   const P = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  const isPathish = t => t === ":" || t === "=" || "123456GSC".includes(t);
+  function drawFloor(c, px, py, x, y, ft) {
+    const g = FLOORS[ft] || GRASS["."];
+    P(c, px, py, 16, 16, g.b);
+    if (GRASS[ft]) {
+      // two tufts on a checkerboard grid, like GBA grass
+      const alt = (x + y) % 2 === 0;
+      const tuft = (ox, oy) => { P(c, px + ox, py + oy + 1, 1, 2, g.d); P(c, px + ox + 2, py + oy + 1, 1, 2, g.d); P(c, px + ox + 1, py + oy, 1, 2, g.d); P(c, px + ox + 1, py + oy, 1, 1, g.l); };
+      if (alt) { tuft(2, 3); tuft(10, 10); } else { tuft(10, 2); tuft(3, 10); }
+    } else if (ft === ":") {
+      if ((x * 3 + y) % 4 === 0) { P(c, px + 5, py + 6, 2, 1, g.d); P(c, px + 11, py + 11, 2, 1, g.d); P(c, px + 5, py + 5, 2, 1, g.l); }
+      // crisp edges where the path meets other ground
+      const edge = (nx, ny) => !isPathish(tileAt(nx, ny));
+      if (edge(x, y - 1)) { P(c, px, py, 16, 1, g.d); P(c, px, py + 1, 16, 1, g.l); }
+      if (edge(x, y + 1)) P(c, px, py + 15, 16, 1, g.d);
+      if (edge(x - 1, y)) P(c, px, py, 1, 16, g.d);
+      if (edge(x + 1, y)) P(c, px + 15, py, 1, 16, g.d);
+    } else if (ft === "n") {
+      if ((x + y) % 3 === 0) { P(c, px + 3, py + 5, 4, 1, g.d); P(c, px + 9, py + 11, 3, 1, g.d); }
+    } else if (ft === "d") {
+      if ((x * 2 + y) % 3 === 0) { P(c, px + 4, py + 4, 3, 1, g.d); P(c, px + 6, py + 5, 1, 2, g.d); P(c, px + 10, py + 11, 2, 1, g.d); }
+    } else if (ft === "r") {
+      if ((x + y * 2) % 3 === 0) { P(c, px + 3, py + 10, 4, 2, g.d); P(c, px + 3, py + 10, 4, 1, g.l); P(c, px + 10, py + 4, 3, 2, g.d); }
+    }
+  }
+  function drawWater(c, px, py, x, y, f) {
+    P(c, px, py, 16, 16, "#58a0f0");
+    const ph = Math.floor(f / 4) % 4;
+    [[2, 4], [9, 11]].forEach(([wx, wy], i) => { const sx = (wx + (i ? -ph : ph) + 16) % 16; P(c, px + Math.min(sx, 12), py + wy, 4, 1, "#a8d8ff"); P(c, px + Math.min(sx, 12) + 1, py + wy - 1, 2, 1, "#a8d8ff"); });
+    const land = (nx, ny) => { const t = tileAt(nx, ny); return t !== "~" && t !== "="; };
+    if (land(x, y - 1)) { P(c, px, py, 16, 2, "#e8f8ff"); P(c, px, py + 2, 16, 1, "#88c0f8"); }
+    if (land(x - 1, y)) P(c, px, py, 2, 16, "#e8f8ff");
+    if (land(x + 1, y)) P(c, px + 14, py, 2, 16, "#e8f8ff");
+    if (land(x, y + 1)) P(c, px, py + 14, 16, 2, "#3878c8");
+  }
+  function drawCliff(c, px, py, x, y) {
+    const reg = regionAt(x, y);
+    const pal = reg.floor === "r" ? ["#806048", "#604430", "#a07858", "#40281c"] : reg.floor === "n" ? ["#a8b4c8", "#8090a8", "#d0dae8", "#56607a"] : reg.floor === "d" ? ["#706888", "#585070", "#9088a8", "#3a3450"] : ["#b09070", "#907050", "#d0b090", "#5a4030"];
+    const [b, d, l, o] = pal;
+    P(c, px, py, 16, 16, b);
+    for (let i = 0; i < 3; i++) { const yy = 4 + i * 5; P(c, px, py + yy, 16, 1, d); P(c, px + ((x + i) % 2 ? 3 : 9), py + yy - 2, 1, 2, d); }
+    const above = tileAt(x, y - 1), below = tileAt(x, y + 1);
+    if (above !== "M") { // a grassy or snowy lip on top
+      const lip = reg.floor === "n" ? "#ffffff" : reg.floor === "r" ? "#a07858" : reg.floor === "d" ? "#9890b0" : "#78c850";
+      P(c, px, py, 16, 3, lip); P(c, px, py + 3, 16, 1, o);
+    } else P(c, px, py, 16, 1, l);
+    if (below !== "M") P(c, px, py + 15, 16, 1, o);
+    if (tileAt(x - 1, y) !== "M") P(c, px, py, 1, 16, o);
+    if (tileAt(x + 1, y) !== "M") P(c, px + 15, py, 1, 16, o);
+  }
+  function drawLava(c, px, py, x, y, f) {
+    P(c, px, py, 16, 16, "#e85020");
+    const ph = Math.floor(f / 5) % 2;
+    P(c, px + (ph ? 3 : 5), py + 4, 5, 2, "#f8a030"); P(c, px + (ph ? 9 : 7), py + 10, 4, 2, "#f8a030"); P(c, px + (ph ? 4 : 6), py + 4, 2, 1, "#fff0a0");
+    const edge = (nx, ny) => tileAt(nx, ny) !== "l";
+    if (edge(x, y - 1)) P(c, px, py, 16, 2, "#802010");
+    if (edge(x - 1, y)) P(c, px, py, 2, 16, "#802010");
+    if (edge(x + 1, y)) P(c, px + 14, py, 2, 16, "#802010");
+    if (edge(x, y + 1)) P(c, px, py + 14, 16, 2, "#a03018");
+  }
+  // Trees and pines are drawn in a second pass so canopies overlap the tile above.
+  function drawTree(c, px, py, x, y) {
+    const dark = regionAt(x, y).floor === "f";
+    const g = dark ? ["#2f8040", "#246030", "#48a050", "#7cc870"] : ["#40a048", "#2c7a38", "#60c058", "#98e080"];
+    // shadow, trunk
+    P(c, px + 3, py + 14, 10, 2, "rgba(0,0,0,.18)");
+    P(c, px + 6, py + 10, 4, 5, "#7a4a28"); P(c, px + 6, py + 10, 1, 5, "#a06838"); P(c, px + 5, py + 14, 6, 1, "#5a3418");
+    // canopy: outlined rounded blob, 18 wide, reaching 6px above the tile
+    const rows = ["....OOOOOOOO....", "..OOMMMMMMMMOO..", ".OMMLLLMMMMMMMO.", "OMMLHHLLMMMMMMMO", "OMLHHLLLMMMMDMMO", "OMMLLLMMMMMDDMMO", "OMMMMMMMMMDDMMMO", "OMMMMMDMMMMMMMDO", ".OMMMDDMMMMMDDO.", ".ODMMMMMMMMMDDO.", "..ODDMMMMMMDDO..", "...OODDDDDDOO...", ".....OOOOOO....."];
+    const pal = { O: "#183820", M: g[0], D: g[1], L: g[2], H: g[3] };
+    rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 6 + ry, 1, 1, pal[ch]); }));
+  }
+  function drawPine(c, px, py) {
+    P(c, px + 3, py + 14, 10, 2, "rgba(0,40,80,.15)");
+    P(c, px + 7, py + 11, 2, 4, "#6a4020");
+    const rows = [".......OO.......", "......OWWO......", ".....OMWWMO.....", "....OMMMMMMO....", "...OWMMMMMWWO...", "....OMMMMMMO....", "...OMMMMMMMMO...", "..OWWMMMMMMWWO..", "...OMMMMMMMMO...", "..OMMMMMMMMMMO..", ".OMMMMMMMMMMMMO.", "..OOOOOOOOOOOO.."];
+    const pal = { O: "#143828", M: "#2a6a48", W: "#ffffff" };
+    rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 3 + ry, 1, 1, ch === "M" && rx < 7 && ry % 3 === 1 ? "#3a8a5a" : pal[ch]); }));
+  }
   function drawTile(c, px, py, x, y, f) {
     const t = tileAt(x, y);
-    if (t === "~") { P(c, px, py, TS, TS, "#4a8fd9"); for (let i = 0; i < 3; i++) { const yy = (i * 6 + Math.floor(f / 2) + Math.floor(hsh(x, y, i) * 6)) % 16; P(c, px + 2 + i * 4, py + yy, 4, 1, "#8fc4f2"); } return; }
-    if (t === "l") { P(c, px, py, TS, TS, "#d94a1a"); for (let i = 0; i < 4; i++) { const yy = (i * 4 + Math.floor(f / 3)) % 16; P(c, px + Math.floor(hsh(x, y, i) * 12), py + yy, 4, 2, i % 2 ? "#ffb02e" : "#ff7a1a"); } return; }
-    if (t === "=") { P(c, px, py, TS, TS, "#4a8fd9"); P(c, px, py + 2, TS, 12, "#8a5a34"); for (let i = 0; i < 4; i++) P(c, px + i * 4, py + 2, 1, 12, "#6b4220"); P(c, px, py + 2, TS, 1, "#b07840"); P(c, px, py + 13, TS, 1, "#5a3a1c"); return; }
-    if (t === "M") {
-      const reg = regionAt(x, y), base = reg.floor === "r" ? ["#4a3f3c", "#3a302d", "#6a5a54"] : reg.floor === "n" ? ["#8a94a6", "#6b7385", "#c9d1e1"] : reg.floor === "d" ? ["#4e4560", "#3c344c", "#6c6280"] : ["#7a7f8f", "#5f6474", "#a3a8b6"];
-      P(c, px, py, TS, TS, base[1]);
-      c.fillStyle = base[0]; c.beginPath(); c.moveTo(px, py + 16); c.lineTo(px + 6, py + 3); c.lineTo(px + 10, py + 8); c.lineTo(px + 13, py + 4); c.lineTo(px + 16, py + 16); c.fill();
-      c.fillStyle = base[2]; c.beginPath(); c.moveTo(px + 6, py + 3); c.lineTo(px + 8, py + 7); c.lineTo(px + 5, py + 9); c.fill();
-      if (reg.floor === "n") { P(c, px + 5, py + 3, 3, 2, "#ffffff"); P(c, px + 12, py + 4, 2, 2, "#ffffff"); }
-      return;
-    }
+    if (t === "~") return drawWater(c, px, py, x, y, f);
+    if (t === "l") return drawLava(c, px, py, x, y, f);
+    if (t === "M") return drawCliff(c, px, py, x, y);
+    if (t === "=") { drawWater(c, px, py, x, y, f); P(c, px, py + 1, 16, 14, "#c08850"); for (let i = 0; i < 4; i++) { P(c, px + i * 4, py + 1, 1, 14, "#906030"); } P(c, px, py + 1, 16, 1, "#e0b070"); P(c, px, py + 14, 16, 1, "#604020"); P(c, px, py + 3, 16, 1, "#906030"); P(c, px, py + 12, 16, 1, "#906030"); return; }
     const ft = floorFor(x, y);
-    drawFloor(c, px, py, x, y, FLOORS[t] ? t : ft);
-    if (t === ",") { [[3, 4, "#f29ab5"], [10, 9, "#ffe58a"], [6, 12, "#ffffff"]].forEach(([a, b2, col], i) => { if (hsh(x, y, i + 20) < 0.8) { P(c, px + a, py + b2, 2, 2, col); P(c, px + a, py + b2 + 2, 1, 1, "#3f8a4e"); } }); }
-    if (t === "v" && hsh(x, y, 30) < 0.25) P(c, px + Math.floor(hsh(x, y, 31) * 13), py + Math.floor(hsh(x, y, 32) * 13), 2, 2, hsh(x, y, 33) < 0.5 ? "#f29ab5" : "#c89cf2");
-    if (t === "T") {
-      const dark = regionAt(x, y).floor === "f";
-      P(c, px + 7, py + 11, 2, 4, "#6b4220");
-      const g1 = dark ? "#2f7a3a" : "#3f9a4a", g2 = dark ? "#1f5a2a" : "#2b7a37", g3 = dark ? "#4a9a50" : "#62bb5e";
-      c.fillStyle = OUTLINE; c.beginPath(); c.arc(px + 8, py + 7, 7, 0, Math.PI * 2); c.fill();
-      c.fillStyle = g2; c.beginPath(); c.arc(px + 8, py + 7, 6, 0, Math.PI * 2); c.fill();
-      c.fillStyle = g1; c.beginPath(); c.arc(px + 7, py + 6, 5, 0, Math.PI * 2); c.fill();
-      P(c, px + 4, py + 3, 3, 2, g3); P(c, px + 5, py + 5, 1, 1, g3);
+    drawFloor(c, px, py, x, y, ("T" === t || "P" === t || "k" === t || "H" === t) ? regionAt(x, y).floor : (FLOORS[t] ? t : ft));
+    if (t === ",") {
+      const sway = Math.floor(f / 6) % 2;
+      [[3, 3, "#f05050"], [10, 9, "#f8d030"]].forEach(([a, b2, col]) => { P(c, px + a + sway, py + b2, 3, 3, col); P(c, px + a + 1 + sway, py + b2 + 1, 1, 1, "#fff8c0"); P(c, px + a + 1, py + b2 + 3, 1, 2, "#3f8a36"); });
     }
-    if (t === "P") {
-      P(c, px + 7, py + 12, 2, 3, "#6b4220");
-      [[7, 1, 2], [6, 3, 4], [5, 5, 6], [4, 7, 8], [3, 9, 10]].forEach(([a, b2, w]) => { P(c, px + a, py + b2, w, 2, "#1f5a3a"); P(c, px + a, py + b2, Math.max(1, w / 2), 1, "#2f7a4a"); });
-      P(c, px + 7, py + 1, 2, 1, "#ffffff"); P(c, px + 4, py + 7, 2, 1, "#ffffff"); P(c, px + 10, py + 9, 2, 1, "#ffffff");
-    }
-    if (t === "k") { P(c, px + 4, py + 8, 8, 6, "#3c344c"); P(c, px + 5, py + 7, 6, 6, "#7d7290"); P(c, px + 5, py + 7, 3, 2, "#9a90ac"); }
+    if (t === "v" && (x * 7 + y * 3) % 9 === 0) { P(c, px + 6, py + 6, 3, 3, (x + y) % 2 ? "#f080b0" : "#c0a0f8"); P(c, px + 7, py + 7, 1, 1, "#fff8c0"); }
+    if (t === "k") { P(c, px + 3, py + 12, 11, 2, "rgba(0,0,0,.18)"); P(c, px + 3, py + 6, 10, 8, "#3a3450"); P(c, px + 4, py + 5, 8, 8, "#8078a0"); P(c, px + 4, py + 5, 4, 2, "#a8a0c8"); P(c, px + 9, py + 9, 3, 3, "#6a6288"); }
     if (t === "H") {
-      P(c, px + 2, py + 8, 12, 7, "#efe2c2"); P(c, px + 2, py + 14, 12, 1, "#cbb98e");
-      c.fillStyle = "#c8423a"; c.beginPath(); c.moveTo(px, py + 9); c.lineTo(px + 8, py + 1); c.lineTo(px + 16, py + 9); c.fill();
-      P(c, px + 1, py + 8, 14, 1, "#93302a"); P(c, px + 7, py + 10, 3, 5, "#8a5a34"); P(c, px + 3, py + 10, 3, 2, "#7ad0ff"); P(c, px + 11, py + 10, 2, 2, "#7ad0ff");
+      P(c, px + 1, py + 7, 14, 8, "#183820"); P(c, px + 2, py + 8, 12, 7, "#f8f0d8"); P(c, px + 2, py + 13, 12, 2, "#d8c8a0");
+      const roof = ["...OOOOOOOOOO...", "..ORRRRRRRRRRO..", ".ORRRRRRRRRRRRO.", "ORRRRRRRRRRRRRRO", "OrrrrrrrrrrrrrrO", "OOOOOOOOOOOOOOOO"];
+      roof.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== ".") P(c, px + rx, py - 2 + ry, 1, 1, { O: "#183820", R: "#e05848", r: "#b03830" }[ch]); }));
+      P(c, px + 3, py, 10, 1, "#f08878");
+      P(c, px + 7, py + 10, 3, 5, "#906030"); P(c, px + 3, py + 9, 3, 2, "#88c8f8"); P(c, px + 11, py + 9, 2, 2, "#88c8f8");
     }
     if (t === "G") {
       const open = gateOpen(poiAt(x, y));
-      P(c, px, py + 1, 4, 15, "#7a7f8f"); P(c, px + 12, py + 1, 4, 15, "#7a7f8f"); P(c, px, py, 16, 4, "#8a94a6"); P(c, px, py, 16, 1, "#c9d1e1"); P(c, px + 1, py + 4, 2, 12, "#5f6474"); P(c, px + 13, py + 4, 2, 12, "#5f6474");
-      if (!open) { for (let i = 0; i < 4; i++) P(c, px + 4 + i * 2 + (i > 1 ? 1 : 0), py + 4, 1, 12, "#2e3142"); P(c, px + 4, py + 9, 8, 1, "#2e3142"); P(c, px + 7, py + 8, 2, 3, "#e2a521"); }
-      else { P(c, px + 6, py + 1, 4, 2, "#f2c14e"); }
+      P(c, px, py, 4, 16, "#183820"); P(c, px + 12, py, 4, 16, "#183820");
+      P(c, px + 1, py + 1, 2, 15, "#c0c8d8"); P(c, px + 13, py + 1, 2, 15, "#c0c8d8"); P(c, px + 1, py + 1, 1, 15, "#e8f0ff");
+      P(c, px, py, 16, 3, "#183820"); P(c, px + 1, py + 1, 14, 1, "#e8f0ff");
+      if (!open) { for (let i = 0; i < 4; i++) P(c, px + 5 + i * 2, py + 3, 1, 13, "#384058"); P(c, px + 4, py + 8, 8, 1, "#384058"); P(c, px + 7, py + 7, 2, 3, "#f8c030"); }
+      else { P(c, px + 6, py + 1, 4, 1, "#f8c030"); }
     }
-    if (t === "S") { P(c, px + 7, py + 8, 2, 7, "#6b4220"); P(c, px + 2, py + 3, 12, 6, OUTLINE); P(c, px + 3, py + 4, 10, 4, "#b07840"); P(c, px + 4, py + 5, 7, 1, "#6b4220"); P(c, px + 4, py + 7, 5, 1, "#6b4220"); }
+    if (t === "S") { P(c, px + 7, py + 9, 2, 6, "#183820"); P(c, px + 2, py + 2, 12, 8, "#183820"); P(c, px + 3, py + 3, 10, 6, "#d8a060"); P(c, px + 3, py + 3, 10, 1, "#f0c888"); P(c, px + 4, py + 5, 8, 1, "#a87040"); P(c, px + 4, py + 7, 6, 1, "#a87040"); }
     if (t === "C") {
       const p = poiAt(x, y), opened = p && adv().chests[p.id];
-      P(c, px + 2, py + 6, 12, 9, OUTLINE); P(c, px + 3, py + 7, 10, 7, "#8a5a34"); P(c, px + 3, py + 10, 10, 1, "#6b4220"); P(c, px + 7, py + 9, 2, 3, "#f2c14e");
-      if (!opened) { P(c, px + 3, py + 7, 10, 2, "#b07840"); if (f % 12 < 2) P(c, px + 12, py + 5, 1, 1, "#ffffff"); }
-      else { P(c, px + 3, py + 3, 10, 4, "#6b4220"); P(c, px + 3, py + 7, 10, 2, "#2a1a10"); }
+      P(c, px + 2, py + 13, 12, 2, "rgba(0,0,0,.18)");
+      P(c, px + 2, py + 5, 12, 10, "#183820"); P(c, px + 3, py + 6, 10, 8, "#c07838"); P(c, px + 3, py + 10, 10, 1, "#183820"); P(c, px + 7, py + 9, 2, 3, "#f8d040");
+      if (!opened) { P(c, px + 3, py + 6, 10, 1, "#e8a058"); if (f % 16 < 2) { P(c, px + 12, py + 4, 1, 1, "#ffffff"); P(c, px + 11, py + 4, 3, 1, "rgba(255,255,255,.6)"); } }
+      else { P(c, px + 3, py + 6, 10, 4, "#4a2a10"); P(c, px + 3, py + 2, 10, 4, "#c07838"); P(c, px + 2, py + 2, 12, 1, "#183820"); }
     }
     if ("123456".includes(t)) drawDungeonTile(c, px, py, x, y, t, f);
   }
@@ -2587,17 +2656,26 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const x0 = Math.floor(camX / TS), y0 = Math.floor(camY / TS);
     const each = fn => { for (let y = y0; y <= y0 + VH; y++) for (let x = x0; x <= x0 + VW; x++) { if (x < AW && y < AH) fn(x, y, Math.round(x * TS - camX), Math.round(y * TS - camY)); } };
     each((x, y, px, py) => { if (bits[y * AW + x]) drawTile(c, px, py, x, y, f); });
-    // fog on top, with a soft edge
-    each((x, y, px, py) => {
-      if (!bits[y * AW + x]) { P(c, px, py, TS, TS, "#151a2c"); if (hsh(x, y, 40) < 0.2) P(c, px + Math.floor(hsh(x, y, 41) * 14), py + Math.floor(hsh(x, y, 42) * 14), 1, 1, "#2b3050"); return; }
-      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { const nx = x + ox, ny = y + oy; if (nx >= 0 && ny >= 0 && nx < AW && ny < AH && !bits[ny * AW + nx]) { c.fillStyle = "rgba(21,26,44,.45)"; c.fillRect(px + (ox > 0 ? 12 : 0), py + (oy > 0 ? 12 : 0), ox ? 4 : TS, oy ? 4 : TS); } });
-    });
-    // hero
+    // trees and the hero, back to front, so canopies overlap the row above
     const walking = advPath.length > 0;
     const hg = miniHero(heroLook(), advFrame >> 2, { walk: walking });
     const hx = Math.round(advPos.fx * TS - camX) - 1, hy = Math.round(advPos.fy * TS - camY) - 4;
-    c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(hx + 4, hy + 17, 10, 2);
-    hg.forEach((row, yy) => row.forEach((col, xx) => { if (col) { c.fillStyle = col; c.fillRect(hx + xx, hy + yy, 1, 1); } }));
+    const drawHero = () => { c.fillStyle = "rgba(0,0,0,.2)"; c.fillRect(hx + 4, hy + 17, 10, 2); hg.forEach((row, yy) => row.forEach((col, xx) => { if (col) { c.fillStyle = col; c.fillRect(hx + xx, hy + yy, 1, 1); } })); };
+    let heroDrawn = false;
+    for (let y = y0; y <= y0 + VH + 1; y++) {
+      if (!heroDrawn && y > advPos.fy) { drawHero(); heroDrawn = true; }
+      for (let x = x0 - 1; x <= x0 + VW + 1; x++) {
+        if (x < 0 || y < 0 || x >= AW || y >= AH || !bits[y * AW + x]) continue;
+        const t = tileAt(x, y), px = Math.round(x * TS - camX), py = Math.round(y * TS - camY);
+        if (t === "T") drawTree(c, px, py, x, y); else if (t === "P") drawPine(c, px, py);
+      }
+    }
+    if (!heroDrawn) drawHero();
+    // fog on top, with a soft edge
+    each((x, y, px, py) => {
+      if (!bits[y * AW + x]) { P(c, px, py, TS, TS, "#151a2c"); return; }
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { const nx = x + ox, ny = y + oy; if (nx >= 0 && ny >= 0 && nx < AW && ny < AH && !bits[ny * AW + nx]) { c.fillStyle = "rgba(21,26,44,.45)"; c.fillRect(px + (ox > 0 ? 12 : 0), py + (oy > 0 ? 12 : 0), ox ? 4 : TS, oy ? 4 : TS); } });
+    });
     // target marker
     if (advPath.length) { const [tx, ty] = advPath[advPath.length - 1]; const px = tx * TS - camX, py = ty * TS - camY; c.strokeStyle = "#ffe58a"; c.lineWidth = 1; c.strokeRect(px + 3.5, py + 3.5, 9, 9); }
     c.setTransform(1, 0, 0, 1, 0, 0);

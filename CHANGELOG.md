@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.12.1 — 2026-10-08 (build 2026-10-08.13)
+
+Cleaner, GBA-style map art.
+
+- New original tiles in the clean style of GBA-era RPGs: flat bright grass with tufts on a regular grid, crisp-edged dirt paths, water with foam where it meets the shore, a plank bridge, and layered cliffs with grassy or snowy tops.
+- Round, outlined trees and snowy pines that overlap the row above, so forests look dense. Your hero walks in front of or behind them.
+- Swaying flowers, gently rippling water and lava, new houses, signposts, chests and gates.
+- No more random speckle on any map tile or in the fog.
+
 ## v0.12.0 — 2026-10-08 (build 2026-10-08.12)
 
 Adventure map.
