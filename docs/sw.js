@@ -1,7 +1,7 @@
 /* Level UP service worker
    The app shell is cached so Level UP opens and tracks practice with no signal.
    VERSION is stamped by build.mjs on every build. */
-const VERSION = "lvup-2026-10-07.7";
+const VERSION = "lvup-2026-10-07.8";
 const SHELL = [
   "./",
   "./index.html",

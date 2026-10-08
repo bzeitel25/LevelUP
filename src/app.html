@@ -1098,12 +1098,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-07.7";
+  const BUILD = "2026-10-07.8";
   const APP_VERSION = "0.5.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
-  const ANDROID_APK = "https://github.com/bzeitel25/LevelUP/releases/download/android/LevelUP.apk";
+  const ANDROID_APK = "https://github.com/bzeitel25/LevelUP/releases";
   const Updater = {
     prompt: null,
     installed: (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true,
@@ -1218,8 +1218,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         <p class="hint" style="margin:0">Real home-screen widgets need the Level UP phone app. Here's what they look like (tap to try):</p>
         ${preview}
         <div class="widget-get">
-          <div><b>Android</b><div class="hint" style="margin:0">Download and install the Level UP app, then add the widget from your home screen. Your phone may ask you to allow installing apps from your browser.</div></div>
-          <a class="btn primary small" href="${ANDROID_APK}" target="_blank" rel="noopener">Download for Android</a>
+          <div><b>Android</b><div class="hint" style="margin:0">Download and install the Level UP app, then add the widget from your home screen. On the download page, tap <b>LevelUP.apk</b> under Assets. Your phone may ask you to allow installing apps from your browser. If nothing is listed yet, the app is still being built, so check back in a few minutes.</div></div>
+          <a class="btn primary small" href="${ANDROID_APK}" target="_blank" rel="noopener">Open Android download</a>
         </div>
         <div class="widget-get">
           <div><b>iPhone</b><div class="hint" style="margin:0">Coming later. iPhone widgets need the app built on a Mac and installed through Apple.</div></div>
