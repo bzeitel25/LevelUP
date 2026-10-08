@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.7.0 — 2026-10-08 (build 2026-10-08.2)
+
+Frames and progress.
+
+- Portrait frames: 16 pixel-art frames for your hero, with their own colors and corner ornaments. Pick one in the Hero tab. It shows on the character sheet, the Hero tab, your saved profile picture and the Android widget.
+  - Free: Plain and Oak. By total level: Iron (10), Gilded (50), Royal (150), Mythic (300).
+  - One per path at 20 combined levels: Bard's Lyre, Warrior's Steel, Scholar's Runes, Artisan's Bench, Artificer's Copper, Monk's Jade, Steward's Coin.
+  - Feats: Dungeon Delver (clear 10 dungeons), Laureate (learn a talent capstone), Legend (any skill Lv 100).
+  - New frames appear in the level-up celebration list.
+- Progress view on the Training tab: this week, weekly average and best week, a 12-week bar chart with hover details, and time per skill over the last 4 weeks. Filter by skill.
+- Practice history is now kept as daily totals, so the chart never loses old weeks (the session list still shows the latest 400). Existing saves fill it in from their sessions automatically.
+- Dungeon clears are now counted for life (they used to come from only the last 30 runs), which also makes the Dungeon theme and backdrop unlocks reliable.
+
 ## v0.6.0 — 2026-10-08 (build 2026-10-08.1)
 
 Talent trees.
