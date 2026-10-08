@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.0 — 2026-10-08 (build 2026-10-08.12)
+
+Adventure map.
+
+- The Dungeons tab is now Adventure: a Pokémon-style overworld you explore with your little overworld hero. Tap a spot to walk there (the hero finds the way), or use the arrow keys or WASD on a keyboard.
+- Six regions, each with its own look and dungeon: Greenleaf Meadows (the starting village and the Goblin Cellar), Mossy Woods (Mossy Ruins), Whisper Vale (Whispering Library), Ember Peaks with lava (Ember Forge), the snowy Sky Cliffs (Sky Citadel) and the Spire Wastes (the Endless Spire).
+- Region gates open as your hero power grows, and tell you the power you need.
+- Fog of war lifts as you explore, and the map tracks how much you've explored.
+- 13 treasure chests to find (one-time gold, or an elixir) and signposts with lore and hints.
+- Walk up to a dungeon's entrance to see its difficulty and enter it. After a battle you're back on the map. The full dungeon list is still one tap away under "All dungeons".
+- Exploring is always free. Only battles cost keys.
+- New achievements: Explorer (explore half the map), Cartographer (the whole map, with a Medium elixir) and Treasure Hunter (open every chest).
+- The roadmap now covers Adventure v2 (caves, missions, bosses, battle potions) and an online, MMO-style phase.
+
 ## v0.11.3 — 2026-10-08 (build 2026-10-08.11)
 
 - Cheaper elixirs: Small XP Elixir 25 gold (was 80), Medium 75 gold (was 220).

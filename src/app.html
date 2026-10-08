@@ -424,6 +424,19 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .item.inv .seg.ver { margin-top: 4px; justify-self: start; }
 .item.inv .seg.ver button { padding: 2px 9px; font-size: 12px; }
 .relic-count { color: #1fa89b; }
+/* adventure map */
+.adv { padding: 12px; display: grid; gap: 10px; }
+.adv-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.adv-top b { font-size: 17px; }
+.advmap { width: 100%; height: auto; aspect-ratio: 13 / 9; border-radius: 8px; box-shadow: 0 0 0 2px var(--ink); touch-action: manipulation; cursor: pointer; background: #151a2c; }
+.adv-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1.5px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 58px; }
+.adv-card.sign { background: color-mix(in srgb, #b07840 10%, var(--panel)); border-color: #b07840; }
+.dun-list summary { cursor: pointer; padding: 12px 16px; list-style: none; }
+.dun-list summary::-webkit-details-marker { display: none; }
+.dun-list summary::before { content: "▸ "; color: var(--muted); }
+.dun-list[open] summary::before { content: "▾ "; }
+.dun-list-body { display: grid; gap: 8px; padding: 0 12px 12px; }
+.dun-list .dun { box-shadow: none; }
 /* quests, elixirs, achievements */
 .quests { padding: 12px 16px; display: grid; gap: 6px; }
 .q-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; align-items: baseline; }
@@ -1341,7 +1354,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
             <button class="tab" role="tab" data-act="tab" data-tab="talents" aria-selected="${tab === "talents"}">${tabIcon("talents")}<span>Talents</span>${totalUnspent() ? `<span class="cnt" title="Talent points to spend">${totalUnspent()}</span>` : ""}</button>
             <button class="tab" role="tab" data-act="tab" data-tab="inventory" aria-selected="${tab === "inventory"}">${tabIcon("inventory")}<span>Inventory</span></button>
             <button class="tab" role="tab" data-act="tab" data-tab="gear" aria-selected="${tab === "gear"}">${tabIcon("shop")}<span>Shop</span>${state.gold ? `<span class="cnt cnt-gold">${state.gold.toLocaleString()}g</span>` : ""}</button>
-            <button class="tab" role="tab" data-act="tab" data-tab="dungeons" aria-selected="${tab === "dungeons"}">${tabIcon("dungeons")}<span>Dungeons</span>${keysAvail() ? `<span class="cnt" title="Dungeon keys">${keysAvail()}<span class="cnt-u"> key${keysAvail() === 1 ? "" : "s"}</span></span>` : ""}</button>
+            <button class="tab" role="tab" data-act="tab" data-tab="dungeons" aria-selected="${tab === "dungeons"}">${tabIcon("dungeons")}<span>Adventure</span>${keysAvail() ? `<span class="cnt" title="Dungeon keys">${keysAvail()}<span class="cnt-u"> key${keysAvail() === 1 ? "" : "s"}</span></span>` : ""}</button>
           </div>
           ${tab === "hero" ? renderHeroTab() : tab === "talents" ? renderTalents() : tab === "inventory" ? renderInventory() : tab === "gear" ? renderGear() : tab === "dungeons" ? renderDungeons() : tab === "settings" ? renderSettings() : `
           <section>
@@ -1364,8 +1377,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-08.11";
-  const APP_VERSION = "0.11.3";
+  const BUILD = "2026-10-08.12";
+  const APP_VERSION = "0.12.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -1578,7 +1591,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     train: '<path d="M4 9v6M20 9v6M7 7v10M17 7v10M7 12h10" />',
     hero: '<circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>',
     gear: '<path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/>',
-    dungeons: '<path d="M5 21V10a7 7 0 0 1 14 0v11z"/><path d="M12 14v3"/>',
+    dungeons: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
     inventory: '<path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 12h6"/>',
     shop: '<path d="M4 9l1.5-5h13L20 9"/><path d="M4 9h16v2a3 3 0 0 1-5.3 1.9A3 3 0 0 1 12 14a3 3 0 0 1-2.7-1.1A3 3 0 0 1 4 11z"/><path d="M5.5 13.5V20h13v-6.5"/>',
     talents: '<path d="M12 21v-6M12 15l-6-5M12 15l6-5M12 15V9"/><circle cx="6" cy="8" r="2.2"/><circle cx="18" cy="8" r="2.2"/><circle cx="12" cy="6.5" r="2.2"/>',
@@ -1827,10 +1840,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function renderDungeons() {
     const st = heroStats(), keys = keysAvail(), busy = bt || runView && runView.step < 4, fp = fortunePct(st) + talentFx().gold;
     return `<section style="display:grid;gap:12px">
-      <div class="section-head" style="margin:0"><h2>Dungeons</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${keys}</b> key${keys === 1 ? "" : "s"} · power <b class="num">${st.power}</b>${fp ? ` · +${fp}% gold` : ""}</span></div>
-      ${bt || runView ? renderRun() : ""}
+      <div class="section-head" style="margin:0"><h2>Adventure</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${keys}</b> key${keys === 1 ? "" : "s"} · power <b class="num">${st.power}</b>${fp ? ` · +${fp}% gold` : ""}</span></div>
+      ${bt || runView ? renderRun() : renderMapCard()}
+      ${keys < 1 && !runView && !bt ? `<p class="hint" style="margin:0">You're out of keys. Every 10 minutes of practice earns one. Exploring the map is always free.</p>` : ""}
       ${!bt && !runView ? renderSkillBook() : ""}
-      ${keys < 1 && !runView && !bt ? `<p class="hint" style="margin:0">You're out of keys. Every 10 minutes of practice earns one.</p>` : ""}
+      <details class="panel dun-list"><summary><b>All dungeons</b> <span class="muted" style="font-size:13px">· quick list</span></summary><div class="dun-list-body">
       ${DUNGEONS.map(d => {
         const open = dungeonOpen(d, st.power), [dl, cls0] = difficulty(d, st.power);
         return `<article class="panel dun ${open ? "" : "locked"}">
@@ -1839,6 +1853,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           ${open ? `<button class="btn ${keys ? "primary" : ""}" data-act="run" data-id="${d.id}" ${keys && !busy ? "" : "disabled"}>Run · 1 key</button>` : `<span class="muted" style="font-size:13px">Locked</span>`}
         </article>`;
       }).join("")}
+      </div></details>
       ${state.runs.length ? `<div><div class="section-head"><h2 style="font-size:16px">Recent runs</h2></div><div class="panel run-hist" style="padding:6px 16px">${state.runs.slice(0, 6).map(r => {
         const d = DUNGEONS.find(x => x.id === r.dungeon);
         return `<div><span>${dayLabel(r.day)} · ${esc(d ? d.name : "Dungeon")}${r.trophy ? ` · <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}${r.relic ? ` · <b class="relic-name">${esc(r.relic)}</b>` : ""}</span><span class="num" style="color:${r.win ? "var(--good)" : "var(--muted)"}">${r.win ? "Cleared" : "Retreated"} · +${r.gold}g</span></div>`;
@@ -2281,6 +2296,9 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     ["daily10", "Quest Taker", "Finish 10 daily quests", () => (state.stats && state.stats.dailies) || 0, 10, 75],
     ["daily100", "Quest Master", "Finish 100 daily quests", () => (state.stats && state.stats.dailies) || 0, 100, 300, "medium"],
     ["weekly4", "Week Warrior", "Finish 4 weekly quests", () => (state.stats && state.stats.weeklies) || 0, 4, 150],
+    ["explore50", "Explorer", "Explore half of the world map", () => exploredPct(), 50, 75],
+    ["explore100", "Cartographer", "Explore the whole world map", () => exploredPct(), 100, 300, "medium"],
+    ["chests", "Treasure Hunter", "Open every treasure chest on the map", () => Object.keys(adv().chests).length, 13, 150],   // 13 chests on the map
     ["elixir1", "Bottoms Up", "Drink an XP elixir", () => (state.stats && state.stats.elixirs) || 0, 1, 25]
   ].map(([id, name, desc, val, target, gold, elixir]) => ({ id, name, desc, val, target, gold, elixir }));
   const achDone = id => !!(state.ach && state.ach[id]);
@@ -2342,6 +2360,271 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           ${ok ? `<small class="ach-rew">Earned ${dayLabel(state.ach[a.id])} · +${a.gold}g${a.elixir ? " · " + esc(ELIXIRS[a.elixir].name) : ""}</small>` : `<div class="q-bar"><i style="width:${v / a.target * 100}%"></i></div><small class="ach-rew">Reward: ${a.gold} gold${a.elixir ? " + " + esc(ELIXIRS[a.elixir].name) : ""}</small>`}</div></div>`; }).join("")}</div>
     </article>`;
   }
+
+
+  // ---------- Adventure: the overworld ----------
+  // A 40x28 tile world of 16x16 pixel tiles. Walk with taps (path-finding) or arrow keys/WASD.
+  // Six regions, one per dungeon; region gates open with hero power. Fog of war lifts as you explore.
+  // Chests are one-time finds, signs share lore and hints. Exploring is free; battles still cost keys.
+  const ADV_ROWS = ["MMMMMMMMMMMMMMM~MMMMMMMMMMMMMMMMMMMMMMMM", "MTTfTfTTfTfTTff~ddddddddddCkMnnnnnnnnnCM", "MTCfffTfTfTTTTf~dCddddddddkdMnnnnnnnnPnM", "MTffTfTTTffTffT~ddddk6ddddddMnnPPnnnnnnM", "MffTffffTfTTfTf~dddkd:ddddkdMPCnnnnnnnnM", "MTfff2Tffffffff~ddkkk:ddddddMnnnnn5nnnnM", "MTfff:TTfTfTTTf~ddddd:ddddkdMnnnnn:nnnnM", "MTTTf:fffffTTTf~MMMMMGMMMMMMMnnPnn:nPnPM", "MfTTT:ffTTTTfff~vvvvv:vvTvvvMnnnnn:nnnnM", "MfffS:fffTTTfTT~vvTTv:vvvvCvMPnnnn:nnnnM", "MTTTT::::TfffTT~vvvvv:vvvvvvG::::::nnnPM", "MTTffffT:TTffTf~vvvvv:S::::::PnnnPnnnnnM", "MfTfTfff:TTTCff~vvTTv:vvvvvTMnnnnnnnnnnM", "MTTfffff:TfTTTT~vvvvv:vvvvvvMnPnnnnnnnPM", "MTffffff:TTTTff~vvTvv3vvvvvvMMMMMMMMMMMM", "MMMMMMMMGMMMMMM~vvvvv:vvTvvvMrrrMrrrrrrM", "M..T....:S.....~vCTvv:vvvvvvMrrCrrrrrrrM", "M..T....:....C.~vvvvv:vvvvvvMMrrrrrrrrrM", "M.,.T...:......~vvTvT:vvvvvvMrrrrllrrrrM", "M.......:,,....~vvvTv:vvvvvvMrrrMlrrMrrM", "M..H..H.:.T.:::=:S::::::::::G:::::rrrrrM", "M,......:.T.:,.~TvvvvvvvvvvSMMrrr:rrrrrM", "M....::S:::::..~vvvvvTvvvvvvMrrMr:MrMrrM", "M..H.:..T,.....~vvvvTvvvvvTvMrMrr4rrrrrM", "M....:,..,.,T..~vvvvvvvvvvTvMrrrrrrrrlrM", "M....:::::1....~vvCvvvTvvvvvMrrrrrrrllrM", "MTCT...T..,.T..~vvvvvvvvvvvvMrrlrrrMrrCM", "MMMMMMMMMMMMMMM~MMMMMMMMMMMMMMMMMMMMMMMM"];
+  const ADV_POI = {"8,15": {"t": "gate", "need": "ruins", "name": "Mossy Woods"}, "21,7": {"t": "gate", "need": "spire", "name": "Spire Wastes"}, "28,20": {"t": "gate", "need": "forge", "name": "Ember Peaks"}, "28,10": {"t": "gate", "need": "citadel", "name": "Sky Cliffs"}, "10,25": {"t": "dungeon", "id": "cellar"}, "5,5": {"t": "dungeon", "id": "ruins"}, "21,14": {"t": "dungeon", "id": "library"}, "33,23": {"t": "dungeon", "id": "forge"}, "34,5": {"t": "dungeon", "id": "citadel"}, "21,3": {"t": "dungeon", "id": "spire"}, "2,26": {"t": "chest", "id": "c0", "reward": 30}, "13,17": {"t": "chest", "id": "c1", "reward": 25}, "2,2": {"t": "chest", "id": "c2", "reward": 60}, "12,12": {"t": "chest", "id": "c3", "reward": 50}, "18,25": {"t": "chest", "id": "c4", "reward": 60}, "26,9": {"t": "chest", "id": "c5", "reward": 80}, "17,16": {"t": "chest", "id": "c6", "reward": "small"}, "38,26": {"t": "chest", "id": "c7", "reward": 150}, "31,16": {"t": "chest", "id": "c8", "reward": "small"}, "38,1": {"t": "chest", "id": "c9", "reward": 200}, "30,4": {"t": "chest", "id": "c10", "reward": "medium"}, "26,1": {"t": "chest", "id": "c11", "reward": 250}, "17,2": {"t": "chest", "id": "c12", "reward": "small"}, "7,22": {"t": "sign", "text": "Greenleaf Village. The Goblin Cellar lies to the southeast. Every hero starts somewhere."}, "9,16": {"t": "sign", "text": "Mossy Woods. The old ruins hide deep among the trees. Hero power 10 opens the gate."}, "17,20": {"t": "sign", "text": "Whisper Vale. A haunted library stands in the meadow's heart."}, "27,21": {"t": "sign", "text": "East: Ember Peaks. Mind the lava."}, "22,11": {"t": "sign", "text": "North-east: the Sky Cliffs. North: the Spire Wastes, where only the strongest go."}, "4,9": {"t": "sign", "text": "Strange runes are carved into the trunks here. Something old sleeps in these woods."}};
+  const ADV_START = [5, 22];
+  const AW = ADV_ROWS[0].length, AH = ADV_ROWS.length, TS = 16, VW = 13, VH = 9, AS = 3;
+  const REGIONS = [
+    { name: "Greenleaf Meadows", x0: 0, y0: 15, x1: 14, y1: 27, floor: "." },
+    { name: "Mossy Woods", x0: 0, y0: 0, x1: 14, y1: 14, floor: "f" },
+    { name: "Spire Wastes", x0: 16, y0: 0, x1: 27, y1: 7, floor: "d" },
+    { name: "Whisper Vale", x0: 15, y0: 8, x1: 27, y1: 27, floor: "v" },
+    { name: "Sky Cliffs", x0: 28, y0: 0, x1: 39, y1: 13, floor: "n" },
+    { name: "Ember Peaks", x0: 28, y0: 14, x1: 39, y1: 27, floor: "r" }
+  ];
+  const regionAt = (x, y) => REGIONS.find(r => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1) || REGIONS[0];
+  const tileAt = (x, y) => (ADV_ROWS[y] && ADV_ROWS[y][x]) || "M";
+  const poiAt = (x, y) => ADV_POI[x + "," + y];
+  const gateOpen = p => { const d = DUNGEONS.find(k => k.id === p.need); return !d || dungeonOpen(d, heroStats().power); };
+  function walkable(x, y) {
+    const t = tileAt(x, y);
+    if ("MT~lkPH".includes(t)) return false;
+    if (t === "G") return gateOpen(poiAt(x, y));
+    return true;
+  }
+  function adv() {
+    if (!state.adv || typeof state.adv !== "object") state.adv = { x: ADV_START[0], y: ADV_START[1], seen: "", chests: {} };
+    if (!state.adv.chests) state.adv.chests = {};
+    return state.adv;
+  }
+  // Explored tiles as a bitstring, base64 packed.
+  let seenBits = null;
+  function seenGet() {
+    if (seenBits) return seenBits;
+    seenBits = new Uint8Array(AW * AH);
+    try { const raw = atob(adv().seen || ""); for (let i = 0; i < raw.length; i++) { const b = raw.charCodeAt(i); for (let k = 0; k < 8; k++) if (b & (1 << k)) seenBits[i * 8 + k] = 1; } } catch (e) {}
+    return seenBits;
+  }
+  function seenSave() {
+    const bits = seenGet(); let s = "";
+    for (let i = 0; i < bits.length; i += 8) { let b = 0; for (let k = 0; k < 8; k++) if (bits[i + k]) b |= 1 << k; s += String.fromCharCode(b); }
+    adv().seen = btoa(s);
+  }
+  function reveal(cx, cy, r = 3) {
+    const bits = seenGet(); let n = 0;
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) {
+      if (x < 0 || y < 0 || x >= AW || y >= AH || (x - cx) * (x - cx) + (y - cy) * (y - cy) > r * r + 1) continue;
+      if (!bits[y * AW + x]) { bits[y * AW + x] = 1; n++; }
+    }
+    return n;
+  }
+  const exploredPct = () => { const b = seenGet(); let n = 0; for (let i = 0; i < b.length; i++) n += b[i]; return Math.round(n / ADV_WALKABLE * 100); };
+  const ADV_WALKABLE = (() => { let n = 0; for (let y = 0; y < AH; y++) for (let x = 0; x < AW; x++) if (!"M~".includes(tileAt(x, y))) n++; return n; })();
+
+  // --- Tile art (16x16, procedural, deterministic per tile) ---
+  const hsh = (x, y, k = 0) => { let h = (x * 374761393 + y * 668265263 + k * 2246822519) >>> 0; h = (h ^ (h >>> 13)) * 1274126177 >>> 0; return (h ^ (h >>> 16)) / 4294967296; };
+  const FLOORS = {
+    ".": ["#5cb85c", "#4ea64f", "#78cc6c"], ",": ["#5cb85c", "#4ea64f", "#78cc6c"], "f": ["#3f8f44", "#347a39", "#4fa354"],
+    "v": ["#6cc46a", "#5db35c", "#8bd685"], "d": ["#6a5f7a", "#5a5068", "#7d7290"], "r": ["#5a4a44", "#4a3c37", "#6e5a52"],
+    "n": ["#e8eef6", "#d2dceb", "#ffffff"], ":": ["#c9a46a", "#b38f58", "#dcbb83"]
+  };
+  function floorFor(x, y) { const t = tileAt(x, y); return FLOORS[t] ? t : regionAt(x, y).floor; }
+  function drawFloor(c, px, py, x, y, ft) {
+    const [b, d, l] = FLOORS[ft] || FLOORS["."];
+    c.fillStyle = b; c.fillRect(px, py, TS, TS);
+    for (let i = 0; i < 6; i++) { const rx = Math.floor(hsh(x, y, i) * 15), ry = Math.floor(hsh(x, y, i + 9) * 15); c.fillStyle = i % 2 ? d : l; c.fillRect(px + rx, py + ry, ft === ":" ? 2 : 1, ft === "." || ft === "f" || ft === "v" ? 2 : 1); }
+    if (ft === "r" && hsh(x, y, 3) < 0.4) { c.fillStyle = "#e8642c"; c.fillRect(px + Math.floor(hsh(x, y, 4) * 14), py + Math.floor(hsh(x, y, 5) * 14), 1, 1); }
+  }
+  const P = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  function drawTile(c, px, py, x, y, f) {
+    const t = tileAt(x, y);
+    if (t === "~") { P(c, px, py, TS, TS, "#4a8fd9"); for (let i = 0; i < 3; i++) { const yy = (i * 6 + Math.floor(f / 2) + Math.floor(hsh(x, y, i) * 6)) % 16; P(c, px + 2 + i * 4, py + yy, 4, 1, "#8fc4f2"); } return; }
+    if (t === "l") { P(c, px, py, TS, TS, "#d94a1a"); for (let i = 0; i < 4; i++) { const yy = (i * 4 + Math.floor(f / 3)) % 16; P(c, px + Math.floor(hsh(x, y, i) * 12), py + yy, 4, 2, i % 2 ? "#ffb02e" : "#ff7a1a"); } return; }
+    if (t === "=") { P(c, px, py, TS, TS, "#4a8fd9"); P(c, px, py + 2, TS, 12, "#8a5a34"); for (let i = 0; i < 4; i++) P(c, px + i * 4, py + 2, 1, 12, "#6b4220"); P(c, px, py + 2, TS, 1, "#b07840"); P(c, px, py + 13, TS, 1, "#5a3a1c"); return; }
+    if (t === "M") {
+      const reg = regionAt(x, y), base = reg.floor === "r" ? ["#4a3f3c", "#3a302d", "#6a5a54"] : reg.floor === "n" ? ["#8a94a6", "#6b7385", "#c9d1e1"] : reg.floor === "d" ? ["#4e4560", "#3c344c", "#6c6280"] : ["#7a7f8f", "#5f6474", "#a3a8b6"];
+      P(c, px, py, TS, TS, base[1]);
+      c.fillStyle = base[0]; c.beginPath(); c.moveTo(px, py + 16); c.lineTo(px + 6, py + 3); c.lineTo(px + 10, py + 8); c.lineTo(px + 13, py + 4); c.lineTo(px + 16, py + 16); c.fill();
+      c.fillStyle = base[2]; c.beginPath(); c.moveTo(px + 6, py + 3); c.lineTo(px + 8, py + 7); c.lineTo(px + 5, py + 9); c.fill();
+      if (reg.floor === "n") { P(c, px + 5, py + 3, 3, 2, "#ffffff"); P(c, px + 12, py + 4, 2, 2, "#ffffff"); }
+      return;
+    }
+    const ft = floorFor(x, y);
+    drawFloor(c, px, py, x, y, FLOORS[t] ? t : ft);
+    if (t === ",") { [[3, 4, "#f29ab5"], [10, 9, "#ffe58a"], [6, 12, "#ffffff"]].forEach(([a, b2, col], i) => { if (hsh(x, y, i + 20) < 0.8) { P(c, px + a, py + b2, 2, 2, col); P(c, px + a, py + b2 + 2, 1, 1, "#3f8a4e"); } }); }
+    if (t === "v" && hsh(x, y, 30) < 0.25) P(c, px + Math.floor(hsh(x, y, 31) * 13), py + Math.floor(hsh(x, y, 32) * 13), 2, 2, hsh(x, y, 33) < 0.5 ? "#f29ab5" : "#c89cf2");
+    if (t === "T") {
+      const dark = regionAt(x, y).floor === "f";
+      P(c, px + 7, py + 11, 2, 4, "#6b4220");
+      const g1 = dark ? "#2f7a3a" : "#3f9a4a", g2 = dark ? "#1f5a2a" : "#2b7a37", g3 = dark ? "#4a9a50" : "#62bb5e";
+      c.fillStyle = OUTLINE; c.beginPath(); c.arc(px + 8, py + 7, 7, 0, Math.PI * 2); c.fill();
+      c.fillStyle = g2; c.beginPath(); c.arc(px + 8, py + 7, 6, 0, Math.PI * 2); c.fill();
+      c.fillStyle = g1; c.beginPath(); c.arc(px + 7, py + 6, 5, 0, Math.PI * 2); c.fill();
+      P(c, px + 4, py + 3, 3, 2, g3); P(c, px + 5, py + 5, 1, 1, g3);
+    }
+    if (t === "P") {
+      P(c, px + 7, py + 12, 2, 3, "#6b4220");
+      [[7, 1, 2], [6, 3, 4], [5, 5, 6], [4, 7, 8], [3, 9, 10]].forEach(([a, b2, w]) => { P(c, px + a, py + b2, w, 2, "#1f5a3a"); P(c, px + a, py + b2, Math.max(1, w / 2), 1, "#2f7a4a"); });
+      P(c, px + 7, py + 1, 2, 1, "#ffffff"); P(c, px + 4, py + 7, 2, 1, "#ffffff"); P(c, px + 10, py + 9, 2, 1, "#ffffff");
+    }
+    if (t === "k") { P(c, px + 4, py + 8, 8, 6, "#3c344c"); P(c, px + 5, py + 7, 6, 6, "#7d7290"); P(c, px + 5, py + 7, 3, 2, "#9a90ac"); }
+    if (t === "H") {
+      P(c, px + 2, py + 8, 12, 7, "#efe2c2"); P(c, px + 2, py + 14, 12, 1, "#cbb98e");
+      c.fillStyle = "#c8423a"; c.beginPath(); c.moveTo(px, py + 9); c.lineTo(px + 8, py + 1); c.lineTo(px + 16, py + 9); c.fill();
+      P(c, px + 1, py + 8, 14, 1, "#93302a"); P(c, px + 7, py + 10, 3, 5, "#8a5a34"); P(c, px + 3, py + 10, 3, 2, "#7ad0ff"); P(c, px + 11, py + 10, 2, 2, "#7ad0ff");
+    }
+    if (t === "G") {
+      const open = gateOpen(poiAt(x, y));
+      P(c, px, py + 1, 4, 15, "#7a7f8f"); P(c, px + 12, py + 1, 4, 15, "#7a7f8f"); P(c, px, py, 16, 4, "#8a94a6"); P(c, px, py, 16, 1, "#c9d1e1"); P(c, px + 1, py + 4, 2, 12, "#5f6474"); P(c, px + 13, py + 4, 2, 12, "#5f6474");
+      if (!open) { for (let i = 0; i < 4; i++) P(c, px + 4 + i * 2 + (i > 1 ? 1 : 0), py + 4, 1, 12, "#2e3142"); P(c, px + 4, py + 9, 8, 1, "#2e3142"); P(c, px + 7, py + 8, 2, 3, "#e2a521"); }
+      else { P(c, px + 6, py + 1, 4, 2, "#f2c14e"); }
+    }
+    if (t === "S") { P(c, px + 7, py + 8, 2, 7, "#6b4220"); P(c, px + 2, py + 3, 12, 6, OUTLINE); P(c, px + 3, py + 4, 10, 4, "#b07840"); P(c, px + 4, py + 5, 7, 1, "#6b4220"); P(c, px + 4, py + 7, 5, 1, "#6b4220"); }
+    if (t === "C") {
+      const p = poiAt(x, y), opened = p && adv().chests[p.id];
+      P(c, px + 2, py + 6, 12, 9, OUTLINE); P(c, px + 3, py + 7, 10, 7, "#8a5a34"); P(c, px + 3, py + 10, 10, 1, "#6b4220"); P(c, px + 7, py + 9, 2, 3, "#f2c14e");
+      if (!opened) { P(c, px + 3, py + 7, 10, 2, "#b07840"); if (f % 12 < 2) P(c, px + 12, py + 5, 1, 1, "#ffffff"); }
+      else { P(c, px + 3, py + 3, 10, 4, "#6b4220"); P(c, px + 3, py + 7, 10, 2, "#2a1a10"); }
+    }
+    if ("123456".includes(t)) drawDungeonTile(c, px, py, x, y, t, f);
+  }
+  function drawDungeonTile(c, px, py, x, y, t, f) {
+    if (t === "1") { P(c, px + 1, py + 4, 14, 12, OUTLINE); P(c, px + 2, py + 5, 12, 10, "#7a7f8f"); P(c, px + 4, py + 7, 8, 8, "#1d1a2b"); P(c, px + 5, py + 13, 6, 1, "#3d4152"); P(c, px + 5, py + 11, 6, 1, "#2e3142"); P(c, px + 2, py + 5, 12, 1, "#a3a8b6"); }
+    if (t === "2") { P(c, px + 1, py + 2, 4, 14, "#8a94a6"); P(c, px + 11, py + 2, 4, 14, "#8a94a6"); P(c, px + 1, py + 2, 14, 3, "#a3a8b6"); P(c, px + 5, py + 5, 6, 11, "#1d1a2b"); [[2, 6], [12, 9], [3, 12], [9, 2]].forEach(([a, b2]) => P(c, px + a, py + b2, 2, 2, "#5cb85c")); }
+    if (t === "3") { P(c, px + 1, py + 7, 14, 9, "#efe2c2"); c.fillStyle = "#7a4ac8"; c.beginPath(); c.moveTo(px, py + 8); c.lineTo(px + 8, py); c.lineTo(px + 16, py + 8); c.fill(); P(c, px + 6, py + 10, 4, 6, "#573493"); P(c, px + 2, py + 9, 3, 3, f % 8 < 4 ? "#ffe58a" : "#c89cf2"); P(c, px + 11, py + 9, 3, 3, "#ffe58a"); }
+    if (t === "4") { P(c, px + 1, py + 4, 14, 12, "#3a302d"); P(c, px + 4, py + 7, 8, 9, f % 6 < 3 ? "#ff7a1a" : "#d94a1a"); P(c, px + 5, py + 9, 6, 7, "#ffb02e"); P(c, px + 1, py + 4, 14, 2, "#6a5a54"); }
+    if (t === "5") { P(c, px + 4, py, 8, 16, "#c9d1e1"); P(c, px + 4, py, 8, 2, "#4a6fd6"); P(c, px + 3, py + 2, 10, 1, "#3350a8"); P(c, px + 6, py + 11, 4, 5, "#3350a8"); P(c, px + 7, py + 5, 2, 2, "#7ad0ff"); P(c, px + 4, py, 1, 16, "#8a94a6"); }
+    if (t === "6") { P(c, px + 5, py, 6, 16, "#3a1d5a"); P(c, px + 4, py + 4, 8, 12, "#3a1d5a"); P(c, px + 6, py + 6, 4, 6, f % 8 < 4 ? "#c89cf2" : "#9a58d8"); P(c, px + 7, py + 1, 2, 2, "#f4f0ff"); }
+  }
+  let advPos = null, advPath = [], advAnim = null, advFrame = 0, advMsg = null;
+  function advStep() {
+    const a = adv();
+    if (!advPos) advPos = { x: a.x, y: a.y, fx: a.x, fy: a.y };
+    if (!advPath.length) { advAnim = null; return; }
+    const nx = advPath[0];
+    const dx = nx[0] - advPos.fx, dy = nx[1] - advPos.fy, sp = 0.28;
+    if (Math.abs(dx) <= sp && Math.abs(dy) <= sp) {
+      advPos.fx = nx[0]; advPos.fy = nx[1]; advPos.x = nx[0]; advPos.y = nx[1]; a.x = nx[0]; a.y = nx[1]; advPath.shift();
+      reveal(a.x, a.y);
+      if (!advPath.length) arrive();
+    } else { advPos.fx += Math.sign(dx) * sp; advPos.fy += Math.sign(dy) * sp; }
+    advFrame++;
+    paintMap();
+    advAnim = requestAnimationFrame(advStep);
+  }
+  function pathTo(tx, ty) {
+    const a = adv(), sx = a.x, sy = a.y; if (sx === tx && sy === ty) return [];
+    const prev = new Map([[sx + "," + sy, null]]), q = [[sx, sy]];
+    while (q.length) {
+      const [x, y] = q.shift(); if (x === tx && y === ty) break;
+      for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ox, ny = y + oy, k = nx + "," + ny; if (!prev.has(k) && walkable(nx, ny)) { prev.set(k, [x, y]); q.push([nx, ny]); } }
+    }
+    if (!prev.has(tx + "," + ty)) return null;
+    const out = []; let cur = [tx, ty];
+    while (cur && !(cur[0] === sx && cur[1] === sy)) { out.unshift(cur); cur = prev.get(cur[0] + "," + cur[1]); }
+    return out;
+  }
+  function walkTo(tx, ty) {
+    if (tx < 0 || ty < 0 || tx >= AW || ty >= AH) return;
+    let target = [tx, ty];
+    const p = poiAt(tx, ty);
+    if (!walkable(tx, ty)) {
+      if (p && p.t === "gate") { const d = DUNGEONS.find(k => k.id === p.need); advMsg = { kind: "gate", p, d }; renderAdvPanel(); }
+      // walk next to it if we can
+      const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([ox, oy]) => [tx + ox, ty + oy]).filter(([x, y]) => walkable(x, y)).map(xy => ({ xy, path: pathTo(xy[0], xy[1]) })).filter(o => o.path).sort((a, b) => a.path.length - b.path.length)[0];
+      if (!near) return; target = near.xy;
+    }
+    const path = pathTo(target[0], target[1]); if (!path) return;
+    advPath = path; if (!advAnim) advAnim = requestAnimationFrame(advStep);
+  }
+  function arrive() {
+    const a = adv(), p = poiAt(a.x, a.y);
+    seenSave();
+    if (p && p.t === "chest" && !a.chests[p.id]) {
+      a.chests[p.id] = dayKey();
+      if (typeof p.reward === "number") { state.gold += p.reward; toast(`You opened a chest: <b>+${p.reward} gold</b>`); Sound.play("coin"); }
+      else { if (!state.elixirs) state.elixirs = {}; state.elixirs[p.reward] = elixirCount(p.reward) + 1; toast(`You opened a chest: <b>${esc(ELIXIRS[p.reward].name)}</b>!`, "", 4500); Sound.play("unlock"); }
+      buzz(20);
+    }
+    advMsg = p ? { kind: p.t, p } : null;
+    persist();
+    renderAdvPanel();
+  }
+  function paintMap() {
+    const cv = document.getElementById("advmap"); if (!cv) return;
+    const a = adv(); if (!advPos) advPos = { x: a.x, y: a.y, fx: a.x, fy: a.y };
+    const W = VW * TS, H = VH * TS;
+    if (cv.width !== W * AS) { cv.width = W * AS; cv.height = H * AS; }
+    const c = cv.getContext("2d"); c.imageSmoothingEnabled = false;
+    c.setTransform(AS, 0, 0, AS, 0, 0);
+    const camX = Math.max(0, Math.min(AW * TS - W, advPos.fx * TS + 8 - W / 2)), camY = Math.max(0, Math.min(AH * TS - H, advPos.fy * TS + 8 - H / 2));
+    const bits = seenGet(), f = Math.floor(performance.now() / 120);
+    const x0 = Math.floor(camX / TS), y0 = Math.floor(camY / TS);
+    const each = fn => { for (let y = y0; y <= y0 + VH; y++) for (let x = x0; x <= x0 + VW; x++) { if (x < AW && y < AH) fn(x, y, Math.round(x * TS - camX), Math.round(y * TS - camY)); } };
+    each((x, y, px, py) => { if (bits[y * AW + x]) drawTile(c, px, py, x, y, f); });
+    // fog on top, with a soft edge
+    each((x, y, px, py) => {
+      if (!bits[y * AW + x]) { P(c, px, py, TS, TS, "#151a2c"); if (hsh(x, y, 40) < 0.2) P(c, px + Math.floor(hsh(x, y, 41) * 14), py + Math.floor(hsh(x, y, 42) * 14), 1, 1, "#2b3050"); return; }
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { const nx = x + ox, ny = y + oy; if (nx >= 0 && ny >= 0 && nx < AW && ny < AH && !bits[ny * AW + nx]) { c.fillStyle = "rgba(21,26,44,.45)"; c.fillRect(px + (ox > 0 ? 12 : 0), py + (oy > 0 ? 12 : 0), ox ? 4 : TS, oy ? 4 : TS); } });
+    });
+    // hero
+    const walking = advPath.length > 0;
+    const hg = miniHero(heroLook(), advFrame >> 2, { walk: walking });
+    const hx = Math.round(advPos.fx * TS - camX) - 1, hy = Math.round(advPos.fy * TS - camY) - 4;
+    c.fillStyle = "rgba(0,0,0,.25)"; c.fillRect(hx + 4, hy + 17, 10, 2);
+    hg.forEach((row, yy) => row.forEach((col, xx) => { if (col) { c.fillStyle = col; c.fillRect(hx + xx, hy + yy, 1, 1); } }));
+    // target marker
+    if (advPath.length) { const [tx, ty] = advPath[advPath.length - 1]; const px = tx * TS - camX, py = ty * TS - camY; c.strokeStyle = "#ffe58a"; c.lineWidth = 1; c.strokeRect(px + 3.5, py + 3.5, 9, 9); }
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    const reg = document.getElementById("adv-region"); if (reg) { const r = regionAt(a.x, a.y).name; if (reg.textContent !== r) reg.textContent = r; }
+  }
+  function renderAdvPanel() {
+    const el = document.getElementById("adv-panel"); if (!el) return;
+    el.innerHTML = advPanelHTML();
+    const st = document.getElementById("adv-stats"); if (st) st.textContent = advStats();
+  }
+  function advPanelHTML() {
+    const m = advMsg, a = adv(), st = heroStats(), keys = keysAvail();
+    if (m && m.kind === "dungeon") {
+      const d = DUNGEONS.find(k => k.id === m.p.id), open = dungeonOpen(d, st.power), [dl, cls] = difficulty(d, st.power);
+      return `<div class="adv-card"><div><b class="px" style="font-size:18px">${esc(d.name)}</b><div class="dun-meta"><span>Suggested power <b>${d.rec}</b></span>${open ? `<span>Difficulty <b class="chance ${cls}">${dl}</b></span><span>Gold <b>${d.gold[0]}–${d.gold[1]}</b></span>` : `<span>Opens at power <b>${Math.ceil(d.rec * 0.5)}</b></span>`}</div></div>
+        ${open ? `<button class="btn ${keys ? "primary" : ""}" data-act="run" data-id="${d.id}" ${keys ? "" : "disabled"}>${keys ? "Enter · 1 key" : "No keys"}</button>` : `<span class="muted" style="font-size:13px">Sealed</span>`}</div>`;
+    }
+    if (m && m.kind === "gate") {
+      const d = m.d || DUNGEONS.find(k => k.id === m.p.need), open = gateOpen(m.p);
+      return `<div class="adv-card"><div><b>Gate to ${esc(m.p.name)}</b><div class="muted" style="font-size:13px">${open ? "The gate stands open." : `Sealed. Reach hero power ${Math.ceil(d.rec * 0.5)} to pass (you have ${st.power}). Practice raises your power.`}</div></div></div>`;
+    }
+    if (m && m.kind === "sign") return `<div class="adv-card sign"><div><b>Signpost</b><div style="font-size:14px">${esc(m.p.text)}</div></div></div>`;
+    if (m && m.kind === "chest") return `<div class="adv-card"><div><b>Treasure chest</b><div class="muted" style="font-size:13px">Opened ${dayLabel(a.chests[m.p.id])}.</div></div></div>`;
+    const reg = regionAt(a.x, a.y);
+    return `<div class="adv-card"><div><b>${esc(reg.name)}</b><div class="muted" style="font-size:13px">Tap the map to walk${matchMedia("(hover: hover)").matches ? " (or use the arrow keys)" : ""}. Dungeons, chests and signs wait to be found. Exploring is free, and battles cost a key.</div></div></div>`;
+  }
+  function advStats() {
+    const chestsTotal = Object.values(ADV_POI).filter(p => p.t === "chest").length, opened = Object.keys(adv().chests).length;
+    return `${exploredPct()}% explored · ${opened}/${chestsTotal} chests · ${keysAvail()} key${keysAvail() === 1 ? "" : "s"}`;
+  }
+  function renderMapCard() {
+    return `<div class="panel adv">
+      <div class="adv-top"><b id="adv-region" class="px">${esc(regionAt(adv().x, adv().y).name)}</b><span class="muted num" style="font-size:12.5px" id="adv-stats">${advStats()}</span></div>
+      <canvas id="advmap" class="px advmap" aria-label="Overworld map. Tap a spot to walk there."></canvas>
+      <div id="adv-panel">${advPanelHTML()}</div>
+    </div>`;
+  }
+  // input
+  document.addEventListener("pointerdown", e => {
+    const cv = e.target && e.target.id === "advmap" ? e.target : null; if (!cv) return;
+    const r = cv.getBoundingClientRect(), a = adv(); if (!advPos) advPos = { x: a.x, y: a.y, fx: a.x, fy: a.y };
+    const W = VW * TS, H = VH * TS, sx = (e.clientX - r.left) / r.width * W, sy = (e.clientY - r.top) / r.height * H;
+    const camX = Math.max(0, Math.min(AW * TS - W, advPos.fx * TS + 8 - W / 2)), camY = Math.max(0, Math.min(AH * TS - H, advPos.fy * TS + 8 - H / 2));
+    walkTo(Math.floor((sx + camX) / TS), Math.floor((sy + camY) / TS));
+  });
+  document.addEventListener("keydown", e => {
+    if (tab !== "dungeons" || bt || runView || !document.getElementById("advmap")) return;
+    if (/input|textarea|select/i.test((e.target && e.target.tagName) || "")) return;
+    const k = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
+    if (!k) return; e.preventDefault();
+    const a = adv(), base = advPath.length ? advPath[advPath.length - 1] : [a.x, a.y];
+    const nx = base[0] + k[0], ny = base[1] + k[1];
+    if (walkable(nx, ny)) { advPath.push([nx, ny]); if (!advAnim) advAnim = requestAnimationFrame(advStep); }
+    else { const p = poiAt(nx, ny); if (p && p.t === "gate") { advMsg = { kind: "gate", p }; renderAdvPanel(); } }
+  });
+  setInterval(() => { if (!advAnim && document.getElementById("advmap") && !document.hidden) paintMap(); }, 240);
 
   // ---------- Widget ----------
   // Quick start picks the skill you practiced most recently (or your first skill).
@@ -4320,7 +4603,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     try { applyTheme(); } catch (e) {}
     baseRender();
     try { paintPixels(); } catch (e) { console.error(e); }
-    try { const cv = document.getElementById("battle"); if (cv && bt) updateBattleUI(); else if (cv && runView) paintOutro(cv, runView); } catch (e) { console.error(e); }
+    try { const cv = document.getElementById("battle"); if (cv && bt) updateBattleUI(); else if (cv && runView) paintOutro(cv, runView);
+      if (document.getElementById("advmap")) { const a = adv(); if (!seenGet()[a.y * AW + a.x]) { reveal(a.x, a.y, 4); seenSave(); } paintMap(); } } catch (e) { console.error(e); }
     try { paintQR(); } catch (e) {}
     if (lastGain) {
       const card = document.querySelector(`[data-skill="${lastGain.skillId}"]`);
