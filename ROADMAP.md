@@ -21,13 +21,13 @@ Design rules that every feature follows:
 | v0.8.1 | Automatic updates on the web and in the Android app |
 | v0.9 | Hero art upgrade: lighting, colored outlines, 7 eye styles, 7 mouths, 5 cheek options, 4 new hairstyles |
 | v0.10 | Active combat: auto-attacks plus tappable path skills on cooldowns, signature moves, HP bars, full-art hero in battle |
+| v0.11 | XP elixirs (+5% to +25%), daily and weekly quests (no FOMO, rewards arrive on their own), 37 achievements |
 
 ## Next up
 
-### 1. Consumables
+### 1. More consumables
 
-- Potions and elixirs in the Inventory (for example XP boost elixirs), earned in play and never sold.
-- Before XP boosts ship, decide how they stay honest next to "levels mean real practice" (for example, small and earned only through practice).
+- Battle potions (heal or shield once per fight), earned in play and never sold.
 
 ### 2. Adventure mode
 

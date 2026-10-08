@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.11.0 — 2026-10-08 (build 2026-10-08.8)
+
+Elixirs, quests and achievements.
+
+- XP elixirs: drink one from the Inventory and your next practice minutes earn bonus XP, the same way Rested XP works. One works at a time.
+  - Small: +5% for 60 min.
+  - Medium: +10% for 60 min.
+  - Large: +15% for 60 min.
+  - Grand: +25% for 90 min.
+  - The sheet shows the active elixir and how many minutes it has left. Sessions boosted by an elixir are tagged, and deleting one gives its elixir minutes back.
+- Where elixirs come from: Small ones turn up in any dungeon now and then (4% to 10% per win) and half the time when you finish all of a day's quests. Medium, Large and Grand are very rare drops in the deeper dungeons (Grand: 0.2% to 0.5% in the last two), and rewards for weekly quests and big achievements.
+- Daily quests: 3 small goals each day, like "Practice for 30 minutes", "Practice 2 different skills" or "Clear a dungeon". Each pays 30 gold, and finishing all 3 adds 50 gold and a 50% chance at a Small elixir.
+- Weekly quests: practice 3 hours and clear 5 dungeons. Each pays 150 gold, and finishing both gives a Medium elixir (sometimes Large).
+- No FOMO: rewards arrive on their own (nothing to claim), quests simply refresh, and missing a day costs nothing.
+- 37 achievements in the Hero tab: hours practiced, skill and total levels, days practiced (any days, never in a row), deep-focus sessions, variety, lessons, dungeon clears, the Endless Spire, trophies, relics, gear, talents, quests and elixirs. Each pays gold, and the big ones add an elixir. Progress you'd already made is credited automatically.
+
 ## v0.10.0 — 2026-10-08 (build 2026-10-08.7)
 
 Active combat.
