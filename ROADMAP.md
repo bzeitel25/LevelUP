@@ -26,15 +26,15 @@ Design rules that every feature follows:
 | v0.12 | Adventure v1: a single-player overworld with 6 regions, region gates, fog of war, chests and signs, and dungeons on the map |
 | v0.13 | Talent trees rebuilt: themed branches per category (warrior, wordmage, engineer, pathfinder and more), 16 capstone battle skills, treasure and utility perks, plus a full sanity pass |
 | v0.14 | Paths v2: Music becomes Art (performing and visual), the new Nature path and Explore the outdoors category with its own talent tree, 16 disciplines, new skills and tips |
+| v0.15 | Choose your class (5 neutral and 16 starter classes with signature skills and perks), adventuring pets, Adventure v2 (caves, villager missions, regional bosses, battle potions), Nature scenes, poses, theme and frame |
 
 ## Next up
 
-### 1. Adventure v2
+### 1. Classes
 
-- Caves: small side dungeons hidden around the map.
-- Missions: short quest chains from signposts and villagers (for example, clear a dungeon 3 times, then face its boss).
-- Bosses: one per region, with special attacks you need to block or stun at the right moment.
-- Battle potions (heal or shield once per fight) as loot, earned in play and never sold.
+- Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 56 two-path and 9 Ascended classes. Full design in the Class Compendium doc.
+- Shipped in v0.15: the class picker with the neutral and 16 starter classes, and adventuring pets.
+- Next: specializations and dual-discipline classes, then two-path classes, class gear sets and class talent trees, then Ascended classes and a Suggest a class form.
 
 ### 2. Online world (MMO-style)
 
@@ -52,11 +52,6 @@ Design rules that every feature follows:
 
 - More skills per path that unlock at higher path levels (pick which ones to equip, like talent skills already do).
 
-### 5. Classes
-
-- Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 56 two-path and 9 Ascended classes. Full design in the Class Compendium doc.
-- Next: the class picker with the neutral and 16 starter classes, then specializations, two-path classes, gear sets, class trees and adventuring pets.
-
-### 6. iPhone widgets
+### 5. iPhone widgets
 
 - The WidgetKit code is written, in mobile/native/ios. Building it needs a Mac.

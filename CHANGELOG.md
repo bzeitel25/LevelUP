@@ -1,5 +1,48 @@
 # Changelog
 
+## v0.15.0 — 2026-10-09 (build 2026-10-09.2)
+
+Choose your class, adventuring pets, and Adventure v2.
+
+**Classes**
+- Pick your class on the Hero tab from every class your practice has unlocked. Switching is free outside a battle.
+- 5 neutral classes for everyone: Wanderer, Freelancer, Student, Squire and Adventurer.
+- 16 starter classes, one per discipline. Each unlocks after 10 hours of practice in its discipline: Bard, Illustrator, Warrior, Strider, Scholar, Scribe, Chef, Artisan, Technomancer, Artificer, Monk, Mystic, Steward, Merchant, Ranger and Beastmaster.
+- Each class has a role (Striker, Guardian, Support, Controller or Treasure Hunter), a signature battle skill and a perk. Perks share the talent caps, and nothing adds XP.
+- The Hero tab shows the classes you're closest to unlocking, and what each needs.
+
+**Adventuring pets**
+- Link a pet to its own Animals skill (Dog walking, Pet care and so on). It joins your hero at that skill's Lv 3.
+- Make it look like your real pet: dog, cat, bird, rabbit or reptile, plus size, colors, markings and its name.
+- One-tap care presets log real minutes: feed 5, play 15, training 15, walk 20, groom 30.
+- Your pet follows you on the map and fights beside you. It learns Follow, Fetch, Sniff, Guard, Cheer and Pounce as its skill levels up.
+- Collars, bandanas and tiny hats are bought with gold and are only for looks.
+- Pets fight at half strength, and at full strength for a Beastmaster. They never get hungry or sad if you skip days.
+
+**Adventure v2**
+- Caves to clear in each region.
+- Villager missions in each region.
+- A boss for each region. Stun, shield or dodge its big telegraphed attack.
+- Healing and Shield battle potions. They're found in play, never sold, and you can drink one per fight.
+
+**Nature polish**
+- Outdoor training scenes: forest trail, lake and garden.
+- New poses and props for outdoor and pet skills, including a dog on the leash.
+- A Ranger theme and frame.
+- New sprites for outdoor gear.
+
+**Fixes from a four-agent review**
+- A corrupted save can no longer blank the app (bad class value or empty pet entry).
+- Beaten bosses now pay normal dungeon gold. Only the first win pays the big hoard.
+- Whisper Vale's mission now starts with its cave, so new heroes can't skip ahead to high-tier rewards.
+- Command now stops a boss special too.
+- The Mystic's heavy-hit warning now always shows.
+- The Beastmaster pet bonus only applies while you play the class.
+- Discipline levels count real practice minutes.
+- Gold pop-ups show what was actually added, and say when the gold bonus is maxed.
+- Pets: hats show fully on rabbits and pointy ears, small birds and rabbits keep their collars, the pet keeps pace with a Strider, and moving a pet's skill to another discipline explains what happened.
+- Rules and help text now cover classes, pets, potions, caves, missions and bosses.
+
 ## v0.14.0 — 2026-10-09 (build 2026-10-09.1)
 
 Paths v2: the groundwork for choosing your own class.
