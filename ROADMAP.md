@@ -25,6 +25,7 @@ Design rules that every feature follows:
 | v0.11.x | One elixir at a time (1 hour each, confirm before replacing), lower quest gold (up to 50 a day), buy Small and Medium elixirs |
 | v0.12 | Adventure v1: a single-player overworld with 6 regions, region gates, fog of war, chests and signs, and dungeons on the map |
 | v0.13 | Talent trees rebuilt: themed branches per category (warrior, wordmage, engineer, pathfinder and more), 16 capstone battle skills, treasure and utility perks, plus a full sanity pass |
+| v0.14 | Paths v2: Music becomes Art (performing and visual), the new Nature path and Explore the outdoors category with its own talent tree, 16 disciplines, new skills and tips |
 
 ## Next up
 
@@ -53,7 +54,8 @@ Design rules that every feature follows:
 
 ### 5. Classes
 
-- Player-chosen classes from combined skill levels, with neutral starters and a new Nature/Explorer category (pets, outdoors). Designed in the Class Compendium doc; waiting on its open questions.
+- Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 56 two-path and 9 Ascended classes. Full design in the Class Compendium doc.
+- Next: the class picker with the neutral and 16 starter classes, then specializations, two-path classes, gear sets, class trees and adventuring pets.
 
 ### 6. iPhone widgets
 

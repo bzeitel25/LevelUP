@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.14.0 — 2026-10-09 (build 2026-10-09.1)
+
+Paths v2: the groundwork for choosing your own class.
+
+- Music is now the **Art** path, covering performing and visual arts. Its stat is now Inspiration (was Harmony), and its battle skill is now Inspire (was Rally Song).
+- A new **Nature** path (stat: Instinct) and an **Explore the outdoors** category with walking, hiking, camping, fishing, gardening, birdwatching, foraging, kayaking and canoeing, plus dog walking, pet care, pet training, horse riding and shelter volunteering.
+- Nature's battle skill is Tracker's Mark: your next 3 hits deal +40%.
+- The Outdoors talent tree has three branches: Tracking, Survival and Forage. Its capstones teach two new battle skills: Ambush and Campfire.
+- **16 disciplines**, two per path. Each skill shows its discipline (for example, Art · Visual), and you can change it in the skill's settings. Each discipline will get its own starter class when the class picker arrives.
+- More skills to pick from:
+  - Dance, Acting & theater and DJing.
+  - Calisthenics, Rowing, Team sports, Tai chi and Breathwork.
+  - Digital art, Calligraphy and Graphic design.
+  - Web design, Robotics and 3D printing.
+  - Knitting.
+- New tip sets, safety first: outdoors, pets, hiking, walking, dog walking, fishing, foraging, horse riding, dance, and acting and theater.
+- Your existing skills move over automatically. Drawing, painting, photography and pottery move from Craft to Art, and gardening moves to Nature. Levels, XP, gear, talents and titles all stay; only stat points move.
+- These talent titles were renamed so no title shares a class name: Prodigy (was Virtuoso), Ravager (was Berserker), Provisioner (was Quartermaster), Phantasmist (was Illusionist), Transmuter (was Alchemist), Savant (was Polymath) and Wordbinder (was Envoy).
+- "Class or lesson" sessions are now called Lessons, so "class" means your hero class.
+
 ## v0.13.0 — 2026-10-08 (build 2026-10-08.15)
 
 Talent trees, rebuilt. Every category now plays differently, WoW-style.
