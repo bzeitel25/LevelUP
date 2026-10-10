@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.16.0 — 2026-10-10 (build 2026-10-10.1)
+
+Specializations and dual-discipline classes.
+
+- **32 specializations**, two for each starter class, each with its own role, signature skill and perk. One unlocks when its discipline reaches Lv 25 (about 62 hours of practice). You keep the starter class and can switch freely. A few examples:
+  - Bard becomes Skald or Siren.
+  - Illustrator becomes Illusionist or Lightweaver.
+  - Chef becomes Feastmaster or Grillmaster.
+  - Ranger becomes Sharpshooter or Herbalist.
+  - Beastmaster becomes Packleader or Wildheart.
+- **8 dual-discipline classes** for people who train both sides of a path. One unlocks when both of a path's disciplines reach Lv 10: Auteur, Gladiator, Philosopher, Hearthwright, Mechanomancer, Ascetic, Majordomo and Outrider.
+- New battle effects: Rage, Riposte, Hourglass (rewind your HP 3 seconds), Energy Barrier, Raise the Gate, Palm of Wind, Spotlight, Empower and more.
+- Herbalists find herb patches on the map that give Healing potions. Patches regrow as you log practice, not on a timer.
+- The class picker shows each starter's specializations as branches with progress bars, plus a dual-discipline group.
+- Pets fight at full strength for Packleader, Wildheart and Outrider too.
+- Perks share the talent caps, and nothing adds XP.
+
 ## v0.15.0 — 2026-10-09 (build 2026-10-09.2)
 
 Choose your class, adventuring pets, and Adventure v2.

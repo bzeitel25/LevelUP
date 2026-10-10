@@ -27,14 +27,15 @@ Design rules that every feature follows:
 | v0.13 | Talent trees rebuilt: themed branches per category (warrior, wordmage, engineer, pathfinder and more), 16 capstone battle skills, treasure and utility perks, plus a full sanity pass |
 | v0.14 | Paths v2: Music becomes Art (performing and visual), the new Nature path and Explore the outdoors category with its own talent tree, 16 disciplines, new skills and tips |
 | v0.15 | Choose your class (5 neutral and 16 starter classes with signature skills and perks), adventuring pets, Adventure v2 (caves, villager missions, regional bosses, battle potions), Nature scenes, poses, theme and frame |
+| v0.16 | 32 specializations and 8 dual-discipline classes, Herbalist herb patches on the map |
 
 ## Next up
 
 ### 1. Classes
 
 - Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 56 two-path and 9 Ascended classes. Full design in the Class Compendium doc.
-- Shipped in v0.15: the class picker with the neutral and 16 starter classes, and adventuring pets.
-- Next: specializations and dual-discipline classes, then two-path classes, class gear sets and class talent trees, then Ascended classes and a Suggest a class form.
+- Shipped: the class picker with neutral and starter classes and adventuring pets (v0.15), then specializations and dual-discipline classes (v0.16).
+- Next: two-path classes, class gear sets and class talent trees, then Ascended classes and a Suggest a class form.
 
 ### 2. Online world (MMO-style)
 
