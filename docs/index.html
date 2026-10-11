@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-11.4",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-11.5",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -33,6 +33,8 @@ document.write(h+'<plaintext hidden style="display:none">');
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: game HUD. Left = character sheet (sticky on desktop), right = skill tracks + session log. Stacks on phones. */
+/* Digits and colon from VT323 (SIL Open Font License), so 2, 8 and B never look alike. Embedded, so it works offline. */
+@font-face { font-family: "LvDigits"; src: url(data:font/woff2;base64,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) format("woff2"); unicode-range: U+0030-003A; size-adjust: 125%; ascent-override: 80%; font-display: swap; }
 :root {
   --bg: #e9edf5;
   --panel: #ffffff;
@@ -49,7 +51,7 @@ document.write(h+'<plaintext hidden style="display:none">');
   --shadow: 0 1px 0 rgba(21,26,44,.06), 0 6px 18px -10px rgba(21,26,44,.25);
   --on-fill: #1b1404;
   --pattern: none;
-  --f-display: "Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --f-display: "LvDigits", "Pixelify Sans", ui-monospace, "Courier New", monospace;
   --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
@@ -2712,8 +2714,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-11.4";
-  const APP_VERSION = "0.18.2";
+  const BUILD = "2026-10-11.5";
+  const APP_VERSION = "0.18.3";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -4257,7 +4259,7 @@ details.cg-set > summary { cursor: pointer; }
     const fly = d.id === "library" || d.id === "citadel" || d.id === "spire" || !!d.fly;
     return { mw, mh, mx: BW - mw - 14 + (lungeX || 0), my: BGY - mh + 2 + (f % 10 < 5 ? 0 : -1) + (fly ? -10 : 0) };
   }
-  function bigText(c, tx, y, col) { c.textAlign = "center"; c.font = `bold ${BS * 13}px "Pixelify Sans", ui-monospace, monospace`; c.fillStyle = OUTLINE; c.fillText(tx, BW / 2 * BS + 3, y * BS + 3); c.fillStyle = col || "#ffe58a"; c.fillText(tx, BW / 2 * BS, y * BS); }
+  function bigText(c, tx, y, col) { c.textAlign = "center"; c.font = `bold ${BS * 13}px "LvDigits", "Pixelify Sans", ui-monospace, monospace`; c.fillStyle = OUTLINE; c.fillText(tx, BW / 2 * BS + 3, y * BS + 3); c.fillStyle = col || "#ffe58a"; c.fillText(tx, BW / 2 * BS, y * BS); }
   function paintFight(cv, b) {
     const f = b.t, s = BS;
     if (cv.width !== BW * s) { cv.width = BW * s; cv.height = BH * s; }
@@ -4293,7 +4295,7 @@ details.cg-set > summary { cursor: pointer; }
     if (b.rally > 0) { c.fillStyle = "#ffe58a"; c.fillRect((hx + 2) * s, (hy + 40) * s, 28 * s, s); }
     // floating numbers
     c.textAlign = "center";
-    b.pops.forEach(p => { const sz = p.big ? 12 : 10; c.font = `bold ${s * sz}px "Pixelify Sans", ui-monospace, monospace`; c.globalAlpha = Math.min(1, p.ttl / 4); c.fillStyle = OUTLINE; c.fillText(p.text, p.x * 2 * s + 3, p.y * 2 * s + 3); c.fillStyle = p.col; c.fillText(p.text, p.x * 2 * s, p.y * 2 * s); c.globalAlpha = 1; });
+    b.pops.forEach(p => { const sz = p.big ? 12 : 10; c.font = `bold ${s * sz}px "LvDigits", "Pixelify Sans", ui-monospace, monospace`; c.globalAlpha = Math.min(1, p.ttl / 4); c.fillStyle = OUTLINE; c.fillText(p.text, p.x * 2 * s + 3, p.y * 2 * s + 3); c.fillStyle = p.col; c.fillText(p.text, p.x * 2 * s, p.y * 2 * s); c.globalAlpha = 1; });
     if (b.phase === "intro") bigText(c, b.t < 6 ? "READY?" : "FIGHT!", 26);
     c.restore();
   }

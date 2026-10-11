@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.18.3 — 2026-10-11 (build 2026-10-11.5)
+
+- Clearer numbers: digits now come from the VT323 pixel font, so 2, 8, 5 and B no longer look alike. The digits are built into the app, so they work offline too. Applies everywhere: timers, levels, gold, stats and battle damage numbers.
+
 ## v0.18.2 — 2026-10-11 (build 2026-10-11.4)
 
 - Redrew the battle skill and class icons on a slightly larger grid. Every side has a full outline and a little padding, so icons like the heart no longer look cut off.
