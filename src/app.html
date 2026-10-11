@@ -2683,8 +2683,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-11.3";
-  const APP_VERSION = "0.18.1";
+  const BUILD = "2026-10-11.4";
+  const APP_VERSION = "0.18.2";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -3935,19 +3935,20 @@ details.cg-set > summary { cursor: pointer; }
     nature: { key: "mark",   name: "Tracker's Mark", cd: 9, desc: "Your next 3 hits deal +40%", icon: "arrow" }
   };
   const SKILL_UNLOCK = 5;
+  // 7x7 pixel icons with a full outline on every side, so nothing looks clipped.
   const SKILL_ICONS = {
-    sword: ["....KK", "...KWK", "..KWK.", "KKWK..", ".KK...", "K.K..."],
-    note:  ["..KKKK", "..KYYK", "..K..K", "KKK.KK", "KYK.KY", "KKK.KK"],
-    rune:  ["KKKKKK", "KBBBBK", "KBKKBK", "KBBKBK", "KBBBBK", "KKKKKK"],
-    heart: [".KK.KK", "KRRKRR", "KRRRRR", ".KRRRK", "..KRK.", "...K.."],
-    gear:  [".K.K.K", "KKKKKK", ".KG.GK", "KKG.GK", ".KKKK.", ".K.K.."],
-    eye:   [".KKKK.", "KWWWWK", "KWKKWK", "KWKKWK", "KWWWWK", ".KKKK."],
-    coin:  [".KKKK.", "KYYYYK", "KYKYYK", "KYKYYK", "KYYYYK", ".KKKK."],
-    star:  ["..KK..", "..YY..", "KYYYYK", ".KYYK.", ".YKKY.", "Y....Y"],
-    arrow: ["...KKK", "....GK", "...KWK", "..KW..", "GKW...", "GG...."]
+    sword: [".....KK", "....KWK", "...KWK.", "K.KWK..", ".KKK...", ".KK....", "K.K...."],
+    note:  ["...KK..", "...KYK.", "...K.YK", "...K..K", ".KKK...", "KYYK...", ".KK...."],
+    rune:  ["KKKKKKK", "KBBBBBK", "KBKKKBK", "KBBKBBK", "KBKKKBK", "KBBBBBK", "KKKKKKK"],
+    heart: [".KK.KK.", "KRRKRRK", "KRWRRRK", "KRRRRRK", ".KRRRK.", "..KRK..", "...K..."],
+    gear:  ["..K.K..", ".KKKKK.", "KKGGGKK", ".KG.GK.", "KKGGGKK", ".KKKKK.", "..K.K.."],
+    eye:   ["..KKK..", ".KWWWK.", "KWKKKWK", "KWKBKWK", "KWKKKWK", ".KWWWK.", "..KKK.."],
+    coin:  ["..KKK..", ".KYYYK.", "KYYKYYK", "KYYKYYK", "KYYKYYK", ".KYYYK.", "..KKK.."],
+    star:  ["...K...", "..KYK..", "KKKYKKK", "KYYYYYK", ".KYYYK.", "KYK.KYK", "KK...KK"],
+    arrow: ["...KKKK", ".....KK", "....KWK", "...KWK.", "..KWK..", ".GK....", "G.G...."]
   };
   const SK_PAL = { K: "currentColor", W: "#ffffff", Y: "#f2c14e", B: "#7ad0ff", R: "#d94a3a", G: "#9aa0ae" };
-  const skillIcon = k => { let r = ""; (SKILL_ICONS[k] || SKILL_ICONS.star).forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== ".") r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${SK_PAL[ch]}"/>`; })); return `<svg viewBox="0 0 6 6" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; };
+  const skillIcon = k => { let r = ""; const ic = SKILL_ICONS[k] || SKILL_ICONS.star, w = Math.max(...ic.map(x => x.length)), h = ic.length; ic.forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== ".") r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${SK_PAL[ch]}"/>`; })); return `<svg viewBox="-0.5 -0.5 ${w + 1} ${h + 1}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; };
   // Unlocked battle skills: up to 3 path skills (4 as an Adventurer, class path first), your class signature, then up to 2 talent skills.
   // Talent skills you bring into a fight: your picks first, then the rest in tree order, up to 2.
   function talentLoadout() {
