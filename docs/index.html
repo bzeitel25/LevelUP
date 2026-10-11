@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-11.2",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-11.3",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -908,7 +908,7 @@ details.cg-set > summary { cursor: pointer; }
 <dialog id="dlg-start">
   <div class="dlg">
     <h2 id="start-title">Start training</h2>
-    <p class="muted" style="margin:0">Choose the session type. It stays fixed until you stop.</p>
+    <p class="muted" style="margin:0">Pick a session type. It's fixed until you stop.</p>
     <div class="start-opts">
       <button type="button" class="start-opt" data-act="start-go" data-type="solo"><b>Solo practice</b><span>On your own. 1 XP per minute.</span></button>
       <button type="button" class="start-opt" data-act="start-go" data-type="lesson"><b>Lesson</b><span>With a teacher or a course. 1.5 XP per minute.</span></button>
@@ -1303,7 +1303,7 @@ details.cg-set > summary { cursor: pointer; }
   const CLASSES = [
     { id: "wanderer", name: "Wanderer", tier: "neutral", role: "All-rounder", req: {},
       sig: { name: "Catch Breath", desc: "Heal 15% once per fight", cd: 0, icon: "heart", once: true, heal: 0.15 },
-      perk: { name: "Crossroads", desc: "The Hero tab shows the 3 classes you are closest to unlocking, and what each needs" } },
+      perk: { name: "Crossroads", desc: "The Hero tab shows your 3 closest classes to unlock and what each needs" } },
     { id: "freelancer", name: "Freelancer", tier: "neutral", role: "Treasure Hunter", req: { total: 10, cats: 2 },
       sig: { name: "Odd Job", desc: "A random effect from one of your path skills (from any path until you unlock one)", cd: 10, icon: "star", oddJob: true },
       perk: { desc: "+5% dungeon gold", fx: { gold: 5 } } },
@@ -1321,7 +1321,7 @@ details.cg-set > summary { cursor: pointer; }
       { desc: "Buffs last 10% longer", fx: { buffDur: 10 } }, ["Lute", "Feathered cap", "Doublet", "Travel cape"]),
     starterClass("illustrator", "Illustrator", "visual", "Controller",
       { name: "Ink Snare", desc: "Sketches a cage that stuns for 1.5 s", cd: 12, icon: "eye", stun: 1.5 },
-      { desc: "Extra portrait frames and hero colors: the Sketchbook and Gallery frames, and Indigo Ink and Mint Wash for shirts and pants, yours while the class is unlocked", art: true },
+      { desc: "Sketchbook and Gallery portrait frames, plus Indigo Ink and Mint Wash shirt and pant colors, while the class is unlocked", art: true },
       ["Paint smock", "Brush staff", "Beret", "Palette shield"]),
     starterClass("warrior", "Warrior", "strength", "Striker",
       { name: "Cleave", desc: "A 2× hit", cd: 8, icon: "sword", mult: 2 },
@@ -2054,17 +2054,17 @@ details.cg-set > summary { cursor: pointer; }
         <div class="cls-fact"><span class="lbl">Perk · always on</span>${cur.perk.name ? `<b>${esc(cur.perk.name)}</b>` : ""}<small>${esc(cur.perk.desc)}${cur.perk.herbs ? ` · ${herbsReadyN()} of ${HERB_SPOTS.length} patches grown now` : ""}</small></div>
         ${clsGearFact(cur)}
       </div>
-      ${lapsed ? `<p class="hint" style="margin:0">Your ${esc(lapsed.name)} class is locked again (${esc(clsReqs(lapsed).filter(r => r.have < r.need).map(clsReqText).join(", "))}), so you play as a Wanderer until it's back.</p>` : ""}
+      ${lapsed ? `<p class="hint" style="margin:0">Your ${esc(lapsed.name)} class is locked again (${esc(clsReqs(lapsed).filter(r => r.have < r.need).map(clsReqText).join(", "))}), so you're a Wanderer until it's back.</p>` : ""}
       ${near.length ? `<div class="cls-sub"><span class="lbl">Crossroads · closest to unlocking</span><div class="cls-grid">${near.map(id => clsCard(CLASS_BY[id], "locked", true)).join("")}</div></div>` : ""}
       <div class="cls-sub"><span class="lbl">Your classes${mine.length > 1 ? " · switching is free" + (bt ? ", after your battle" : "") : ""}</span>
         <div class="cls-grid">${mine.map(c => clsCard(c, c.id === cur.id ? "cur" : "open")).join("")}</div>
-        ${mine.length < 2 ? `<p class="hint" style="margin:0">Practice unlocks more classes: total level opens the neutral classes, and 10 hours in one discipline opens its starter class.</p>` : ""}
+        ${mine.length < 2 ? `<p class="hint" style="margin:0">Practice unlocks classes: total level opens neutral ones, 10 hours in a discipline opens its starter class.</p>` : ""}
       </div>
       <details class="cls-all" ${open ? "open" : ""}><summary><b>Class tree</b> <span class="muted" style="font-size:13px">· ${locked.length ? `${locked.length} to unlock` : "all unlocked"}</span></summary>
-        <p class="hint cls-tree-hint">10 hours in a discipline opens its starter class. About 62 hours (Lv ${SPEC_LV}) opens its two specializations, and you keep the starter too. 10 hours in both disciplines of a path opens its dual-discipline class, and Lv ${TWO_LV} in two paths (about 10 hours in each) opens their two-path class.</p>
+        <p class="hint cls-tree-hint">Starter class: 10 hours in a discipline. Specializations: about 62 hours (Lv ${SPEC_LV}); you keep the starter. Dual-discipline: 10 hours in both of a path's disciplines. Two-path: Lv ${TWO_LV} in two paths (about 10 hours each).</p>
         ${clsTreeHTML(ids, near)}
       </details>
-      <p class="hint" style="margin:0">Classes never add XP. Your class sets your signature battle skill and perk, and its path's skill comes first in battle. Gold bonuses from classes and talents share one cap (+${TAL_CAP.gold}%).</p>
+      <p class="hint" style="margin:0">Classes never add XP. Yours sets your signature skill and perk, and its path's skill goes first in battle. Class and talent gold bonuses share one cap (+${TAL_CAP.gold}%).</p>
     </article>`;
   }
   function classSkillBook() {
@@ -2251,7 +2251,7 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // --- UI ---
-  const cgRuleText = () => `Each class beyond the neutral ones has a 4-piece gear set (${CG_PRICE.starter}g a piece for starter classes, ${CG_PRICE.two}g for two-path and dual-discipline, ${CG_PRICE.spec}g for specializations). Pieces only change your hero's look; owning all 4 while you play that class adds a small bonus for its role. Each role also has a class tree of 8 talents and a capstone, with points at your class's level ${CT_AT.join(", ")} (its discipline level, or the lower of its two). Both share the talent caps, never add XP, and resetting the tree is free.`;
+  const cgRuleText = () => `Each non-neutral class has a 4-piece gear set (${CG_PRICE.starter}g a piece for starter, ${CG_PRICE.two}g for two-path and dual-discipline, ${CG_PRICE.spec}g for specializations). Pieces are cosmetic; all 4 while playing that class add a small role bonus. Each role also has a class tree (8 talents and a capstone), with points at class level ${CT_AT.join(", ")} (its discipline level, or the lower of two). Both share the talent caps and never add XP. Tree resets are free.`;
   function cgCard(c, open) {
     const n = cgCount(c), on = cgBonusOn(c), unl = classUnlocked(c.id), price = cgPrice(c), off = price < CG_PRICE[c.tier], rk = CLASS_ROLE_KEY[c.role];
     const status = on ? `<b style="color:var(--good)">Active</b>` : n === 4 ? `Active while you play ${esc(c.name)}` : `${n} of 4 pieces`;
@@ -2271,7 +2271,7 @@ details.cg-set > summary { cursor: pointer; }
     const cur = curClass(), others = CLASSES.filter(c => cgHasSet(c) && c.id !== cur.id && classUnlocked(c.id));
     return `<article class="panel gear-skill cg-shop">
       <div class="gear-head"><h3>Class gear</h3><span class="muted" style="font-size:13px">${esc(cur.name)}</span></div>
-      ${cgHasSet(cur) ? cgCard(cur, true) : `<p class="hint" style="margin:0">${esc(cur.name)} is a neutral class, so it has no gear set.${others.length ? " Sets for your other unlocked classes are below." : " Your first set opens with a starter class, at discipline Lv 10."}</p>`}
+      ${cgHasSet(cur) ? cgCard(cur, true) : `<p class="hint" style="margin:0">${esc(cur.name)} is neutral, so it has no gear set.${others.length ? " Your other classes' sets are below." : " Your first set opens with a starter class (discipline Lv 10)."}</p>`}
       ${others.length ? `<details class="cg-others"><summary>Other unlocked classes (${others.length})</summary><div class="cg-list">${others.map(c => cgCard(c, false)).join("")}</div></details>` : ""}
       <p class="hint" style="margin:0">${esc(cgRuleText())}</p>
     </article>`;
@@ -2289,7 +2289,7 @@ details.cg-set > summary { cursor: pointer; }
   const clsGearFact = c => cgHasSet(c) ? `<div class="cls-fact"><span class="lbl">Gear set · ${cgCount(c)} of 4 owned</span><small>${esc(c.gear.join(", "))}. Full set bonus: ${esc(cgBonusText(c))}.</small></div>` : "";
   function ctTreeHTML() {
     const c = curClass(), role = ctRole(c);
-    if (!role) return `<article class="panel tal-tree ct-tree"><div class="tal-head"><div><h3>Class tree</h3><div class="muted" style="font-size:13px">${esc(c.name)} is a neutral class, so it has no class tree. Play a starter class or higher to grow the tree for its role.</div></div></div></article>`;
+    if (!role) return `<article class="panel tal-tree ct-tree"><div class="tal-head"><div><h3>Class tree</h3><div class="muted" style="font-size:13px">${esc(c.name)} is a neutral class with no class tree. Play a starter class or higher to grow its role's tree.</div></div></div></article>`;
     const T = CLASS_TREES[role], lv = ctLevel(c), pts = ctPts(), have = ctIn(role), active = ctActive(role), free = ctFree(role);
     const next = CT_AT.find(t => lv < t), prev = CT_AT.filter(t => lv >= t).pop() || 0;
     const node = id => {
@@ -2319,7 +2319,7 @@ details.cg-set > summary { cursor: pointer; }
           ? `<span class="muted" style="font-size:13px">Reset the ${esc(c.role)} tree? Every point comes back to spend again.</span><button class="btn small danger" data-act="ct-reset" data-id="${role}">Reset</button><button class="btn small ghost" data-act="cancel-confirm">Keep</button>`
           : `<button class="btn small ghost" data-act="ask-ct-reset" data-id="${role}" ${have.length ? "" : "disabled"}>Reset tree (free)</button>`}
       </div>
-      <p class="hint" style="margin:0">Points come at class level ${CT_AT.join(", ")}. Every ${esc(c.role)} class shares this tree, and only your current class's role tree is active.</p>
+      <p class="hint" style="margin:0">Points at class level ${CT_AT.join(", ")}. All ${esc(c.role)} classes share this tree; only your current role's tree is active.</p>
     </article>`;
   }
   // ===== END FEATURE: class gear and class trees =====
@@ -2622,9 +2622,9 @@ details.cg-set > summary { cursor: pointer; }
     const t = state.timer; if (!t) return;
     const secs = (Date.now() - t.startedAt) / 1000;
     state.timer = null;
-    if (secs < 60) { toast("Under a minute, so nothing was logged. Practice is counted in whole minutes."); persist(); render(); return; }
+    if (secs < 60) { toast("Under a minute, so nothing was logged."); persist(); render(); return; }
     let min = Math.floor(secs / 60);
-    if (min > MAX_ENTRY) { min = MAX_ENTRY; toast("Timer ran past 12 hours, so it was capped at 12h. Edit with a manual log if needed."); }
+    if (min > MAX_ENTRY) { min = MAX_ENTRY; toast("Timer capped at 12h. Fix with a manual log if needed."); }
     logMinutes(t.skillId, min, dayKey(), "", t.type);
   }
 
@@ -2665,18 +2665,18 @@ details.cg-set > summary { cursor: pointer; }
           ${(() => { const st = heroStats(); return `<div>
             <div class="power"><strong>Hero power</strong><b class="num">${st.power}</b></div>
             <div class="statgrid">${Object.entries(STATS).map(([k, v]) => `<div title="${esc(v.desc)}"><span>${v.name}</span><b>${st.total[k]}${st.gear[k] ? ` <i>+${st.gear[k]}</i>` : ""}</b></div>`).join("")}</div>
-            <div class="hint">Stats come from your skill levels in each path. Green numbers are gear bonuses.</div>
+            <div class="hint">Stats come from your skill levels per path. Green is gear bonus.</div>
           </div>`; })()}
           <div>
             <div class="meter-label"><strong>Rested XP</strong><span class="num">${rested ? "next " + fmt(rested) + " earns 2× XP" : "Not rested"}</span></div>
             <div class="rest-bar"><i style="width:${(rested / REST_CAP) * 100}%"></i></div>
-            <div class="hint">Each day off adds 30 minutes of double XP, up to 3 hours, so missed days don't set you back. You never lose progress.</div>
+            <div class="hint">Each day off adds 30 min of double XP (up to 3 hours). You never lose progress.</div>
             ${(() => { const ae = activeElixir(); return ae ? `<div class="meter-label" style="margin-top:8px"><strong>${esc(ELIXIRS[ae.kind].name)}</strong><span class="num">+${ae.pct}% XP · ${fmt(ae.left)} left</span></div><div class="rest-bar"><i style="width:${ae.left / ae.total * 100}%;background:${ELIXIRS[ae.kind].col}"></i></div>` : ""; })()}
           </div>
           <div>
             <div class="meter-label"><strong>Dungeon keys</strong><span class="num muted">${shardDebt() ? `repaying ${shardDebt()} shards` : `${shardRem()} / ${SHARDS_PER_KEY} shards`}</span></div>
             <div class="keys-row"><span class="keys-count num">${keysAvail()} key${keysAvail() === 1 ? "" : "s"}</span>${pipsHTML(shardRem())}</div>
-            <div class="hint">Every minute of practice is a shard, and 10 shards make a key (up to 15 keys a day). Spend keys on dungeon runs to earn gold for gear.</div>
+            <div class="hint">1 minute = 1 shard; 10 shards = 1 key (up to 15 a day). Keys run dungeons for gear gold.</div>
           </div>
           <div class="meter-label" style="margin:0"><span class="muted">Logged today</span><strong class="num">${fmt(todayMin())}</strong></div>
           <button class="btn primary" data-act="open-log">Log practice</button>
@@ -2712,8 +2712,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-11.2";
-  const APP_VERSION = "0.18.0";
+  const BUILD = "2026-10-11.3";
+  const APP_VERSION = "0.18.1";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -2837,7 +2837,7 @@ details.cg-set > summary { cursor: pointer; }
     document.head.appendChild(sc);
   }
   function renderInstall() {
-    if (!inClaude && Updater.installed) return `<article class="panel set-card" id="install-card"><h3>Installed</h3><p class="hint" style="margin:0">Level UP is on your home screen. Open it from there for the full-screen app.</p></article>`;
+    if (!inClaude && Updater.installed) return `<article class="panel set-card" id="install-card"><h3>Installed</h3><p class="hint" style="margin:0">Level UP is on your home screen. Open it there for full screen.</p></article>`;
     const steps = `<ol class="steps">
         <li><b>iPhone:</b> open the link in <b>Safari</b>, tap the <b>Share</b> button (square with an arrow), then <b>Add to Home Screen</b>.</li>
         <li><b>Android:</b> open the link in <b>Chrome</b>, then tap <b>Install app</b> on this screen, or use the menu's <b>Add to Home screen</b>.</li>
@@ -2845,7 +2845,7 @@ details.cg-set > summary { cursor: pointer; }
     return `<article class="panel set-card install" id="install-card">
       <h3>Install on your phone</h3>
       ${!inClaude && Updater.prompt ? `<button class="btn primary big" data-act="upd-go">Install Level UP on this phone</button>` : ""}
-      ${inClaude ? `<p class="hint" style="margin:0">Phones only add apps to the home screen from a real web address, not from inside the Claude app. Open the Level UP site on your phone once, add it to your home screen, and it opens like a normal app from then on.</p>` : ""}
+      ${inClaude ? `<p class="hint" style="margin:0">Phones can't add apps to the home screen from inside the Claude app. Open the Level UP site on your phone once and add it to your home screen.</p>` : ""}
       <div class="install-row">
         <div class="qr-box"><canvas id="qr" class="px" hidden aria-label="QR code for the Level UP app"></canvas><span id="qr-ph" class="hint">Loading QR code…</span></div>
         <div style="display:grid;gap:8px;min-width:0">
@@ -2863,19 +2863,19 @@ details.cg-set > summary { cursor: pointer; }
     const preview = `<div class="wall">${renderWidget("sm")}${renderWidget("md")}</div>`;
     if (isNative) return `<article class="panel set-card" id="widget-card">
         <h3>Home screen widget</h3>
-        <p class="hint" style="margin:0">Long-press an empty spot on your home screen, tap <b>Widgets</b>, find <b>Level UP</b>, and drag a widget onto your home screen. It shows your hero, level and focus skill, and starts or stops training in one tap.</p>
+        <p class="hint" style="margin:0">Long-press your home screen, tap <b>Widgets</b>, and drag a <b>Level UP</b> widget on. It shows your hero, level and focus skill, and starts or stops training in one tap.</p>
         ${preview}
       </article>`;
     return `<article class="panel set-card" id="widget-card">
         <h3>Home screen widget</h3>
-        <p class="hint" style="margin:0">Real home-screen widgets need the Level UP phone app. Here's what they look like (tap to try):</p>
+        <p class="hint" style="margin:0">Home-screen widgets need the Level UP phone app. Preview (tap to try):</p>
         ${preview}
         <div class="widget-get">
-          <div><b>Android</b><div class="hint" style="margin:0">Download and install the Level UP app, then add the widget from your home screen. On the download page, tap <b>LevelUP.apk</b> under Assets. Your phone may ask you to allow installing apps from your browser. If nothing is listed yet, the app is still being built, so check back in a few minutes.</div></div>
+          <div><b>Android</b><div class="hint" style="margin:0">On the download page, tap <b>LevelUP.apk</b> under Assets, install it (allow browser installs if asked), then add the widget. Nothing listed? It's still building; check back in a few minutes.</div></div>
           <a class="btn primary small" href="${ANDROID_APK}" target="_blank" rel="noopener">Open Android download</a>
         </div>
         <div class="widget-get">
-          <div><b>iPhone</b><div class="hint" style="margin:0">Coming later. iPhone widgets need the app built on a Mac and installed through Apple.</div></div>
+          <div><b>iPhone</b><div class="hint" style="margin:0">Coming later. iPhone widgets need a Mac build through Apple.</div></div>
         </div>
       </article>`;
   }
@@ -2891,14 +2891,14 @@ details.cg-set > summary { cursor: pointer; }
         <h3>App version</h3>
         <div class="train-row"><span><b>v${APP_VERSION}</b> <span class="muted">· build ${esc(BUILD)}</span></span><span class="muted" style="font-size:13px">${where}</span></div>
         ${inClaude ? `<div class="hint" style="margin:0">This preview always shows the newest version.</div>` : `
-          <div class="toggle-row"><div><b>Update automatically</b><div class="hint" style="margin:0">Checks when you open the app and installs new versions by itself. Your hero is never touched.</div></div><button class="switch" role="switch" aria-checked="${Updater.auto()}" aria-label="Update automatically" data-act="toggle-autoupd"><i></i></button></div>
+          <div class="toggle-row"><div><b>Update automatically</b><div class="hint" style="margin:0">Installs new versions when you open the app. Your hero is never touched.</div></div><button class="switch" role="switch" aria-checked="${Updater.auto()}" aria-label="Update automatically" data-act="toggle-autoupd"><i></i></button></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="upd-check">Check now</button>${isNative ? `<a class="btn small ghost" href="${ANDROID_APK}" target="_blank" rel="noopener">Android app download</a>` : ""}</div>`}
         <div id="upd-status">${Updater.status}</div>
-        ${isNative ? `<div class="hint" style="margin:0">App updates install by themselves. You only need a new download from the Android page when the home-screen widgets change, and the update notes will say so.</div>` : ""}
+        ${isNative ? `<div class="hint" style="margin:0">Updates install by themselves. Re-download from the Android page only when the update notes say widgets changed.</div>` : ""}
       </article>
       <article class="panel set-card">
         <h3>Backup and move your hero</h3>
-        <p class="hint" style="margin:0">Your hero is saved in ${saveWhere}. The Claude preview and the phone app keep separate saves, so use a backup code to move your hero between them.</p>
+        <p class="hint" style="margin:0">Saved in ${saveWhere}. The Claude preview and phone app save separately; use a backup code to move between them.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" data-act="backup-copy" ${sample ? "disabled" : ""}>Copy backup code</button>
           <button class="btn ghost" data-act="restore-open">Restore from a code</button>
@@ -2912,11 +2912,11 @@ details.cg-set > summary { cursor: pointer; }
       <article class="panel set-card">
         <h3>Sound and feel</h3>
         <div class="toggle-row"><div><b>Sound effects</b><div class="hint" style="margin:0">8-bit blips for training, level-ups, loot and battles.</div></div><button class="switch" role="switch" aria-checked="${state.settings.sound !== false}" data-act="toggle-sound" aria-label="Sound effects"><i></i></button></div>
-        <div class="toggle-row"><div><b>Vibration</b><div class="hint" style="margin:0">A buzz on level-ups and hits, on phones that support it.</div></div><button class="switch" role="switch" aria-checked="${state.settings.haptics !== false}" data-act="toggle-haptics" aria-label="Vibration"><i></i></button></div>
+        <div class="toggle-row"><div><b>Vibration</b><div class="hint" style="margin:0">Buzz on level-ups and hits (supported phones).</div></div><button class="switch" role="switch" aria-checked="${state.settings.haptics !== false}" data-act="toggle-haptics" aria-label="Vibration"><i></i></button></div>
       </article>
       <article class="panel set-card">
         <h3>Feedback</h3>
-        <p class="hint" style="margin:0">Ideas, bugs or balance problems all help shape the app.</p>
+        <p class="hint" style="margin:0">Ideas, bugs or balance issues all help.</p>
         <div><button class="btn ghost" data-act="feedback">Send feedback</button></div>
       </article>
     </section>`;
@@ -3010,7 +3010,7 @@ details.cg-set > summary { cursor: pointer; }
           <div class="pg-row pg-headrow" role="row"><span role="columnheader">Skill · last 4 weeks</span><span role="columnheader"></span><span role="columnheader">Time</span></div>
           ${rows.map(r => `<div class="pg-row" role="row"><span role="cell">${esc(r.s.name)}</span><span role="cell" class="pg-mini"><i style="width:${(r.m / rmax) * 100}%"></i></span><span role="cell" class="num">${r.m ? fmt(r.m) : "—"}</span></div>`).join("")}
         </div>
-        <p class="hint" style="margin:0">Weeks start on Monday. Quiet weeks never cost you anything: they build Rested XP instead.</p>
+        <p class="hint" style="margin:0">Weeks start Monday. Quiet weeks cost nothing; they build Rested XP.</p>
       </div>
     </section>`;
   }
@@ -3058,7 +3058,7 @@ details.cg-set > summary { cursor: pointer; }
     ].filter(Boolean);
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Talents</h2><span class="muted" style="font-size:13px">${summary.length ? `${summary.length} active effect${summary.length === 1 ? "" : "s"}` : "No talents learned yet"}</span></div>
-      ${summary.length ? `<details class="panel tal-sum"><summary>Active talent effects</summary><ul>${summary.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="hint" style="margin:0">Totals from every tree together, plus your class perk, class tree and full gear set. Some effects have a cap.</p></details>` : ""}
+      ${summary.length ? `<details class="panel tal-sum"><summary>Active talent effects</summary><ul>${summary.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="hint" style="margin:0">Totals from all trees, class perk, class tree and full gear set. Some are capped.</p></details>` : ""}
       ${ctTreeHTML()}
       <div class="tal-cats" role="tablist" aria-label="Talent trees">${cats.map(k => {
         const u = unspent(k.id);
@@ -3104,7 +3104,7 @@ details.cg-set > summary { cursor: pointer; }
             : `<button class="btn small ghost" data-act="ask-tal-reset" ${have.length ? "" : "disabled"}>Reset tree (free)</button>`}
         </div>
       </article>
-      <p class="hint" style="margin:0">Your category level is all your ${esc(T.short.toLowerCase())} skill levels added together. Points come at category levels ${TALENT_AT.slice(0, 5).join(", ")} and on up to ${TALENT_AT[TALENT_AT.length - 1]}. Each tree plays differently: combat power, battle skills, treasure and shop perks. Talents never add XP, so your levels always show real practice. Resetting a tree is free, so try things out.</p>
+      <p class="hint" style="margin:0">Category level = your ${esc(T.short.toLowerCase())} skill levels added up. Points at ${TALENT_AT.slice(0, 5).join(", ")} and on up to ${TALENT_AT[TALENT_AT.length - 1]}. Talents never add XP, and resets are free.</p>
     </section>`;
   }
   // ===== FEATURE: pets (v0.15) =====
@@ -3645,7 +3645,7 @@ details.cg-set > summary { cursor: pointer; }
     const used = new Set(list.map(p => p.skillId)), canAdd = an.some(s => !used.has(s.id));
     let body;
     if (petDraft) body = petEditorHTML();
-    else if (!an.length && !list.length) body = `<p class="hint" style="margin:0">Pets are linked to a skill in the Animals discipline. Add one, for example <b>Pet care</b> or <b>Dog walking</b> under Explore the outdoors, then log time with your real pet. Your companion joins your hero at Lv ${PET_UNLOCK} (54 minutes).</p>
+    else if (!an.length && !list.length) body = `<p class="hint" style="margin:0">Pets link to an Animals skill. Add one (like <b>Pet care</b> or <b>Dog walking</b> under Explore the outdoors) and log time with your real pet. Your companion joins at Lv ${PET_UNLOCK} (54 minutes).</p>
       <div><button class="btn small primary" data-act="pet-add-skill">+ Add an Animals skill</button></div>`;
     else body = `${list.length ? `<div class="pet-list">${list.map(p => {
         const s = petSkill(p), lv = petLv(p), open = petUnlocked(p), on = act && act.id === p.id;
@@ -3660,14 +3660,14 @@ details.cg-set > summary { cursor: pointer; }
               : `<button class="x" data-act="pet-ask" data-id="${esc(p.id)}">Remove</button>`}</div>
           </div>
           <details class="pet-tr"><summary>Tricks · ${PET_TRICKS.filter(t => lv >= t.lv).length} of ${PET_TRICKS.length}</summary>${petTricksHTML(p)}</details>
-        </div>`; }).join("")}</div>` : `<p class="hint" style="margin:0">You have an Animals skill. Create a companion that looks like your real pet.</p>`}
-      ${canAdd ? `<div><button class="btn small primary" data-act="pet-new">+ New pet</button></div>` : an.length ? `<p class="hint" style="margin:0">Each pet links to its own Animals skill. Add another Animals skill to make another pet.</p><div><button class="btn small" data-act="pet-add-skill">+ Add an Animals skill</button></div>` : ""}
+        </div>`; }).join("")}</div>` : `<p class="hint" style="margin:0">Create a companion that looks like your real pet.</p>`}
+      ${canAdd ? `<div><button class="btn small primary" data-act="pet-new">+ New pet</button></div>` : an.length ? `<p class="hint" style="margin:0">Each pet needs its own Animals skill. Add one for another pet.</p><div><button class="btn small" data-act="pet-add-skill">+ Add an Animals skill</button></div>` : ""}
       <h3 style="margin:6px 0 0">Pet gear</h3>
-      <p class="hint" style="margin:0">Just for looks, never for power. Equip it while customizing a pet.</p>
+      <p class="hint" style="margin:0">Cosmetic only. Equip while customizing a pet.</p>
       <div class="pet-shop">${PET_GEAR.map(g => { const own = petGear()[g.id]; return `<div class="pet-item"><canvas class="px" data-pet-gear="${g.id}" aria-hidden="true"></canvas><span><b>${esc(g.name)}</b><small>${g.slot === "head" ? "Hat" : "Neck"}</small></span>${own ? `<span class="muted" style="font-size:13px">Owned</span>` : `<button class="btn small" data-act="pet-buy" data-id="${g.id}" ${state.gold < g.price ? "disabled" : ""}>${g.price}g</button>`}</div>`; }).join("")}</div>`;
     return `<article class="panel set-card pets-panel">
       <div class="train-row"><h3>Pets</h3>${list.length ? `<span class="muted" style="font-size:13px">${list.length} pet${list.length === 1 ? "" : "s"}</span>` : ""}</div>
-      <p class="hint" style="margin:0">Your companion adventures with your hero and levels with its Animals skill. It never gets hungry, sad or sick, and nothing fades if you skip days.</p>
+      <p class="hint" style="margin:0">Your companion adventures with your hero and levels with its Animals skill. It never gets hungry, sad or sick if you skip days.</p>
       ${body}
     </article>`;
   }
@@ -3721,7 +3721,7 @@ details.cg-set > summary { cursor: pointer; }
       case "pet-bring": { const p = pets().find(k => k.id === id); if (p && petUnlocked(p)) { state.activePet = p.id; Sound.play("tap"); toast(`${esc(p.name)} comes along on your adventures.`); persist(); render(); } break; }
       case "pet-ask": petAsk = id; render(); break;
       case "pet-keep": petAsk = null; render(); break;
-      case "pet-remove": { const p = pets().find(k => k.id === id); state.pets = pets().filter(k => k.id !== id); if (state.activePet === id) state.activePet = null; petAsk = null; if (p) toast(`${esc(p.name || "Your pet")} was removed. Your skill and its time are untouched.`); persist(); render(); break; }
+      case "pet-remove": { const p = pets().find(k => k.id === id); state.pets = pets().filter(k => k.id !== id); if (state.activePet === id) state.activePet = null; petAsk = null; if (p) toast(`${esc(p.name || "Your pet")} removed. Your skill and its time are untouched.`); persist(); render(); break; }
       case "pet-buy": {
         const g = PET_GEAR.find(x => x.id === id); if (!g || petGear()[g.id]) break;
         if (state.gold < g.price) { toast(`You need ${g.price - state.gold} more gold. Run a dungeon to earn it.`); break; }
@@ -3858,12 +3858,12 @@ details.cg-set > summary { cursor: pointer; }
             </div>`;
           }).join("")}</div>
         </article>`;
-      }).join("") : `<article class="panel set-card"><h3>No gear yet</h3><p class="hint" style="margin:0">Practice to unlock gear, run dungeons for gold, then buy items in the Shop. Everything you buy lands here.</p><div><button class="btn small primary" data-act="tab" data-tab="gear">Open the Shop</button></div></article>`}
-      <p class="hint" style="margin:0">Equip one item per skill for its stat bonus. Your hero wears your best items automatically, and you can change what shows in the Hero tab. Every dungeon win has a small chance to drop the Radiant version of an item you own (4% in the Goblin Cellar up to 15% in the Endless Spire). Radiant is a look, not a power boost.</p>
+      }).join("") : `<article class="panel set-card"><h3>No gear yet</h3><p class="hint" style="margin:0">Practice unlocks gear, dungeons earn gold, and Shop purchases land here.</p><div><button class="btn small primary" data-act="tab" data-tab="gear">Open the Shop</button></div></article>`}
+      <p class="hint" style="margin:0">Equip one item per skill for its stat bonus. Your hero wears your best items; change the look in the Hero tab. Dungeon wins can drop a Radiant version of an item you own (4% in the Goblin Cellar up to 15% in the Endless Spire). Radiant is cosmetic.</p>
       ${clsGearInv()}
       <article class="panel gear-skill">
         <div class="gear-head"><h3>Trophies</h3><span class="muted" style="font-size:13px">Rare dungeon drops</span></div>
-        ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">${typeof advBossTrophies === "function" && advBossTrophies() ? "No dungeon trophies yet." : "None yet."} Each dungeon has a 1 in 10 chance to drop its trophy when you win.</p>`}
+        ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">${typeof advBossTrophies === "function" && advBossTrophies() ? "No dungeon trophies yet." : "None yet."} Each dungeon win has a 1 in 10 trophy chance.</p>`}
         ${advBossTrophies()}
       </article>
       <article class="panel gear-skill">
@@ -3873,7 +3873,7 @@ details.cg-set > summary { cursor: pointer; }
             if (cur && e.pct <= cur.pct) return `<button class="btn small" disabled>${cur.kind === k ? "Already active" : "A stronger one is active"}</button>`;
             if (cur) return `<button class="btn small" data-act="drink" data-id="${k}">Replace active elixir…</button>`;
             return `<button class="btn small primary" data-act="drink" data-id="${k}">Drink</button>`; })()}</div>`).join("")}</div>`
-          : `<p class="hint" style="margin:0">No elixirs yet. Elixirs last 1 hour of practice, one at a time. Buy Small (+5%) and Medium (+10%) elixirs in the Shop, or find them: Small ones turn up in dungeons now and then and when you finish all of a day's quests. Large and Grand elixirs (+15% and +25%) are very rare finds deep in the dungeons, and rewards for weekly quests and big achievements.</p>`}
+          : `<p class="hint" style="margin:0">No elixirs yet. Each lasts 1 hour of practice, one at a time. Small (+5%) and Medium (+10%) are sold in the Shop; Small also drop in dungeons and for finishing a day's quests. Large (+15%) and Grand (+25%) are rare deep-dungeon finds and weekly quest and achievement rewards.</p>`}
         ${advPotionInv()}
       </article>
     </section>`;
@@ -3883,7 +3883,7 @@ details.cg-set > summary { cursor: pointer; }
     const tro = DUNGEONS.filter(d => state.trophies[d.id]);
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Shop</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${state.gold.toLocaleString()}</b> gold</span></div>
-      <p class="hint" style="margin:0">Each skill unlocks gear as you level it. Buy it with dungeon gold, and it goes to your Inventory. One item per skill can be equipped, and its bonus adds to that skill's stat. Items you own can turn up in their Radiant version in dungeons.</p>
+      <p class="hint" style="margin:0">Skills unlock gear as they level. Buy with dungeon gold; equip one item per skill to add to its stat.</p>
       ${renderPotionShop()}
       ${clsGearShop()}
       ${CATEGORIES.flatMap(c => state.skills.filter(s => s.catId === c.id)).map(s => {
@@ -3911,7 +3911,7 @@ details.cg-set > summary { cursor: pointer; }
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Adventure</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${keys}</b> key${keys === 1 ? "" : "s"} · power <b class="num">${st.power}</b>${fp ? ` · +${fp}% gold` : ""}</span></div>
       ${bt || runView ? renderRun() : renderMapCard()}
-      ${keys < 1 && !runView && !bt ? `<p class="hint" style="margin:0">You're out of keys. Every 10 minutes of practice earns one. Exploring the map is always free.</p>` : ""}
+      ${keys < 1 && !runView && !bt ? `<p class="hint" style="margin:0">Out of keys. Every 10 minutes of practice earns one. Exploring is free.</p>` : ""}
       ${!bt && !runView ? renderSkillBook() : ""}
       <details class="panel dun-list"><summary><b>All dungeons</b> <span class="muted" style="font-size:13px">· quick list</span></summary><div class="dun-list-body">
       ${DUNGEONS.map(d => {
@@ -3928,7 +3928,7 @@ details.cg-set > summary { cursor: pointer; }
         const d = DUNGEONS.find(x => x.id === r.dungeon);
         return `<div><span>${dayLabel(r.day)} · ${esc(d ? d.name : advRunName(r.dungeon))}${r.trophy ? ` · <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}${r.relic ? ` · <b class="relic-name">${esc(r.relic)}</b>` : ""}</span><span class="num" style="color:${r.win ? "var(--good)" : "var(--muted)"}">${r.win ? "Cleared" : "Retreated"} · +${r.gold}g</span></div>`;
       }).join("")}</div></div>` : ""}
-      <p class="hint" style="margin:0">Your stats set how hard your hero hits and how much they can take, and your skills turn close fights. If your hero falls you retreat with some gold, and you never lose anything except the key and any potions you drink.</p>
+      <p class="hint" style="margin:0">Stats set damage and toughness; skills turn close fights. If your hero falls, you retreat with some gold and lose only the key and any potions drunk.</p>
     </section>`;
   }
   function renderRun() {
@@ -3941,9 +3941,9 @@ details.cg-set > summary { cursor: pointer; }
         <div class="result ${r.win ? "win" : "lose"}">${r.win ? (r.d.winText || "Dungeon cleared!") : "Retreated safely"}</div>
         ${r.summary ? `<div class="muted" style="font-size:13px">${esc(r.summary)}${r.lucky ? ` · Lucky Find +${r.lucky}% gold` : ""}</div>` : ""}
         <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune || r.talGold ? ` <span class="muted">(includes ${[r.fortune ? `Fortune +${r.fortune}%` : "", r.talGold ? `${classGoldLabel(r.talGold)} +${r.talGold}%` : ""].filter(Boolean).join(" and ")})</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
-        ${r.elixir ? `<div class="relic-drop elix-drop">${ElixirIcon(r.elixir, 44)}<div><div class="relic-kicker">Rare elixir found</div><b>${esc(ELIXIRS[r.elixir].name)}</b><div class="muted" style="font-size:13px">+${ELIXIRS[r.elixir].pct}% XP for 1 hour of practice. Drink it from your Inventory whenever you like.</div></div></div>` : ""}
+        ${r.elixir ? `<div class="relic-drop elix-drop">${ElixirIcon(r.elixir, 44)}<div><div class="relic-kicker">Rare elixir found</div><b>${esc(ELIXIRS[r.elixir].name)}</b><div class="muted" style="font-size:13px">+${ELIXIRS[r.elixir].pct}% XP for 1 hour of practice. Drink it from your Inventory.</div></div></div>` : ""}
         ${advRunExtra(r)}
-        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}). It's on your hero now. Switch versions anytime in your Inventory.</div></div></div>` : ""}
+        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}), now on your hero. Switch versions in your Inventory.</div></div></div>` : ""}
         <div style="display:flex;gap:8px;flex-wrap:wrap">${r.relic ? `<button class="btn small" data-act="tab" data-tab="inventory">Open inventory</button>` : ""}<button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
     </div>`;
   }
@@ -4211,7 +4211,7 @@ details.cg-set > summary { cursor: pointer; }
       <canvas id="battle" class="px battle" aria-label="Your hero fighting the ${esc(mon.name)}"></canvas>
       <div class="bt-log" id="bt-log" aria-live="polite">${esc(b.log)}</div>
       ${b.skills.length ? `<div class="bt-skills">${b.skills.map((s, i) => `<button class="bt-skill" data-act="bt-skill" data-id="${s.key}" id="bts-${s.key}" aria-label="${esc(s.name)}: ${esc(s.desc)}"><span class="bt-ic">${skillIcon(s.icon)}</span><b>${esc(s.name)}</b><small>${esc(s.desc)}</small><span class="bt-cd"></span><span class="bt-sec num"></span><kbd class="hide-phone">${i + 1}</kbd></button>`).join("")}</div>`
-        : `<p class="hint" style="margin:0">Your hero fights on their own. Level any path to ${SKILL_UNLOCK} combined to unlock your first battle skill.</p>`}
+        : `<p class="hint" style="margin:0">Your hero fights alone for now. Any path at ${SKILL_UNLOCK} combined unlocks your first battle skill.</p>`}
       ${advPotionRow(b)}
     </div>`;
   }
@@ -4227,7 +4227,7 @@ details.cg-set > summary { cursor: pointer; }
       ${classSkillBook()}
       ${(() => { const pool = talentFx().skills, on = talentLoadout().map(x => x.key); if (!pool.length) return "";
         return `<h3 style="margin-top:4px">Talent skills</h3><div class="sb-grid">${pool.map(sk => `<div class="sb ${on.includes(sk.key) ? "on" : "spare"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on.includes(sk.key) ? "Equipped" : "Benched"}${pool.length > maxTalSkills() ? ` · <button class="linkbtn" data-act="tal-skill" data-id="${sk.key}">${on.includes(sk.key) ? "Bench" : "Equip"}</button>` : ""}</small></div></div>`).join("")}</div>${pool.length > maxTalSkills() ? `<p class="hint" style="margin:0">You know ${pool.length} talent skills. Bring any ${maxTalSkills()} into a fight.</p>` : ""}`; })()}
-      <p class="hint" style="margin:0">Your hero attacks on their own. Tap skills during a battle (or press the number keys on a keyboard). Each path has one skill, and your class path comes first. Your class adds its signature skill. Some talent capstones teach a new battle skill; you can bring up to 2 of them into a fight.</p>
+      <p class="hint" style="margin:0">Your hero auto-attacks. Tap skills (or press number keys) in battle. Each path gives one skill, your class path first, plus your class's signature. Some talent capstones teach a skill; bring up to 2.</p>
     </article>`;
   }
   function updateBattleUI() {
@@ -4372,20 +4372,20 @@ details.cg-set > summary { cursor: pointer; }
     const price = elixirPrice(e);
     if (state.gold < price) { toast(`You need ${price - state.gold} more gold.`); return; }
     state.gold -= price; if (!state.elixirs) state.elixirs = {}; state.elixirs[k] = elixirCount(k) + 1;
-    Sound.play("buy"); toast(`Bought a <b>${esc(e.name)}</b>. Drink it from your Inventory when you're ready to practice.`);
+    Sound.play("buy"); toast(`Bought a <b>${esc(e.name)}</b>. Drink it from your Inventory before practice.`);
     persist(); render();
   }
   function renderPotionShop() {
     return `<article class="panel gear-skill">
       <div class="gear-head"><h3>Elixirs</h3><span class="muted" style="font-size:13px">One works at a time · lasts 1 hour of practice</span></div>
       <div class="gear-grid">${Object.entries(ELIXIRS).filter(([, e]) => e.price).map(([k, e]) => `<div class="item elix">${ElixirIcon(k, 40)}<b>${esc(e.name)}</b><span class="eff">+${e.pct}% XP for 1 hour of practice</span>${elixirCount(k) ? `<span class="req">You have ${elixirCount(k)}</span>` : ""}<button class="btn small ${state.gold >= elixirPrice(e) ? "primary" : ""}" data-act="buy-elixir" data-id="${k}" ${state.gold >= elixirPrice(e) ? "" : "disabled"}>Buy · ${elixirPrice(e)}g</button></div>`).join("")}</div>
-      <p class="hint" style="margin:0">Spend gold to level a little faster, or save it for gear. Large and Grand elixirs can't be bought: find them deep in dungeons, or earn them from weekly quests and achievements.</p>
+      <p class="hint" style="margin:0">Level a bit faster, or save gold for gear. Large and Grand elixirs aren't sold: find them deep in dungeons or earn them from weekly quests and achievements.</p>
     </article>`;
   }
   function drinkElixir(k, replace) {
     const e = ELIXIRS[k]; if (!e || elixirCount(k) < 1) return;
     const cur = activeElixir();
-    if (cur && e.pct <= cur.pct) { toast("An equal or stronger elixir is already working. Finish its minutes first."); return; }
+    if (cur && e.pct <= cur.pct) { toast("An equal or stronger elixir is active. Finish its minutes first."); return; }
     if (cur && !replace) { confirm = { kind: "elixir", id: k }; render(); return; }
     confirm = null;
     state.elixirs[k]--; state.elixir = { kind: k, pct: e.pct, left: e.min, total: e.min };
@@ -5110,7 +5110,7 @@ details.cg-set > summary { cursor: pointer; }
     const R = r.d.rid && adv2Reg(r.d.rid);
     let h = "";
     if (x.bonus) h += `<div class="adv2-bonus">${x.kind === "boss" ? "First victory" : "First clear"}: <b class="num" style="color:var(--xp)">+${x.bonus}</b> gold ${x.kind === "boss" ? "from the boss's hoard" : "from a hidden stash"}</div>`;
-    if (x.trophy) h += `<div class="relic-drop adv2-drop boss"><span class="adv2-tro-ic" aria-hidden="true">${adv2CrownSVG()}</span><div><div class="relic-kicker">Boss trophy</div><b>${esc(x.trophy)}</b><div class="muted" style="font-size:13px">${esc(R ? R.boss.name : "The boss")} is beaten. Find the trophy in your Inventory. You can fight it again anytime for normal rewards.</div></div></div>`;
+    if (x.trophy) h += `<div class="relic-drop adv2-drop boss"><span class="adv2-tro-ic" aria-hidden="true">${adv2CrownSVG()}</span><div><div class="relic-kicker">Boss trophy</div><b>${esc(x.trophy)}</b><div class="muted" style="font-size:13px">${esc(R ? R.boss.name : "The boss")} is beaten. Trophy is in your Inventory. Rematch anytime for normal rewards.</div></div></div>`;
     x.potions.forEach(k => { h += `<div class="relic-drop adv2-drop">${PotionIcon(k, 44)}<div><div class="relic-kicker">Potion found</div><b>${esc(POTIONS[k].name)}</b><div class="muted" style="font-size:13px">${esc(POTIONS[k].short)}. Drink it during any battle.</div></div></div>`; });
     return h;
   }
@@ -5286,7 +5286,7 @@ details.cg-set > summary { cursor: pointer; }
     }
     if (m.kind === "lair") {
       const bs = bossState(R), [dl, cls] = difficulty({ rec: d.rec * 1.25 }, st.power);
-      if (!missionDone(R)) return `<div class="adv-card"><div><b class="px" style="font-size:18px">${esc(R.boss.lair)}</b><div class="muted" style="font-size:13px">Sealed by old magic. Finish ${esc(R.npc.name)}'s mission in ${esc(R.region)} to break the seal.</div></div><span class="muted" style="font-size:13px">Sealed</span></div>`;
+      if (!missionDone(R)) return `<div class="adv-card"><div><b class="px" style="font-size:18px">${esc(R.boss.lair)}</b><div class="muted" style="font-size:13px">Sealed. Finish ${esc(R.npc.name)}'s mission in ${esc(R.region)} to open it.</div></div><span class="muted" style="font-size:13px">Sealed</span></div>`;
       return `<div class="adv-card adv2-lair"><div><b class="px" style="font-size:18px">${esc(R.boss.name)}</b><div class="adv2-say">Every few seconds it winds up <b>${esc(R.boss.special)}</b>, a 3× hit. Stun it to interrupt, or have a shield up.</div>
         <div class="dun-meta"><span>Suggested power <b>${Math.round(d.rec * 1.25)}</b></span>${open ? `<span>Difficulty <b class="chance ${cls}">${dl}</b></span>` : ""}<span>${bs.first ? `Defeated ×${bs.wins}` : `First win: <b>big hoard, trophy, potion</b>`}</span></div></div>
         ${btn("adv2-boss", bs.first ? "Fight again" : "Fight")}</div>`;
@@ -5305,14 +5305,14 @@ details.cg-set > summary { cursor: pointer; }
       return `<div class="adv2-mrow ${m && m.done && bs.wins ? "done" : !m ? "new" : ""}"><span class="adv2-mi" aria-hidden="true">${icon}</span><div style="min-width:0"><b>${esc(R.region)}</b> <small class="muted">${esc(R.npc.name)}</small><div class="adv2-mline">${line}</div></div></div>`;
     }).join("");
     return `<details class="panel dun-list adv2-mlist" open><summary><b>Missions</b> <span class="muted" style="font-size:13px">· ${bossesBeaten()} of ${ADV2.length} bosses · ${cavesCleared()} of ${ADV2.length} caves</span></summary><div class="dun-list-body">${rows}
-      <p class="hint" style="margin:0">Each region has a villager with a short mission. Steps track on their own and never expire. Finish a mission to unseal that region's boss lair.</p></div></details>`;
+      <p class="hint" style="margin:0">Each region's villager has a short mission. Steps track themselves and never expire. Finishing unseals the region's boss lair.</p></div></details>`;
   }
 
   // --- Inventory: potions with the consumables, boss trophies with the trophies ---
   function advPotionInv() {
     return `<div class="adv2-inv"><div class="adv2-inv-h"><b>Battle potions</b><span class="muted">Drink ${potionCarry()} per fight from the potion row in battle</span></div>
       <div class="gear-grid">${Object.entries(POTIONS).map(([k, p]) => `<div class="item elix ${potionCount(k) ? "" : "adv2-none"}">${PotionIcon(k, 40)}<b>${esc(p.name)} <span class="muted num">×${potionCount(k)}</span></b><span class="eff">${esc(p.short)}</span></div>`).join("")}</div>
-      ${Object.keys(POTIONS).some(k => potionCount(k)) ? "" : `<p class="hint" style="margin:0">Potions are found, never sold: in caves, as mission rewards, from bosses, and now and then after a dungeon win.</p>`}</div>`;
+      ${Object.keys(POTIONS).some(k => potionCount(k)) ? "" : `<p class="hint" style="margin:0">Potions are found, never sold: in caves, from missions and bosses, and sometimes after dungeon wins.</p>`}</div>`;
   }
   function advBossTrophies() {
     const got = ADV2.filter(R => state.bosses && state.bosses[R.id] && state.bosses[R.id].first);
@@ -5408,12 +5408,12 @@ details.cg-set > summary { cursor: pointer; }
     }
     if (m && m.kind === "gate") {
       const d = m.d || DUNGEONS.find(k => k.id === m.p.need), open = gateOpen(m.p);
-      return `<div class="adv-card"><div><b>Gate to ${esc(m.p.name)}</b><div class="muted" style="font-size:13px">${open ? "The gate stands open." : `Sealed. Reach hero power ${Math.ceil(d.rec * 0.5)} to pass (you have ${st.power}). Practice raises your power.`}</div></div></div>`;
+      return `<div class="adv-card"><div><b>Gate to ${esc(m.p.name)}</b><div class="muted" style="font-size:13px">${open ? "The gate stands open." : `Sealed. Needs hero power ${Math.ceil(d.rec * 0.5)} (you have ${st.power}). Practice raises power.`}</div></div></div>`;
     }
     if (m && m.kind === "sign") return `<div class="adv-card sign"><div><b>Signpost</b><div style="font-size:14px">${esc(m.p.text)}</div></div></div>`;
     if (m && m.kind === "chest") return `<div class="adv-card"><div><b>Treasure chest</b><div class="muted" style="font-size:13px">Opened ${dayLabel(a.chests[m.p.id])}.</div></div></div>`;
     const reg = regionAt(a.x, a.y);
-    return `<div class="adv-card"><div><b>${esc(reg.name)}</b><div class="muted" style="font-size:13px">Tap the map to walk${matchMedia("(hover: hover)").matches ? " (or use the arrow keys)" : ""}. Dungeons, chests and signs wait to be found. Exploring is free, and battles cost a key.</div></div></div>`;
+    return `<div class="adv-card"><div><b>${esc(reg.name)}</b><div class="muted" style="font-size:13px">Tap the map to walk${matchMedia("(hover: hover)").matches ? " (or use the arrow keys)" : ""}. Find dungeons, chests and signs. Exploring is free; battles cost a key.</div></div></div>`;
   }
   function advStats() {
     const chestsTotal = Object.values(ADV_POI).filter(p => p.t === "chest").length, opened = Object.keys(adv().chests).length;
@@ -7005,7 +7005,7 @@ details.cg-set > summary { cursor: pointer; }
   }
   function showPortrait(cv) {
     const out = document.getElementById("portrait-out");
-    if (out) { out.innerHTML = `<img src="${cv.toDataURL("image/png")}" alt="Your hero" style="width:200px;image-rendering:pixelated;border-radius:8px"><div class="hint">Press and hold (or right-click) the picture to save it.</div>`; }
+    if (out) { out.innerHTML = `<img src="${cv.toDataURL("image/png")}" alt="Your hero" style="width:200px;image-rendering:pixelated;border-radius:8px"><div class="hint">Long-press or right-click to save.</div>`; }
   }
 
   // ---------- Hero tab ----------
@@ -7042,7 +7042,7 @@ details.cg-set > summary { cursor: pointer; }
       ${renderPetsPanel()}
       <article class="panel set-card">
         <h3>App theme</h3>
-        <p class="hint" style="margin:0">Each path has a theme, named for one of its classes. Level skills on that path to 10 combined levels to unlock it.</p>
+        <p class="hint" style="margin:0">Each path has a theme named for one of its classes. Unlock it at 10 combined levels on that path.</p>
         <div class="theme-grid">${Object.entries(THEMES).map(([k, t]) => { const open = themeUnlocked(k), on = (state.settings.theme || "classic") === k;
           const sw = t.light ? [t.light[5], t.light[4], t.dark[1]] : ["#e2a521", "#9a6604", "#171a28"];
           return `<button class="theme ${open ? "" : "locked"}" data-act="set-theme" data-val="${k}" aria-pressed="${on}" ${open ? "" : "disabled"}><span class="theme-sw">${sw.map(c => `<i style="background:${c}"></i>`).join("")}</span><b>${esc(t.name)}</b><small>${esc(open ? t.desc : themeReq(k))}</small></button>`; }).join("")}</div>
@@ -7051,12 +7051,12 @@ details.cg-set > summary { cursor: pointer; }
       ${renderAchievements()}
       <article class="panel set-card">
         <h3>Gear on your hero</h3>
-        ${slots.length ? `<p class="hint" style="margin:0">Everything you own shows up on your hero. Auto shows your best item in each spot.</p>
+        ${slots.length ? `<p class="hint" style="margin:0">Auto shows your best item in each spot.</p>
           <div class="slot-grid">${slots.map(sl => `<div class="field"><label class="lbl" for="slot-${sl}">${SLOT_NAMES[sl]}</label><select class="input" id="slot-${sl}" data-act-change="ap-slot" data-slot="${sl}">
             <option value="auto" ${!ap.show[sl] || ap.show[sl] === "auto" ? "selected" : ""}>Auto</option>
             ${bySlot[sl].map(o => `<option value="${o.id}" ${ap.show[sl] === o.id ? "selected" : ""}>${esc(o.name)}</option>`).join("")}
             <option value="none" ${ap.show[sl] === "none" ? "selected" : ""}>Hide</option></select></div>`).join("")}</div>`
-        : `<p class="hint" style="margin:0">Gear you buy appears on your hero. Practice to unlock items, run dungeons for gold, then buy them in the Shop.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>`}
+        : `<p class="hint" style="margin:0">Gear you buy shows on your hero. Practice unlocks it; dungeon gold buys it in the Shop.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>`}
       </article>
     </section>`;
   }
@@ -7244,21 +7244,21 @@ details.cg-set > summary { cursor: pointer; }
       <div style="margin-top:10px">
         <table><tr><th>Level</th><th>Solo time</th></tr>${rows.map(r => `<tr><td>Lv ${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>
         <ul>
-          <li>Levels run on XP and follow the power law of practice: early levels come fast, later ones take real time. One minute of solo practice earns 1 XP, so the table above is in solo time.</li>
-          <li>A lesson earns 1.5× XP, since you're learning from a teacher or a course.</li>
-          <li>Rested XP is the catch-up bonus. Each day off adds 30 minutes of double XP, up to 3 hours. No streaks, and nothing you've earned is ever taken away.</li>
-          <li>Your real hours practiced are always shown separately from XP. Milestones count real hours logged in the app.</li>
-          <li>Everyone starts at Lv 0. Your level only grows from time you log in the app.</li>
-          <li>Veteran hours (practice from before Level UP) earn a Veteran badge: Bronze from 1 hour, then Silver at 50, Gold at 250, Platinum at 1,000 and Diamond at 5,000. They never add XP, levels, keys or gear, and you can edit them anytime.</li>
-          <li>Every minute of practice earns 1 key shard, and 10 shards make a dungeon key, so no minute is wasted. Up to 15 keys a day. Keys open dungeon, cave and boss fights, where your hero earns gold for gear.</li>
+          <li>Levels follow the power law of practice: early ones come fast, later ones take real time. 1 minute of solo practice = 1 XP.</li>
+          <li>Lessons (teacher or course) earn 1.5× XP.</li>
+          <li>Rested XP: each day off adds 30 minutes of double XP, up to 3 hours. No streaks, and nothing earned is ever taken away.</li>
+          <li>Real hours show separately from XP. Milestones count real hours logged in the app.</li>
+          <li>Everyone starts at Lv 0 and levels only from time logged here.</li>
+          <li>Veteran hours (practice before Level UP) earn a badge: Bronze from 1 hour, Silver 50, Gold 250, Platinum 1,000, Diamond 5,000. They never add XP, levels, keys or gear. Editable anytime.</li>
+          <li>Each minute earns 1 key shard; 10 shards make a key (up to 15 a day). Keys open dungeon, cave and boss fights, which earn gold for gear.</li>
           <li>Past Lv 100, every 60,000 XP (1,000 solo hours) earns a mastery star. Legend is 600,000 XP.</li>
-          <li>Categories help you find skills. You level each skill on its own.</li>
-          <li>Each category grows a talent tree. Add up your skill levels in a category to get its category level, and you earn talent points at category levels ${TALENT_AT.join(", ")}. Each tree plays differently: combat effects, new battle skills, gold, loot and shop discounts, never XP. Resetting a tree is free.</li>
-          <li>Every skill feeds one of 16 disciplines, two in each of 8 paths: Art (performing and visual), Body (strength and endurance), Mind (knowledge and words), Craft (kitchen and workshop), Tech (software and hardware), Spirit (movement and stillness), Life (home, and money and time) and Nature (outdoors and animals). You can change a skill's discipline in its settings.</li>
-          <li>Practice unlocks classes, and you choose which one to play in the Hero tab. Everyone starts as a Wanderer; the other neutral classes open with total level, and each discipline's starter class opens at discipline Lv 10 (10 hours of practice across its skills, counted from total minutes, not by adding skill levels). Switching is free outside a battle. A class gives a signature battle skill and a perk, never XP. There are 98 classes in all: 5 neutral, 16 starter, 32 specializations (a discipline at Lv 25), 8 dual-discipline (both disciplines of a path at Lv 10), 28 two-path classes (two paths at Lv 10 each, one class for every pair) and 9 ascended classes still to come.</li>
+          <li>Categories organize skills; each skill levels on its own.</li>
+          <li>Each category grows a talent tree. Its category level is its skill levels added up; points come at ${TALENT_AT.join(", ")}. Trees give combat effects, battle skills, gold, loot and shop discounts, never XP. Resets are free.</li>
+          <li>Each skill feeds one of 16 disciplines, two per path across 8 paths: Art (performing and visual), Body (strength and endurance), Mind (knowledge and words), Craft (kitchen and workshop), Tech (software and hardware), Spirit (movement and stillness), Life (home, and money and time) and Nature (outdoors and animals). Change a skill's discipline in its settings.</li>
+          <li>Practice unlocks classes; pick one in the Hero tab. Everyone starts as a Wanderer. Other neutral classes open with total level; each starter class at discipline Lv 10 (10 hours across its skills, from total minutes, not summed levels). Switching is free outside battle. A class gives a signature skill and a perk, never XP. There are 98 classes in all: 5 neutral, 16 starter, 32 specializations (a discipline at Lv 25), 8 dual-discipline (both disciplines of a path at Lv 10), 28 two-path classes (two paths at Lv 10 each, one class for every pair) and 9 ascended classes still to come.</li>
           <li>${esc(cgRuleText())}</li>
-          <li>Adventuring pets: link a pet to its own Animals skill (like Dog walking or Pet care). It joins your hero at that skill's Lv 3 and learns tricks as the skill levels up. Pets never add XP, and they never get hungry or sad if you skip days.</li>
-          <li>On the map, villagers give short missions, caves hide side fights, and each region has a boss whose big attack you can stun, shield or dodge. Healing and Shield potions are found in play, never sold, and you can drink one per fight.</li>
+          <li>Pets: link each to its own Animals skill (like Dog walking or Pet care). It joins at that skill's Lv 3 and learns tricks as it levels. Pets never add XP and never get hungry or sad if you skip days.</li>
+          <li>On the map, villagers give missions, caves hide side fights, and each region's boss has a big attack you can stun, shield or dodge. Healing and Shield potions are found, never sold; drink one per fight.</li>
         </ul>
       </div></details>`;
   }
@@ -7293,13 +7293,13 @@ details.cg-set > summary { cursor: pointer; }
       <div class="panel onboard">
         <div style="display:grid;gap:8px">
           <h2>Create your hero</h2>
-          <p class="muted">Choose what you're working on. Each skill gets its own XP bar, and your practice unlocks classes you can choose.</p>
+          <p class="muted">Pick what you're working on. Each skill gets its own XP bar, and practice unlocks classes.</p>
         </div>
         <div class="field"><label for="ob-name">Hero name</label><input class="input" id="ob-name" maxlength="30" placeholder="e.g. Bruno the Bold" value="${esc(state.heroName)}"></div>
         ${pickerHTML(true)}
         ${pick.size ? `<div class="field"><span class="lbl">Your skills · veteran hours before today (optional)</span>
           <div class="picked">${[...pick.entries()].map(([n, v], i) => `<div class="picked-row"><span>${esc(n)} <small class="muted" style="font-weight:400">${esc(catById(v.catId).label)}</small></span><input class="input num" type="number" min="0" max="20000" inputmode="numeric" placeholder="0 hours" id="ob-prior-${i}" data-prior="${esc(n)}" value="${v.prior || ""}" aria-label="Veteran hours for ${esc(n)}"></div>`).join("")}</div>
-          <div class="hint">Veteran hours earn a Veteran badge to show your past experience. Every skill starts at Lv 0 and levels from time you log here. You can edit veteran hours later.</div></div>` : ""}
+          <div class="hint">Veteran hours earn a badge for past experience, not XP. Skills start at Lv 0 and level from time logged here. Editable later.</div></div>` : ""}
         <div class="err" id="ob-err"></div>
         <div class="actions">
           <button class="btn primary" data-act="ob-start" ${pick.size ? "" : "disabled"}>Begin${pick.size ? ` with ${pick.size} skill${pick.size > 1 ? "s" : ""}` : ""}</button>
@@ -7313,7 +7313,7 @@ details.cg-set > summary { cursor: pointer; }
     body.innerHTML = pickerHTML(false) + (addSel
       ? `<div class="field"><label for="add-prior">Veteran hours of ${esc(addSel.name)} (optional)</label>
           <input class="input num" id="add-prior" type="number" min="0" max="20000" inputmode="numeric" placeholder="0" value="${esc(addPrior)}">
-          <div class="hint">Earns a Veteran badge for past experience. Your level still starts at 0 and grows from what you log here. You can edit this later.</div></div>`
+          <div class="hint">Earns a Veteran badge, not XP. Your level starts at 0 and grows from time logged here. Editable later.</div></div>`
       : `<div class="hint">Pick a skill above, or add your own.</div>`);
   }
   function inPicker() { return dlgAdd.open ? "add" : "ob"; }
@@ -7385,7 +7385,7 @@ details.cg-set > summary { cursor: pointer; }
     fbMode = mode; fbSkill = mode === "tip" ? skillById(skillId) : null; fbKind = "idea";
     const tipMode = mode === "tip" && fbSkill;
     document.getElementById("fb-title").textContent = tipMode ? `Suggest a ${fbSkill.name} tip` : "Send feedback";
-    document.getElementById("fb-sub").textContent = tipMode ? "Good tips get reviewed and added for everyone at that tier." : "Tell us what's working, what's broken, or what you'd change.";
+    document.getElementById("fb-sub").textContent = tipMode ? "Good tips are reviewed and added for everyone at that tier." : "What's working, what's broken, what would you change?";
     document.getElementById("fb-label").textContent = tipMode ? "Your tip" : "Your message";
     document.getElementById("fb-text").placeholder = tipMode ? "One short, practical tip a player at this tier can use today." : "";
     document.getElementById("fb-kind-wrap").hidden = !!tipMode;
@@ -7641,7 +7641,7 @@ details.cg-set > summary { cursor: pointer; }
         pick = new Map();
         tab = "hero";
         persist(); render();
-        toast("Your hero is ready. Give them a look, then start a timer to earn your first XP.");
+        toast("Your hero is ready. Start a timer to earn your first XP.");
         break;
       }
     }

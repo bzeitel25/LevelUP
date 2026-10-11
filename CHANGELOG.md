@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.18.1 — 2026-10-11 (build 2026-10-11.3)
+
+Shorter, clearer text.
+
+- Tightened about 80 hints, intros, tooltips, toasts and rules across the app, covering classes, talents, pets, the shop, inventory, adventure, settings and onboarding. Same meaning and same numbers, with less reading.
+
 ## v0.18.0 — 2026-10-11 (build 2026-10-11.2)
 
 Class gear sets and role talent trees.
