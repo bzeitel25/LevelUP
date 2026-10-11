@@ -1254,7 +1254,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // A class gives a signature battle skill and an always-on perk. Never XP.
   // Signature skills are recipes run by castSkill's recipe branch (keys start "c-"); the new recipe
   // fields are handled in classRecipe(). Effect perks add into talentFx() before the caps.
-  const CLASS_TIERS = { neutral: "Neutral class", starter: "Starter class", spec: "Specialization", dual: "Dual-discipline class" };
+  const CLASS_TIERS = { neutral: "Neutral class", starter: "Starter class", spec: "Specialization", dual: "Dual-discipline class", two: "Two-path class" };
   const CLASS_ROLE_KEY = { "Striker": "striker", "Guardian": "guardian", "Support": "support", "Controller": "controller", "Treasure Hunter": "treasure", "All-rounder": "all" };
   const CLS_CLOTH = [["Indigo Ink", "#3b3a8f", "#272566"], ["Mint Wash", "#7fd3b0", "#55a687"]];   // Illustrator colors, appended to CLOTH
   const starterClass = (id, name, disc, role, sig, perk, gear) => ({ id, name, tier: "starter", disc, role, req: { disc, lv: 10 }, sig, perk, gear });
@@ -1335,7 +1335,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   const CLASS_SPECS = [
     specClass("bard", "skald", "Skald", "Striker", { name: "War Chant", desc: "A 2× hit that heals 5%", cd: 10, icon: "note", mult: 2, heal: 0.05 },
       { desc: "Your Art path skill (Inspire) lasts 1 s longer", inspireSec: 1 }),
-    specClass("bard", "siren", "Siren", "Controller", { name: "Lullaby", desc: "Stuns for 2 s", cd: 13, icon: "note", stun: 2 },
+    specClass("bard", "siren", "Siren", "Controller", { name: "Lure", desc: "The monster's next attack hits itself instead", cd: 13, icon: "note", lure: 1 },
       { desc: "Monsters wait 1 s longer before their first attack", fx: { monDelay: 1 } }),
     specClass("illustrator", "illusionist", "Illusionist", "Controller", { name: "Trompe-l'oeil", desc: "The next 2 hits miss", cd: 20, icon: "eye", dodgeN: 2 },
       { desc: "5% chance to dodge", fx: { dodge: 5 } }),
@@ -1355,8 +1355,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       { desc: "Radiant relics 15% more often", fx: { relicFind: 15 } }),
     specClass("scribe", "warlock", "Warlock", "Controller", { name: "Hex", desc: "The monster deals 20% less for 5 s", cd: 8, icon: "rune", weak: [20, 5] },
       { desc: "Heal for 5% of your auto-attack damage", fx: { lifesteal: 5 } }),
-    specClass("scribe", "envoy", "Envoy", "Treasure Hunter", { name: "Parley", desc: "+10% gold from this fight, once per fight", cd: 16, icon: "coin", once: true, goldPct: 10 },
-      { desc: "Shop gear 10% cheaper", fx: { shopDisc: 10 } }),
+    specClass("scribe", "envoy", "Envoy", "Treasure Hunter", { name: "Parley", desc: "Radiant relics 25% more likely if you win this fight (once per fight)", cd: 16, icon: "coin", once: true, relicWin: 25 },
+      { desc: "Radiant relics 10% more often and shop gear 5% cheaper", fx: { relicFind: 10, shopDisc: 5 } }),
     specClass("chef", "feastmaster", "Feastmaster", "Support", { name: "Grand Feast", desc: "Heals 25% and +20% damage for 5 s", cd: 16, icon: "heart", heal: 0.25, buff: [20, 5] },
       { desc: "Heals 15% stronger", fx: { healPow: 15 } }),
     specClass("chef", "grillmaster", "Grillmaster", "Striker", { name: "Searing Skewer", desc: "A 2.5× hit that burns for 0.3× a second for 3 s", cd: 12, icon: "sword", mult: 2.5, burn: [0.3, 3] },
@@ -1416,17 +1416,84 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     dualClass("nature", "outrider", "Outrider", "Striker", { name: "Hunt Together", desc: "You and your pet strike for 2× together (no pet yet: a spirit companion joins in)", cd: 10, icon: "arrow", hunt: 2 },
       { desc: "Your pet fights at full strength, and you walk faster on the map", petFull: true, walk: 1.25 })
   ];
-  CLASSES.push(...CLASS_SPECS, ...CLASS_DUALS);
+  // Phase 4: two-path classes, one for each pair of paths, at Lv 10 in both paths (path level from all the
+  // practice minutes in that path's skills, like a discipline). New recipe fields (see classRecipe): tale, dance,
+  // retune, drop, chant, trophyWin, relicWin, birdsong, runed, coil, clarity, plan, molten, kinetic, aegis,
+  // bodyguard, fury, gizmo, totem, swarm, predict, dividend, recon, immune, wolf, gatherPot, lure.
+  // Flag perks: talSkills, burnPow, firstFree, open, slowDur, sigCdr, spirit, potWin.
+  const TWO_LV = 10;
+  const twoClass = (paths, id, name, role, sig, perk) => ({ id, name, tier: "two", paths, role, sig, perk });
+  const CLASS_TWOPATH = [
+    twoClass(["music", "mind"], "loremaster", "Loremaster", "Support", { name: "Epic Tale", desc: "+5% damage for each skill you have used this fight, up to +40%, for 6 s", cd: 14, icon: "note", tale: [5, 40, 6] },
+      { desc: "Bring 3 talent skills into a fight instead of 2", talSkills: 3 }),
+    twoClass(["music", "body"], "bladedancer", "Blade Dancer", "Striker", { name: "Dancing Blades", desc: "Four 0.6× hits, each with a 25% chance to make the monster miss its next attack", cd: 10, icon: "sword", dance: [4, 0.6, 25] },
+      { desc: "5% chance to dodge", fx: { dodge: 5 } }),
+    twoClass(["music", "craft"], "luthier", "Luthier", "Support", { name: "Retune", desc: "Your other skills' cooldowns drop by 3 s", cd: 12, icon: "note", retune: 3 },
+      { desc: "Radiant relics 10% more often", fx: { relicFind: 10 } }),
+    twoClass(["music", "tech"], "synthmage", "Synth Mage", "Striker", { name: "Bass Drop", desc: "A 3× shockwave after a 1 s build-up, with a 0.5 s stun", cd: 14, icon: "note", drop: [3, 1, 0.5] },
+      { desc: "Attack 8% faster", fx: { atkSpeed: 8 } }),
+    twoClass(["music", "spirit"], "cantor", "Cantor", "Support", { name: "Chant", desc: "For 6 s, each hit you take heals you 5% right after", cd: 14, icon: "note", chant: [0.05, 6] },
+      { desc: "Regenerate 1% HP every 5 s", fx: { regen: 1 } }),
+    twoClass(["music", "life"], "impresario", "Impresario", "Treasure Hunter", { name: "Encore Night", desc: "Win this fight for +10% trophy chance (once per fight)", cd: 16, icon: "star", once: true, trophyWin: 10 },
+      { desc: "+5% trophy drops", fx: { trophy: 5 } }),
+    twoClass(["music", "nature"], "wildsinger", "Wildsinger", "Controller", { name: "Birdsong", desc: "For 6 s, the monster misses 30% of its attacks", cd: 14, icon: "note", birdsong: [30, 6] },
+      { desc: "Monsters attack 5% slower", fx: { monSlow: 5 } }),
+    twoClass(["mind", "body"], "spellblade", "Spellblade", "Striker", { name: "Runed Strike", desc: "A 2× hit, and your next auto-attack also hits for 2×", cd: 10, icon: "rune", mult: 2, runed: 2 },
+      { desc: "+5% skill damage and +3% auto-attack damage", fx: { skillDmg: 5, atkDmg: 3 } }),
+    twoClass(["mind", "craft"], "alchemist", "Alchemist", "Striker", { name: "Caustic Vial", desc: "A 1.5× hit that burns for 0.3× a second for 4 s, and the monster deals 20% less for 4 s", cd: 12, icon: "star", mult: 1.5, burn: [0.3, 4], weak: [20, 4] },
+      { desc: "Burns deal 25% more damage", burnPow: 25 }),
+    twoClass(["mind", "tech"], "inventor", "Inventor", "Striker", { name: "Lightning Coil", desc: "Three chained 0.9× zaps, each with a 20% chance to stun for 0.5 s", cd: 11, icon: "gear", coil: [3, 0.9, 20, 0.5] },
+      { desc: "Your first skill each fight recharges instantly", firstFree: 1 }),
+    twoClass(["mind", "spirit"], "sage", "Sage", "Support", { name: "Clarity", desc: "Your cooldowns tick twice as fast for 4 s", cd: 16, icon: "eye", clarity: 4 },
+      { desc: "Start every fight with +10% damage for 8 s", open: [10, 8] }),
+    twoClass(["mind", "life"], "strategist", "Strategist", "Controller", { name: "Battle Plan", desc: "The monster's next 2 attacks each come 2 s later", cd: 14, icon: "rune", plan: [2, 2] },
+      { desc: "Stuns and slows last 15% longer", fx: { ctrlDur: 15 }, slowDur: 15 }),
+    twoClass(["mind", "nature"], "druid", "Druid", "Support", { name: "Wild Growth", desc: "Heal 15%, and roots stun for 1 s", cd: 14, icon: "heart", heal: 0.15, stun: 1 },
+      { desc: "+8% max HP", fx: { hp: 8 } }),
+    twoClass(["body", "craft"], "forgeblade", "Forgeblade", "Striker", { name: "Molten Edge", desc: "A 2× hit, then your auto-attacks deal +20% for 4 s", cd: 10, icon: "sword", mult: 2, molten: [20, 4] },
+      { desc: "Critical hits deal 215% instead of 200%", fx: { critDmg: 15 } }),
+    twoClass(["body", "tech"], "vanguard", "Vanguard", "Guardian", { name: "Kinetic Plating", desc: "For 6 s, take 20% less damage, and each hit you take adds +10% to your next attack", cd: 14, icon: "gear", guard: [20, 6], kinetic: [10, 6] },
+      { desc: "+8% max HP", fx: { hp: 8 } }),
+    twoClass(["body", "spirit"], "paladin", "Paladin", "Guardian", { name: "Aegis", desc: "Gain a 1-hit shield, and for 5 s every block or shield also heals you 4%", cd: 14, icon: "rune", ward: 1, aegis: [0.04, 5] },
+      { desc: "Heals 10% stronger", fx: { healPow: 10 } }),
+    twoClass(["body", "life"], "sentinel", "Sentinel", "Guardian", { name: "Bodyguard", desc: "Block the next hit and counter for 1.5×", cd: 12, icon: "rune", bodyguard: 1.5 },
+      { desc: "Take 5% less damage", fx: { dmgTaken: 5 } }),
+    twoClass(["body", "nature"], "barbarian", "Barbarian", "Striker", { name: "Wild Fury", desc: "A hit from 1.5× at full HP up to 3× at 25% HP or less", cd: 10, icon: "sword", fury: [1.5, 3, 0.25] },
+      { desc: "+8% max HP", fx: { hp: 8 } }),
+    twoClass(["craft", "tech"], "tinker", "Tinker", "Controller", { name: "Gizmo", desc: "A random stun (1.5 s), slow (40% for 4 s) or 1-hit shield", cd: 10, icon: "gear", gizmo: [1.5, 40, 4] },
+      { desc: "Stuns last 10% longer", fx: { ctrlDur: 10 } }),
+    twoClass(["craft", "spirit"], "totemcarver", "Totem Carver", "Support", { name: "Spirit Totem", desc: "The next 2 hits you take deal half damage and each heals you 3%", cd: 14, icon: "rune", totem: [2, 0.03] },
+      { desc: "Buffs last 10% longer", fx: { buffDur: 10 } }),
+    twoClass(["craft", "life"], "homesteader", "Homesteader", "Treasure Hunter", { name: "Harvest", desc: "+10% gold from this fight and heal 8% (once per fight)", cd: 16, icon: "coin", once: true, goldPct: 10, heal: 0.08 },
+      { desc: "Find elixirs 15% more often", fx: { elixirFind: 15 } }),
+    twoClass(["craft", "nature"], "beekeeper", "Beekeeper", "Controller", { name: "Swarm", desc: "Bees sting for 0.2× every half second for 5 s, and the monster deals 15% less while they buzz", cd: 14, icon: "star", swarm: [0.2, 5, 15] },
+      { desc: "Monsters deal 5% less damage", fx: { weaken: 5 } }),
+    twoClass(["tech", "spirit"], "oracle", "Oracle", "Controller", { name: "Predict", desc: "The next 3 heavy hits deal half damage", cd: 14, icon: "eye", predict: 3 },
+      { desc: "Heavy hits drop from 20% to 15% of attacks", fx: { heavyLess: 5 } }),
+    twoClass(["tech", "life"], "magnate", "Magnate", "Treasure Hunter", { name: "Dividend", desc: "+10% gold from this fight, doubled if you win above half HP (once per fight)", cd: 16, icon: "coin", once: true, goldPct: 10, dividend: 10 },
+      { desc: "+5% dungeon gold", fx: { gold: 5 } }),
+    twoClass(["tech", "nature"], "scout", "Scout", "Striker", { name: "Recon", desc: "+25% crit chance for 6 s", cd: 12, icon: "arrow", recon: [25, 6] },
+      { desc: "+3% crit chance", fx: { crit: 3 } }),
+    twoClass(["spirit", "life"], "minimalist", "Minimalist", "Guardian", { name: "Let Go", desc: "Immune to damage for 1.5 s", cd: 16, icon: "eye", immune: 1.5 },
+      { desc: "Your class signature's cooldown is 15% shorter", sigCdr: 15 }),
+    twoClass(["spirit", "nature"], "shaman", "Shaman", "Support", { name: "Spirit Wolf", desc: "A spirit wolf bites for 0.4× every second for 6 s, and each bite heals you 2%", cd: 16, icon: "heart", wolf: [6, 0.4, 0.02] },
+      { desc: "With no pet along, a spirit companion joins every fight at 0.2× (a bite every 3 s)", spirit: 0.2 }),
+    twoClass(["life", "nature"], "forager", "Forager", "Treasure Hunter", { name: "Gather", desc: "Heal 5%, and a win this fight has +25% chance to drop a Healing Potion (once per fight)", cd: 16, icon: "heart", once: true, heal: 0.05, gatherPot: 25 },
+      { desc: "5% chance after any win to find a Healing Potion", potWin: 5 })
+  ];
+  CLASSES.push(...CLASS_SPECS, ...CLASS_DUALS, ...CLASS_TWOPATH);
   const CLASS_BY = Object.fromEntries(CLASSES.map(c => [c.id, c]));
   CLASSES.forEach(c => {
     if (c.tier === "spec") { c.disc = CLASS_BY[c.from].disc; c.req = { disc: c.disc, lv: SPEC_LV }; }
     if (c.tier === "dual") { c.discs = Object.keys(DISCIPLINES).filter(d => DISCIPLINES[d].path === c.path); c.req = { discs: c.discs, lv: DUAL_LV }; }
+    if (c.tier === "two") c.req = { paths: c.paths, lv: TWO_LV };
   });
   const clsSpecsOf = id => CLASS_SPECS.filter(c => c.from === id);
 
   // Discipline and path levels come from all the practice minutes in their skills together, on the same curve as a skill.
   const clsDiscXp = d => state.skills.reduce((n, s) => n + (discOf(s) === d ? (s.earnedMin || 0) : 0), 0);
-  const clsPathLv = p => lvFrom(state.skills.reduce((n, s) => n + (s.cat === p ? (s.earnedMin || 0) : 0), 0));
+  const clsPathXp = p => state.skills.reduce((n, s) => n + (s.cat === p ? (s.earnedMin || 0) : 0), 0);
+  const clsPathLv = p => lvFrom(clsPathXp(p));
   const clsDiscLv = d => lvFrom(clsDiscXp(d));
   const clsLvExact = xp => Math.min(MAX_LV, Math.sqrt(Math.max(0, xp) / MIN_PER_LV));
   const clsPaths5 = () => Object.keys(PATHS).filter(p => clsPathLv(p) >= 5).length;
@@ -1441,6 +1508,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (q.paths5) add("Paths at Lv 5", clsPaths5(), q.paths5);
     if (q.disc) { const xp = clsDiscXp(q.disc); add(DISCIPLINES[q.disc].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); }
     if (q.discs) q.discs.forEach(d => { const xp = clsDiscXp(d); add(DISCIPLINES[d].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); });
+    if (q.paths) q.paths.forEach(p => { const xp = clsPathXp(p); add(PATHS[p].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); });
     return out;
   }
   const clsReqText = r => r.lvl ? `${r.label} Lv ${r.have} / ${r.need}` : `${r.label} ${r.have} / ${r.need}`;
@@ -1451,10 +1519,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   const curClassId = () => typeof state.cls === "string" && Object.hasOwn(CLASS_BY, state.cls) && classUnlocked(state.cls) ? state.cls : "wanderer";
   const curClass = () => CLASS_BY[curClassId()];
   const clsPathOf = c => c.disc ? DISCIPLINES[c.disc].path : c.path || null;
-  function classHero() { const c = curClass(), p = clsPathOf(c); return { id: c.id, name: c.name, role: c.role, paths: p ? [p] : [] }; }
-  const clsWhere = c => c.disc ? `${PATHS[clsPathOf(c)].label} · ${DISCIPLINES[c.disc].label}` : c.path ? `${PATHS[c.path].label} · Dual-discipline` : CLASS_TIERS[c.tier];
+  function classHero() { const c = curClass(), p = clsPathOf(c); return { id: c.id, name: c.name, role: c.role, paths: c.paths ? c.paths.slice() : p ? [p] : [] }; }
+  const clsPairText = c => c.paths.map(p => PATHS[p].label).join(" + ");
+  const clsWhere = c => c.disc ? `${PATHS[clsPathOf(c)].label} · ${DISCIPLINES[c.disc].label}` : c.path ? `${PATHS[c.path].label} · Dual-discipline` : c.paths ? `${clsPairText(c)} · Two-path` : CLASS_TIERS[c.tier];
   // The discipline levels behind a class, for the panel kicker: "Performing Lv 27" or "Performing Lv 12, Visual Lv 10".
-  const clsLvLine = c => (c.discs || (c.disc ? [c.disc] : [])).map(d => `${DISCIPLINES[d].label} Lv ${clsDiscLv(d)}`).join(", ");
+  const clsLvLine = c => c.paths ? c.paths.map(p => `${PATHS[p].label} Lv ${clsPathLv(p)}`).join(", ") : (c.discs || (c.disc ? [c.disc] : [])).map(d => `${DISCIPLINES[d].label} Lv ${clsDiscLv(d)}`).join(", ");
   function classSubline() { const c = curClass(); return `${c.role} · ${clsWhere(c)}`; }
   // Perks that are plain effects add into the talent totals, before the shared caps.
   function classPerkFx(fx) { const c = curClass(); Object.entries(c.perk.fx || {}).forEach(([k, v]) => { fx[k] = (fx[k] || 0) + v; }); fx.cls = c.id; }
@@ -1466,7 +1535,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // Shared interface for other features (see design/CONTRACT.md).
   const activeClass = () => curClass();
   const classPerk = k => k === "petFull" ? +classPetFull() : k === "walkFast" ? (classWalkMult() > 1 ? 1 : 0) : (talentFx()[k] || 0);
-  function classSignature() { const c = curClass(); return Object.assign({ key: "c-" + c.id, power: 1, cls: c.id }, c.sig); }
+  function classSignature() {
+    const c = curClass(), s = Object.assign({ key: "c-" + c.id, power: 1, cls: c.id }, c.sig), cut = +(c.perk.sigCdr || 0);
+    if (cut && s.cd) s.cd = Math.round(s.cd * (1 - cut / 100) * 10) / 10;   // Minimalist: the signature recharges 15% sooner
+    return s;
+  }
+  const maxTalSkills = () => Math.max(MAX_TAL_SKILLS, +(curClass().perk.talSkills || 0));   // Loremaster brings 3
   const clsCdText = s => s.once ? "once per fight" : cdText(s.cd);
   const clsSigLine = s => /once per fight/.test(s.desc) ? s.desc : `${s.desc} · ${clsCdText(s)}`;
   const clsSeasonedX = s => Math.min(s.seasoned[2], s.seasoned[0] + s.seasoned[1] * clsPaths5());
@@ -1483,10 +1557,18 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     b.missN = 0; b.guardN = 0; b.gateN = 0; b.gateX = 1; b.absorb = 0; b.ripX = 0; b.empX = 0; b.castX = 1; b.castPre = null;
     b.hpHist = []; b.endured = false; b.errand = null; b.winGold = 0; b.clsNote = "";
     if (clsFlag("startShield")) b.shield = Math.max(b.shield, clsFlag("startShield"));   // Netwarden
+    // phase 4 (two-path) timers and counters
+    b.taleT = 0; b.taleX = 1; b.dropT = 0; b.dropM = 0; b.chantT = 0; b.chantH = 0; b.birdT = 0; b.birdP = 0; b.runeX = 0; b.clarT = 0;
+    b.planN = 0; b.planD = 0; b.planLast = 0; b.moltT = 0; b.moltX = 1; b.kinT = 0; b.kinP = 0; b.kinX = 0; b.aegisT = 0; b.aegisH = 0; b.shPrev = b.shield;
+    b.bgX = 0; b.totemN = 0; b.totemH = 0; b.totemDue = 0; b.swarmT = 0; b.swarmDmg = 0; b.swarmX = 1; b.predictN = 0; b.reconT = 0; b.reconAdd = 0;
+    b.immT = 0; b.wolfT = 0; b.wolfDmg = 0; b.wolfH = 0; b.lureN = 0; b.trophyWin = 0; b.relicWin = 0; b.gatherPot = 0; b.divPct = 0;
+    b.freeOne = !!clsFlag("firstFree"); b.spiritX = +(curClass().perk.spirit || 0);   // Inventor, Shaman
+    const op = curClass().perk.open; b.openX = op ? 1 + op[0] / 100 : 1; b.openTo = op ? 10 + op[1] * 10 : 0;   // Sage: the fight starts at tick 10
   }
   function classHeavy(b) { if (b.hvy == null) return Math.random() < b.heavyCh; const h = b.hvy; b.hvy = Math.random() < b.heavyCh; b.hvyWarned = false; return h; }
   function classDodge(b) {                      // Trompe-l'oeil and Palm of Wind: the next hits miss. Foresight: the next heavy hit misses
     if (b.missN > 0) { b.missN--; return true; }
+    if (b.birdT > 0 && Math.random() < b.birdP / 100) { btPop("Birdsong", 14, 4, "#9be07a"); return true; }   // Wildsinger
     if (!(b.foresee > 0 && b.hvy)) return false;
     b.foresee = 0; b.hvy = Math.random() < b.heavyCh; b.hvyWarned = false; btPop("Foreseen!", 14, 4, "#c89cf2", true); return true;
   }
@@ -1518,39 +1600,97 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       if (b.monHit !== b.hgSeen) { b.hgSeen = b.monHit; n++; }
       for (let i = 0; i < n && b.hgGold < 10; i++) { const add = Math.min(2, 10 - b.hgGold); b.hgGold += add; const got = clsGold(b, add); btPop(got ? "+" + got + "% gold" : "Gold bonus maxed", 40, 18, "#f2c14e"); }
     }
-    if (b.cmpT > 0) { b.cmpT--; if (b.cmpT % 10 === 0) { const d = Math.round(b.cmpDmg); b.monHp -= d; b.monHit = b.t; btPop("" + d, 40, 16, "#9be07a"); } }
+    if (b.cmpT > 0) { b.cmpT--; if (b.cmpT % 10 === 0) clsSpiritBite(b, b.cmpDmg); }
     if (b.rageT > 0 && --b.rageT === 0) { b.monDmg /= b.rageTaken; b.rageX = 1; b.rageTaken = 1; }
     if (b.howlT > 0 && --b.howlT === 0) { if (b.pet) b.pet.mult /= b.howlX; b.howlX = 1; }
     if (b.slowT > 0 && --b.slowT === 0) { b.monEvery /= b.slowX; b.slowX = 1; }
     if (b.reflT > 0) b.reflT--;
     if (b.spot && !(b.stun > 0)) b.spot = 0;      // Spotlight lasts as long as its stun
     if (b.hpHist) { b.hpHist.push(b.heroHp); if (b.hpHist.length > 31) b.hpHist.shift(); }   // 3 s of HP, for Hourglass
+    classTick2(b);
     if (b.cls === "mystic" && b.hvy && !b.hvyWarned && b.monHp > 0 && b.nextMon - b.t <= 8 && b.nextMon > b.t) { b.hvyWarned = true; btPop("Heavy hit!", 40, 2, "#ff5a5a", true); b.log = "Heavy hit incoming! Shield, stun or dodge it."; }
+  }
+  // A spirit companion bite (Beastmaster's spirit, the Shaman's companion and Spirit Wolf). Returns the damage.
+  function clsSpiritBite(b, dmg, col) { const d = Math.max(1, Math.round(dmg)); b.monHp -= d; b.monHit = b.t; btPop("" + d, 40, 16, col || "#9be07a"); return d; }
+  const clsHealPop = (b, frac, label) => { const h = btHeal(b, frac); if (h) btPop((label ? label + " +" : "+") + h, 14, 10, "#4fc58d"); return h; };
+  // Two-path timers, run every tick from classTick.
+  function classTick2(b) {
+    if (b.taleT > 0 && --b.taleT === 0) b.taleX = 1;
+    if (b.dropT > 0 && --b.dropT === 0 && b.monHp > 0) { const d = clsStrike(b, b.dropM); btStun(b, b.dropS); btPop("DROP " + d + "!!", 42, 8, "#c89cf2", true); b.fx.push({ k: "flash", ttl: 3 }); }
+    if (b.chantT > 0) b.chantT--;
+    if (b.birdT > 0) b.birdT--;
+    if (b.moltT > 0 && --b.moltT === 0) b.moltX = 1;
+    if (b.kinT > 0) b.kinT--;
+    if (b.aegisT > 0) { b.aegisT--; for (let i = b.shield; i < b.shPrev; i++) clsAegis(b); }   // a shield charge was spent this tick
+    b.shPrev = b.shield;
+    if (b.reconT > 0 && --b.reconT === 0) { b.critCh -= b.reconAdd; b.reconAdd = 0; }
+    if (b.immT > 0) b.immT--;
+    if (b.clarT > 0) { b.clarT--; Object.keys(b.cds).forEach(k => { if (b.cds[k] > 0 && b.cds[k] < 1e5) b.cds[k]--; }); }   // Clarity: cooldowns tick twice
+    if (b.swarmT > 0) { b.swarmT--; if (b.swarmT % 5 === 0) clsSpiritBite(b, b.swarmDmg, "#ffd23a"); if (!b.swarmT) b.swarmX = 1; }
+    if (b.wolfT > 0) { b.wolfT--; if (b.wolfT % 10 === 0 && b.monHp > 0) { clsSpiritBite(b, b.wolfDmg, "#bfe3ff"); clsHealPop(b, b.wolfH); } }
+    if (b.planN > 0 && b.t >= b.planLast && b.nextMon > b.t) { b.nextMon += b.planD; b.planN--; b.planLast = b.nextMon; }   // Battle Plan
+    if (b.freeOne && b.used > 0) {                // Inventor: the first skill of the fight recharges at once
+      b.freeOne = false;
+      if (b.last && b.cds[b.last] > 0 && b.cds[b.last] < 1e5) { b.cds[b.last] = 0; btPop("Recharged", 14, 2, "#7ad0ff"); }
+    }
+    if (b.spiritX && !b.pet && b.t % 30 === 0 && b.monHp > 0) clsSpiritBite(b, b.baseDmg * b.spiritX * (0.9 + Math.random() * 0.2));   // Shaman: like a pet, a bite every 3 s
+  }
+  // Paladin's Aegis: blocks and shields heal for a few seconds.
+  function clsAegis(b) { if (b.aegisT > 0 && b.heroHp > 0) clsHealPop(b, b.aegisH, "Aegis"); }
+  // Auto-attack damage only: Runed Strike, Molten Edge and Kinetic Plating. Used by stepBattle.
+  function classAutoX(b) {
+    let x = b.moltT > 0 ? b.moltX : 1;
+    if (b.runeX) { x *= b.runeX; b.runeX = 0; btPop("Rune!", 46, 4, "#c89cf2"); }
+    if (b.kinX) { x *= 1 + b.kinX; b.kinX = 0; }
+    return x;
   }
   function classBattleUI(b) {
     Object.keys(b.once || {}).forEach(k => { const el = document.getElementById("bts-" + k), sec = el && el.querySelector(".bt-sec"); if (sec && sec.textContent !== "Used") sec.textContent = "Used"; });
     if (b.absorb > 0) { const el = document.getElementById("bt-hero-n"), v = Math.max(0, Math.round(b.heroHp)) + " +" + b.absorb; if (el && el.textContent !== v) { el.textContent = v; el.title = "Energy Barrier absorbs " + b.absorb + " more damage"; } }
   }
   // Damage dealt by the hero (auto-attacks and skill hits): Rage, Pack Howl and Spotlight. Used by btMult.
-  const clsDmgX = b => (b.rageT > 0 ? b.rageX : 1) * (b.howlT > 0 ? b.howlX : 1) * (b.spot && b.stun > 0 ? b.spot : 1);
+  const clsDmgX = b => (b.rageT > 0 ? b.rageX : 1) * (b.howlT > 0 ? b.howlX : 1) * (b.spot && b.stun > 0 ? b.spot : 1) * (b.taleT > 0 ? b.taleX : 1) * (b.openX > 1 && b.t <= b.openTo ? b.openX : 1);   // + Epic Tale, Sage
   // A class skill hit outside castSkill (Riposte's counter).
   function clsStrike(b, mult) { const d = Math.round(b.baseDmg * mult * b.skillMult * btMult(b)); b.monHp -= d; b.monHit = b.t; b.heroAtk = b.t; return d; }
   // A monster hit about to land: Raise the Gate softens it, then Energy Barrier soaks it up. Returns the damage left.
-  function clsHurt(b, raw) {
+  function clsHurt(b, raw, heavy) {
     let d = raw;
+    if (b.immT > 0) { btPop("Immune", 14, 2, "#ffe58a"); return 0; }                  // Let Go
+    if (b.swarmT > 0) d = Math.round(d * b.swarmX);                                   // Swarm
+    if (heavy && b.predictN > 0) { b.predictN--; d = Math.round(d * 0.5); btPop("Predicted", 14, 2, "#c89cf2"); }   // Predict
+    if (b.totemN > 0) { b.totemN--; d = Math.round(d * 0.5); b.totemDue++; }        // Spirit Totem (heals after the hit)
     if (b.gateN > 0) { b.gateN--; d = Math.round(d * b.gateX); }
     if (b.absorb > 0 && d > 0) { const a = Math.min(b.absorb, d); b.absorb -= a; d -= a; btPop("Absorbed " + a, 14, 2, "#7ad0ff"); }
     return d;
   }
   // After a monster hit lands: Berserker holds on, Reforge reflects, Riposte strikes back.
-  function classAfterHit(b, dmg, heavy) {
+  function classAfterHit(b, dmg, heavy, blocked) {
+    if (b.heroHp > 0) {
+      for (; b.totemDue > 0; b.totemDue--) clsHealPop(b, b.totemH, "Totem");
+      if (b.chantT > 0 && dmg > 0) clsHealPop(b, b.chantH, "Chant");
+      if (blocked) clsAegis(b);
+    } else b.totemDue = 0;
+    if (b.kinT > 0 && dmg > 0) { b.kinX += b.kinP; btPop("+" + Math.round(b.kinX * 100) + "% charge", 14, 2, "#7ad0ff"); }   // Kinetic Plating
     if (heavy && b.heroHp <= 0 && clsFlag("endure") && !b.endured) { b.endured = true; b.heroHp = 1; btPop("Hold on!", 14, 4, "#ffe58a", true); b.log = "Berserker: that heavy hit can't take you below 1 HP."; }
     if (b.reflT > 0 && dmg > 0) { const r = Math.round(dmg * b.reflX); if (r > 0) { b.monHp -= r; b.monHit = b.t; btPop("Reflect " + r, 44, 14, "#cfd6e4"); } }
     if (b.ripX && b.heroHp > 0) { const d = clsStrike(b, b.ripX); b.ripX = 0; btPop("Riposte " + d + "!", 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 4 }); }
   }
   // Loyal Guard: your pet (or a spirit companion) jumps in front of the next hits.
-  function classGuard(b) {
+  function classGuard(b, x) {
+    if (b.lureN > 0) {                          // Siren's Lure: the attack turns on the monster, at its own strength
+      b.lureN--; b.monAtk = b.t;
+      const own = b.monDmg / (b.guardT > 0 ? b.guardX : 1) / (b.rageT > 0 ? b.rageTaken : 1);
+      const d = Math.round(own * b.weakX * (0.8 + Math.random() * 0.4) * (classHeavy(b) ? 2 : 1) * (x || 1));
+      b.monHp -= d; b.monHit = b.t; btPop("Lured " + d + "!", 44, 8, "#c89cf2", true); b.fx.push({ k: "flash", ttl: 2 }); Sound.play("hit");
+      return true;
+    }
+    if (b.bgX) {                                // Sentinel's Bodyguard: block and counter
+      b.monAtk = b.t; btPop("Blocked", 16, 12, "#7ad0ff"); clsAegis(b);
+      const d = clsStrike(b, b.bgX); b.bgX = 0; btPop("Counter " + d + "!", 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 4 }); Sound.play("tap");
+      return true;
+    }
     if (!(b.guardN > 0)) return false;
+    clsAegis(b);
     b.guardN--; b.monAtk = b.t; if (b.pet) b.pet.hop = b.t;
     btPop("Guarded", 16, 12, "#ffc98a"); Sound.play("tap");
     return true;
@@ -1558,7 +1698,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   // Boss specials: the class misses and guards work on them too.
   function classSpecialDefend(b) {
     if (b.missN > 0) { b.missN--; btPop("Dodged!", 16, 8, "#cfd6e4", true); return true; }
-    return classGuard(b);
+    return classGuard(b, typeof ADV2_SPECIAL_X === "number" ? ADV2_SPECIAL_X : 3);
   }
   // Empower and Hotfix: the next skill you cast deals and heals more (hits, heals, heal over time, burns, turrets).
   function classCastStart(b, sk) {
@@ -1566,7 +1706,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (X > 1) { b.empX = 0; b.castX = X; b.castPre = { hot: b.hot, burn: b.burn, turret: b.turret, cmpT: b.cmpT }; btPop("Empowered", 14, 2, "#c89cf2"); }
     return X;
   }
-  function classCastEnd(b) {
+  function classCastEnd(b, sk) {
+    if (sk && sk.burn && clsFlag("burnPow")) b.burnDmg *= 1 + clsFlag("burnPow") / 100;   // Alchemist
     const p = b.castPre;
     if (b.castX > 1 && p) {
       if (b.hot !== p.hot) b.hotPer *= b.castX;
@@ -1584,6 +1725,15 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       else if (win) notes.push("Swift Errand ran out of time");
     }
     if (b.winGold && win) { const got = clsGold(b, b.winGold); notes.push(got ? `Trade Winds +${got}% gold` : "Trade Winds: gold bonus maxed"); }
+    if (b.divPct && win) {
+      if (b.heroHp > b.heroMax / 2) { const got = clsGold(b, b.divPct); notes.push(got ? `Dividend doubled +${got}% gold` : "Dividend: gold bonus maxed"); }
+      else notes.push("Dividend not doubled (below half HP)");
+    }
+    const bump = (k, add, label, what) => { const before = b.tfx[k] || 0; b.tfx[k] = Math.min(TAL_CAP[k], before + add); const got = b.tfx[k] - before; notes.push(got ? `${label} +${got}% ${what}` : `${label}: ${what} bonus maxed`); };
+    if (b.trophyWin && win) bump("trophy", b.trophyWin, "Encore Night", "trophy chance");
+    if (b.relicWin && win) bump("relicFind", b.relicWin, "Parley", "Radiant relic chance");
+    const potCh = (clsFlag("potWin") + (b.gatherPot || 0)) / 100;          // Forager's perk and Gather
+    if (win && potCh > 0 && Math.random() < potCh) { givePotion("heal", "Forager's find"); notes.push("found a Healing Potion"); }
     b.clsNote = notes.map(n => " · " + n).join("");
   }
   // Skill text that a perk lengthens: Skald's Inspire and Dronemaster's drones and turrets.
@@ -1592,6 +1742,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (ins && sk.key === "rally") return Object.assign({}, sk, { desc: sk.desc.replace(/(\d+) seconds/, (m, n) => `${+n + ins} seconds`) });
     if (tur && sk.turret) return Object.assign({}, sk, { desc: sk.desc.replace(/for (\d+) ?s\b/, (m, n) => `for ${+n + tur} s`) });
     return sk;
+  }
+  // A slow on the monster (Silk Snare, Gizmo). Strategists make slows last longer.
+  function clsSlow(b, pct, secs) {
+    if (b.slowT <= 0) { b.slowX = 1 + pct / 100; b.monEvery *= b.slowX; b.nextMon = b.t + Math.round(Math.max(0, b.nextMon - b.t) * b.slowX); }
+    b.slowT = Math.max(b.slowT, Math.round(secs * 10 * (1 + clsFlag("slowDur") / 100)));
   }
   // New recipe fields for signature skills. Runs inside castSkill's recipe branch; false stops the cast.
   function classRecipe(b, sk, hit, caster) {
@@ -1628,10 +1783,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       if (b.howlT <= 0) { b.howlX = 1 + sk.howl[0] / 100; if (b.pet) b.pet.mult *= b.howlX; }
       b.howlT = Math.max(b.howlT, btBuff(sk.howl[1])); btPop("Howl!", 14, 4, "#ffc98a", true); b.fx.push({ k: "notes", ttl: 6 });
     }
-    if (sk.slow) {
-      if (b.slowT <= 0) { b.slowX = 1 + sk.slow[0] / 100; b.monEvery *= b.slowX; b.nextMon = b.t + Math.round(Math.max(0, b.nextMon - b.t) * b.slowX); }
-      b.slowT = Math.max(b.slowT, Math.round(sk.slow[1] * 10)); btPop("Snared", 44, 6, "#cfd6e4");
-    }
+    if (sk.slow) { clsSlow(b, sk.slow[0], sk.slow[1]); btPop("Snared", 44, 6, "#cfd6e4"); }
     if (sk.reflect) { b.reflX = sk.reflect[0] / 100; b.reflT = Math.max(b.reflT, btBuff(sk.reflect[1])); }
     if (sk.absorb) { b.absorb = Math.max(b.absorb, Math.round(b.heroMax * sk.absorb)); btPop("Barrier " + b.absorb, 14, 6, "#7ad0ff"); }
     if (sk.gate) { b.gateN = sk.gate[0]; b.gateX = 1 - sk.gate[1] / 100; btPop("Gate up", 14, 2, "#9aa0ae"); }
@@ -1653,6 +1805,52 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       btPop(mine + " + " + pd + "!", 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 5 });
     }
     if (sk.spot) { b.spot = 1 + sk.spot / 100; btPop("Spotlight", 44, 2, "#ffe58a"); }
+    // phase 4 (two-path) recipes
+    const Q = (sk.power || 1) * (b.castX || 1);           // path power and Empower for hits that land later
+    if (sk.lure) { b.lureN = Math.max(b.lureN, sk.lure); btPop("Lured", 44, 6, "#c89cf2"); }
+    if (sk.relicWin) { b.relicWin = sk.relicWin; btPop("Parley", 44, 8, "#ffe58a"); }
+    if (sk.trophyWin) { b.trophyWin = sk.trophyWin; btPop("Encore night", 44, 8, "#ffe58a"); b.fx.push({ k: "notes", ttl: 6 }); }
+    if (sk.gatherPot) { b.gatherPot = sk.gatherPot; btPop("Gathering", 44, 8, "#9be07a"); }
+    if (sk.dividend) b.divPct = sk.dividend;
+    if (sk.tale) { const pct = Math.min(sk.tale[1], sk.tale[0] * (b.used || 1)); b.taleX = 1 + pct / 100; b.taleT = btBuff(sk.tale[2]); btPop("Epic tale +" + pct + "%", 14, 4, "#ffe58a", true); b.fx.push({ k: "notes", ttl: 8 }); }
+    if (sk.dance) {
+      let tot = 0, miss = false; for (let i = 0; i < sk.dance[0]; i++) { tot += hit(sk.dance[1]); if (Math.random() < sk.dance[2] / 100) miss = true; }
+      if (miss) b.missN = Math.max(b.missN, 1);
+      btPop(sk.dance[0] + " hits " + tot + (miss ? ", dazzled!" : "!"), 42, 8, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 5 });
+      if (b.hgT > 0) b.hgExtra += sk.dance[0] - 1;
+    }
+    if (sk.retune) { const cut = Math.round(sk.retune * 10); Object.keys(b.cds).forEach(k => { if (k !== sk.key && b.cds[k] > 0 && b.cds[k] < 1e5) b.cds[k] = Math.max(0, b.cds[k] - cut); }); btPop("Retuned", 14, 4, "#ffe58a"); }
+    if (sk.drop) { b.dropM = sk.drop[0] * Q; b.dropT = Math.round(sk.drop[1] * 10); b.dropS = sk.drop[2]; btPop("Building up…", 44, 6, "#c89cf2"); }
+    if (sk.chant) { b.chantH = sk.chant[0]; b.chantT = btBuff(sk.chant[1]); btPop("Chanting", 14, 6, "#ffe58a"); b.fx.push({ k: "notes", ttl: 8 }); }
+    if (sk.birdsong) { b.birdP = sk.birdsong[0]; b.birdT = btBuff(sk.birdsong[1]); btPop("Birdsong", 44, 6, "#9be07a"); b.fx.push({ k: "notes", ttl: 8 }); }
+    if (sk.runed) { b.runeX = sk.runed; btPop("Rune charged", 14, 2, "#c89cf2"); }
+    if (sk.coil) {
+      let tot = 0, st = 0; for (let i = 0; i < sk.coil[0]; i++) { tot += hit(sk.coil[1]); if (Math.random() < sk.coil[2] / 100) { btStun(b, sk.coil[3]); st++; } }
+      btPop(sk.coil[0] + " zaps " + tot + (st ? ", stun!" : "!"), 42, 8, "#7ad0ff", true); b.fx.push({ k: "flash", ttl: 2 });
+      if (b.hgT > 0) b.hgExtra += sk.coil[0] - 1;
+    }
+    if (sk.clarity) { b.clarT = btBuff(sk.clarity); btPop("Clarity", 14, 4, "#c89cf2"); }
+    if (sk.plan) { b.planD = Math.round(sk.plan[1] * 10); b.nextMon += b.planD; b.planN = sk.plan[0] - 1; b.planLast = b.nextMon; btPop("Battle plan", 44, 6, "#cfd6e4"); }
+    if (sk.molten) { b.moltX = 1 + sk.molten[0] / 100; b.moltT = btBuff(sk.molten[1]); }
+    if (sk.kinetic) { b.kinP = sk.kinetic[0] / 100; b.kinT = btBuff(sk.kinetic[1]); }
+    if (sk.aegis) { b.aegisH = sk.aegis[0]; b.aegisT = btBuff(sk.aegis[1]); b.shPrev = b.shield; btPop("Aegis", 14, 4, "#ffe58a"); }
+    if (sk.bodyguard) { b.bgX = sk.bodyguard * Q; btPop("On guard", 14, 6, "#9aa0ae"); }
+    if (sk.fury) {
+      const lost = 1 - Math.max(0, b.heroHp) / b.heroMax, m = Math.round(Math.min(sk.fury[1], sk.fury[0] + (sk.fury[1] - sk.fury[0]) * lost / (1 - sk.fury[2])) * 100) / 100;
+      btPop(hit(m) + (m >= 2.5 ? "!!" : "!"), 42, 8, "#ff6a5a", true); b.fx.push({ k: "slash", ttl: 5 }); if (m >= 2.5) b.fx.push({ k: "flash", ttl: 3 });
+    }
+    if (sk.gizmo) {
+      const r = Math.floor(Math.random() * 3);
+      if (r === 0) { btStun(b, sk.gizmo[0]); btPop("Gizmo: stun!", 44, 6, "#9aa0ae"); }
+      else if (r === 1) { clsSlow(b, sk.gizmo[1], sk.gizmo[2]); btPop("Gizmo: slow!", 44, 4, "#cfd6e4"); }
+      else { b.shield = Math.max(b.shield, 1); btPop("Gizmo: shield!", 14, 6, "#7ad0ff"); }
+    }
+    if (sk.totem) { b.totemN = Math.max(b.totemN, sk.totem[0]); b.totemH = sk.totem[1]; btPop("Spirit totem", 14, 6, "#9be07a"); }
+    if (sk.swarm) { b.swarmDmg = b.baseDmg * sk.swarm[0] * Q * b.skillMult; b.swarmT = Math.round(sk.swarm[1] * 10); b.swarmX = 1 - sk.swarm[2] / 100; btPop("Swarm!", 44, 6, "#ffd23a", true); }
+    if (sk.predict) { b.predictN = Math.max(b.predictN, sk.predict); btPop("Predicted ×" + sk.predict, 14, 6, "#c89cf2"); }
+    if (sk.recon) { if (b.reconT <= 0) { b.reconAdd = sk.recon[0] / 100; b.critCh += b.reconAdd; } b.reconT = Math.max(b.reconT, btBuff(sk.recon[1])); btPop("Recon", 14, 4, "#9be07a"); }
+    if (sk.immune) { b.immT = Math.max(b.immT, btBuff(sk.immune)); btPop("Let go", 14, 4, "#ffe58a", true); }
+    if (sk.wolf) { b.wolfT = Math.round(sk.wolf[0] * 10); b.wolfDmg = b.baseDmg * sk.wolf[1] * Q * b.skillMult; b.wolfH = sk.wolf[2]; btPop("Spirit wolf!", 14, 6, "#bfe3ff"); b.fx.push({ k: "notes", ttl: 6 }); }
     if (sk.oddJob || sk.trick) {
       const keys = Object.values(COMBAT_SKILLS).map(x => x.key), own = b.skills.filter(s => keys.includes(s.key));
       const pool = own.length ? own : Object.entries(COMBAT_SKILLS).sort((x, y) => pathLevel(y[0]) - pathLevel(x[0])).map(([p, x]) => Object.assign({ path: p, power: 1 }, x));
@@ -1760,7 +1958,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
   const clsRole = c => `<span class="cls-role r-${CLASS_ROLE_KEY[c.role] || "all"}">${esc(c.role)}</span>`;
   // What a card says under the class name: its discipline, the starter it grows from, or its path.
-  const clsCardWhere = c => c.tier === "spec" ? `${CLASS_BY[c.from].name} · Lv ${SPEC_LV}` : c.tier === "dual" ? `${PATHS[c.path].label} · both at Lv ${DUAL_LV}` : c.disc ? DISCIPLINES[c.disc].label : CLASS_TIERS[c.tier];
+  const clsCardWhere = c => c.tier === "spec" ? `${CLASS_BY[c.from].name} · Lv ${SPEC_LV}` : c.tier === "dual" ? `${PATHS[c.path].label} · both at Lv ${DUAL_LV}` : c.tier === "two" ? `${clsPairText(c)} · both at Lv ${TWO_LV}` : c.disc ? DISCIPLINES[c.disc].label : CLASS_TIERS[c.tier];
   // mode: "cur" (playing), "open" (unlocked, switch), "have" (unlocked, shown in the class tree) or "locked".
   function clsCard(c, mode, near, extra) {
     const isNew = clsNewIds.includes(c.id) && mode === "open", reqs = mode === "locked" ? clsReqs(c) : [];
@@ -1778,7 +1976,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     </div>`;
   }
   // The class tree: each path's two starters, each with its two specializations branching beneath,
-  // then the dual-discipline classes. Unlocked classes show as playable, locked ones show their progress.
+  // then the dual-discipline and two-path classes. Unlocked classes show as playable, locked ones show their progress.
   function clsTreeHTML(ids, near) {
     const mode = c => ids.includes(c.id) ? "have" : "locked";
     const neutral = CLASSES.filter(c => c.tier === "neutral" && !ids.includes(c.id));
@@ -1791,19 +1989,20 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       </div>`).join("")}</div></div>`;
     });
     h += `<div class="cls-group"><div class="cls-gh">Dual-discipline <small>both disciplines of one path at Lv ${DUAL_LV}</small></div><div class="cls-grid">${CLASS_DUALS.map(c => clsCard(c, mode(c), near.includes(c.id))).join("")}</div></div>`;
+    h += `<div class="cls-group" id="cls-two"><div class="cls-gh">Two-path <small>two paths at Lv ${TWO_LV} each</small></div><div class="cls-grid">${CLASS_TWOPATH.map(c => clsCard(c, mode(c), near.includes(c.id))).join("")}</div></div>`;
     return h;
   }
   function renderClassPanel() {
     const cur = curClass(), ids = clsUnlockedIds(), mine = CLASSES.filter(c => ids.includes(c.id)), locked = CLASSES.filter(c => !ids.includes(c.id));
     const lapsed = state.cls && CLASS_BY[state.cls] && state.cls !== cur.id ? CLASS_BY[state.cls] : null;
     const near = cur.perk.name === "Crossroads" ? locked.map(c => ({ id: c.id, f: clsFrac(c) })).sort((a, b) => b.f - a.f).slice(0, 3).map(x => x.id) : [];
-    const sig = cur.sig, open = clsAllOpen == null ? cur.id === "wanderer" : clsAllOpen, lvl = clsLvLine(cur);
+    const sig = classSignature(), open = clsAllOpen == null ? cur.id === "wanderer" : clsAllOpen, lvl = clsLvLine(cur);
     return `<article class="panel set-card cls-panel" id="class-panel">
       <div class="cls-head"><h3>Class</h3><span class="muted" style="font-size:13px">${ids.length} of ${CLASSES.length} unlocked</span></div>
       <div class="cls-cur r-${CLASS_ROLE_KEY[cur.role] || "all"}">
         <span class="cls-crest" aria-hidden="true">${skillIcon(sig.icon)}</span>
         <div class="cls-cur-main">
-          <div class="cls-kicker">${esc(CLASS_TIERS[cur.tier])}${cur.disc || cur.path ? ` · ${esc(PATHS[clsPathOf(cur)].label)}` : ""}${lvl ? ` · ${esc(lvl)}` : ""}${cur.tier === "spec" ? ` · from ${esc(CLASS_BY[cur.from].name)}` : ""}</div>
+          <div class="cls-kicker">${esc(CLASS_TIERS[cur.tier])}${cur.disc || cur.path ? ` · ${esc(PATHS[clsPathOf(cur)].label)}` : cur.paths ? ` · ${esc(clsPairText(cur))}` : ""}${lvl ? ` · ${esc(lvl)}` : ""}${cur.tier === "spec" ? ` · from ${esc(CLASS_BY[cur.from].name)}` : ""}</div>
           <div class="cls-name">${esc(cur.name)}</div>
           ${clsRole(cur)}
         </div>
@@ -1820,7 +2019,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         ${mine.length < 2 ? `<p class="hint" style="margin:0">Practice unlocks more classes: total level opens the neutral classes, and 10 hours in one discipline opens its starter class.</p>` : ""}
       </div>
       <details class="cls-all" ${open ? "open" : ""}><summary><b>Class tree</b> <span class="muted" style="font-size:13px">· ${locked.length ? `${locked.length} to unlock` : "all unlocked"}</span></summary>
-        <p class="hint cls-tree-hint">10 hours in a discipline opens its starter class. About 62 hours (Lv ${SPEC_LV}) opens its two specializations, and you keep the starter too. 10 hours in both disciplines of a path opens its dual-discipline class.</p>
+        <p class="hint cls-tree-hint">10 hours in a discipline opens its starter class. About 62 hours (Lv ${SPEC_LV}) opens its two specializations, and you keep the starter too. 10 hours in both disciplines of a path opens its dual-discipline class, and Lv ${TWO_LV} in two paths (about 10 hours in each) opens their two-path class.</p>
         ${clsTreeHTML(ids, near)}
       </details>
       <p class="hint" style="margin:0">Classes never add XP. Your class sets your signature battle skill and perk, and its path's skill comes first in battle. Gold bonuses from classes and talents share one cap (+${TAL_CAP.gold}%).</p>
@@ -2224,8 +2423,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-10.1";
-  const APP_VERSION = "0.16.0";
+  const BUILD = "2026-10-11.1";
+  const APP_VERSION = "0.17.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -2565,7 +2764,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     const summary = [
       ...Object.entries(fx.stat).filter(([, v]) => v).map(([k, v]) => `+${v} ${STATS[k].name}`),
       ...Object.keys(FX_TEXT).filter(k => fx[k]).map(k => FX_TEXT[k](fx[k])),
-      fx.skills.length ? `Battle skills from talents: ${fx.skills.map(k => k.name).join(", ")}${fx.skills.length > MAX_TAL_SKILLS ? ` (pick which ${MAX_TAL_SKILLS} to bring under Battle skills in Adventure)` : ""}` : "",
+      fx.skills.length ? `Battle skills from talents: ${fx.skills.map(k => k.name).join(", ")}${fx.skills.length > maxTalSkills() ? ` (pick which ${maxTalSkills()} to bring under Battle skills in Adventure)` : ""}` : "",
       Object.keys(fx.disc).length ? "gear discounts" : ""
     ].filter(Boolean);
     return `<section style="display:grid;gap:12px">
@@ -3491,18 +3690,18 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function talentLoadout() {
     const pool = talentFx().skills, pick = (state.talSkills || []).map(k => pool.find(x => x.key === k)).filter(Boolean);
     pool.forEach(x => { if (!pick.includes(x)) pick.push(x); });
-    return pick.slice(0, MAX_TAL_SKILLS);
+    return pick.slice(0, maxTalSkills());
   }
   function toggleTalSkill(key) {
     const pool = talentFx().skills; if (!pool.some(x => x.key === key)) return;
     let cur = talentLoadout().map(x => x.key);
     if (cur.includes(key)) {
-      if (pool.length <= MAX_TAL_SKILLS) return;
+      if (pool.length <= maxTalSkills()) return;
       cur = cur.filter(k => k !== key);
       const alt = pool.find(x => x.key !== key && !cur.includes(x.key) && !(state.talSkills || []).includes(x.key)) || pool.find(x => x.key !== key && !cur.includes(x.key));
       if (alt) cur.push(alt.key);
     }
-    else { cur = [key, ...cur].slice(0, MAX_TAL_SKILLS); }
+    else { cur = [key, ...cur].slice(0, maxTalSkills()); }
     state.talSkills = cur; persist(); render();
   }
   function battleSkills() {
@@ -3576,6 +3775,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         let dmg = b.heroDmg * (0.8 + Math.random() * 0.4) * btMult(b) * (crit ? b.critX : 1);
         if (b.mark > 0) { dmg *= 1.4; b.mark--; }
         if (b.first) { dmg *= 1 + tf.firstStrike / 100; b.first = false; }
+        dmg *= classAutoX(b);                             // CLASSES (v0.15): Runed Strike, Molten Edge, Kinetic Plating
         if (twice) dmg *= 2;
         dmg = Math.round(dmg);
         b.monHp -= dmg; b.heroAtk = b.t; b.monHit = b.t; b.nextHero = b.t + b.heroEvery;
@@ -3594,11 +3794,11 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         else if (classGuard(b) || petGuard(b)) {}       // CLASSES (v0.15): Loyal Guard
         else {
           const heavy = classHeavy(b), blocked = tf.block && Math.random() < tf.block / 100;
-          const dmg = clsHurt(b, Math.round(b.monDmg * b.weakX * (0.8 + Math.random() * 0.4) * (heavy ? 2 : 1) * (blocked ? 0.5 : 1)));   // CLASSES (v0.15): gate, barrier
+          const dmg = clsHurt(b, Math.round(b.monDmg * b.weakX * (0.8 + Math.random() * 0.4) * (heavy ? 2 : 1) * (blocked ? 0.5 : 1)), heavy);   // CLASSES (v0.15): gate, barrier, totem, Predict
           b.heroHp -= dmg; b.monAtk = b.t; b.heroHit = b.t;
           btPop((blocked ? "Block -" : heavy ? "OUCH -" : "-") + dmg, 16, 12, heavy ? "#ff5a5a" : "#ff8a8a", heavy); Sound.play("hurt"); buzz(heavy ? 30 : 12);
           if (tf.thorns) b.monHp -= Math.round(dmg * tf.thorns / 100);
-          classAfterHit(b, dmg, heavy);                   // CLASSES (v0.15): Berserker, Reforge, Riposte
+          classAfterHit(b, dmg, heavy, blocked);          // CLASSES (v0.15): Berserker, Reforge, Riposte, Chant, Aegis
           if (b.heroHp <= 0 && tf.lastStand && !b.stand) { b.stand = true; b.heroHp = 1; b.shield = Math.max(b.shield, 1); btPop("Last stand!", 14, 4, "#ffe58a", true); b.log = "Contingency Plan: you hang on with 1 HP!"; }
           if (b.heroHp > 0 && tf.secondWind && !b.wind && b.heroHp < b.heroMax * 0.3) { b.wind = true; const h = btHeal(b, tf.secondWind / 100); btPop("Second wind +" + h, 14, 4, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); }
         }
@@ -3624,7 +3824,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (key === "focus") { btPop(hit(1.5) + "", 44, 9, "#ffe58a", true); btHeal(b, 0.03 * P); b.fx.push({ k: "flash", ttl: 2 }); Sound.play("win"); }
     if (key === "lucky") { hit(0.6); if (b.lucky < 3) b.lucky++; btPop("+5% gold", 44, 8, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); Sound.play("coin"); }
     if (key.indexOf("t-") === 0 || key.indexOf("c-") === 0) {   // talent and class skills, built from their recipe
-      if (classRecipe(b, sk, hit, caster) === false) return classCastEnd(b);   // CLASSES (v0.15): new recipe fields
+      if (classRecipe(b, sk, hit, caster) === false) return classCastEnd(b, sk);   // CLASSES (v0.15): new recipe fields
       let mult = sk.mult || 0;
       if (sk.rand) mult = sk.rand[0] + Math.random() * (sk.rand[1] - sk.rand[0]);
       if (sk.exec40) mult = b.monHp < b.monMax * 0.4 ? sk.exec40[0] : sk.exec40[1];
@@ -3643,7 +3843,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       if (sk.reset) { Object.keys(b.cds).forEach(k => { if (k !== key && k !== caster) b.cds[k] = 0; }); btPop("Overdrive!", 14, 6, "#ffe58a", true); }
       Sound.play(mult >= 2.5 ? "levelup" : mult ? "win" : "unlock"); buzz(mult ? [25, 30, 40] : 20);
     }
-    classCastEnd(b);
+    classCastEnd(b, sk);
   }
   function useSkill(key) {
     const b = bt; if (!b || b.phase !== "fight") return;
@@ -3734,7 +3934,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       }).join("")}</div>
       ${classSkillBook()}
       ${(() => { const pool = talentFx().skills, on = talentLoadout().map(x => x.key); if (!pool.length) return "";
-        return `<h3 style="margin-top:4px">Talent skills</h3><div class="sb-grid">${pool.map(sk => `<div class="sb ${on.includes(sk.key) ? "on" : "spare"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on.includes(sk.key) ? "Equipped" : "Benched"}${pool.length > MAX_TAL_SKILLS ? ` · <button class="linkbtn" data-act="tal-skill" data-id="${sk.key}">${on.includes(sk.key) ? "Bench" : "Equip"}</button>` : ""}</small></div></div>`).join("")}</div>${pool.length > MAX_TAL_SKILLS ? `<p class="hint" style="margin:0">You know ${pool.length} talent skills. Bring any ${MAX_TAL_SKILLS} into a fight.</p>` : ""}`; })()}
+        return `<h3 style="margin-top:4px">Talent skills</h3><div class="sb-grid">${pool.map(sk => `<div class="sb ${on.includes(sk.key) ? "on" : "spare"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on.includes(sk.key) ? "Equipped" : "Benched"}${pool.length > maxTalSkills() ? ` · <button class="linkbtn" data-act="tal-skill" data-id="${sk.key}">${on.includes(sk.key) ? "Bench" : "Equip"}</button>` : ""}</small></div></div>`).join("")}</div>${pool.length > maxTalSkills() ? `<p class="hint" style="margin:0">You know ${pool.length} talent skills. Bring any ${maxTalSkills()} into a fight.</p>` : ""}`; })()}
       <p class="hint" style="margin:0">Your hero attacks on their own. Tap skills during a battle (or press the number keys on a keyboard). Each path has one skill, and your class path comes first. Your class adds its signature skill. Some talent capstones teach a new battle skill; you can bring up to 2 of them into a fight.</p>
     </article>`;
   }
@@ -4569,12 +4769,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (b.decoy > 0 || (tf.dodge && Math.random() < tf.dodge / 100)) { btPop("Dodged!", 16, 8, "#cfd6e4", true); b.log = `You dodge ${B.special}!`; Sound.play("tap"); return; }
     if (classSpecialDefend(b)) { b.log = `${B.special} never lands!`; return; }   // CLASSES (v0.15): misses and Loyal Guard
     const blocked = tf.block && Math.random() < tf.block / 100;
-    const dmg = clsHurt(b, Math.round(b.monDmg * b.weakX * ADV2_SPECIAL_X * (0.9 + Math.random() * 0.2) * (blocked ? 0.5 : 1)));
+    const dmg = clsHurt(b, Math.round(b.monDmg * b.weakX * ADV2_SPECIAL_X * (0.9 + Math.random() * 0.2) * (blocked ? 0.5 : 1)), true);
     b.heroHp -= dmg; b.heroHit = b.t; b.fx.push({ k: "flash", ttl: 3 });
     btPop((blocked ? "Block -" : "CRUSH -") + dmg, 16, 8, "#ff3b3b", true); b.log = `${B.special} hits for ${dmg}! ${B.hit}`;
     Sound.play("hurt"); buzz([40, 30, 60]);
     if (tf.thorns) b.monHp -= Math.round(dmg * tf.thorns / 100);
-    classAfterHit(b, dmg, true);                        // CLASSES (v0.15): a boss special counts as a heavy hit
+    classAfterHit(b, dmg, true, blocked);               // CLASSES (v0.15): a boss special counts as a heavy hit
     if (b.heroHp <= 0 && tf.lastStand && !b.stand) { b.stand = true; b.heroHp = 1; b.shield = Math.max(b.shield, 1); btPop("Last stand!", 14, 4, "#ffe58a", true); }
   }
   const potionLeft = (k, b) => potionCount(k) - ((b && b.pot && b.pot.drank[k]) || 0);
@@ -6762,7 +6962,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           <li>Categories help you find skills. You level each skill on its own.</li>
           <li>Each category grows a talent tree. Add up your skill levels in a category to get its category level, and you earn talent points at category levels ${TALENT_AT.join(", ")}. Each tree plays differently: combat effects, new battle skills, gold, loot and shop discounts, never XP. Resetting a tree is free.</li>
           <li>Every skill feeds one of 16 disciplines, two in each of 8 paths: Art (performing and visual), Body (strength and endurance), Mind (knowledge and words), Craft (kitchen and workshop), Tech (software and hardware), Spirit (movement and stillness), Life (home, and money and time) and Nature (outdoors and animals). You can change a skill's discipline in its settings.</li>
-          <li>Practice unlocks classes, and you choose which one to play in the Hero tab. Everyone starts as a Wanderer; the other neutral classes open with total level, and each discipline's starter class opens at discipline Lv 10 (10 hours of practice across its skills, counted from total minutes, not by adding skill levels). Switching is free outside a battle. A class gives a signature battle skill and a perk, never XP.</li>
+          <li>Practice unlocks classes, and you choose which one to play in the Hero tab. Everyone starts as a Wanderer; the other neutral classes open with total level, and each discipline's starter class opens at discipline Lv 10 (10 hours of practice across its skills, counted from total minutes, not by adding skill levels). Switching is free outside a battle. A class gives a signature battle skill and a perk, never XP. There are 98 classes in all: 5 neutral, 16 starter, 32 specializations (a discipline at Lv 25), 8 dual-discipline (both disciplines of a path at Lv 10), 28 two-path classes (two paths at Lv 10 each, one class for every pair) and 9 ascended classes still to come.</li>
           <li>Adventuring pets: link a pet to its own Animals skill (like Dog walking or Pet care). It joins your hero at that skill's Lv 3 and learns tricks as the skill levels up. Pets never add XP, and they never get hungry or sad if you skip days.</li>
           <li>On the map, villagers give short missions, caves hide side fights, and each region has a boss whose big attack you can stun, shield or dodge. Healing and Shield potions are found in play, never sold, and you can drink one per fight.</li>
         </ul>

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.17.0 — 2026-10-11 (build 2026-10-11.1)
+
+A tighter class system: 28 two-path classes.
+
+- **One class for each pair of paths (28 in all),** each the mix real people with those two practices actually live. Each unlocks when both paths reach Lv 10, about 20 hours of practice. Examples: Blade Dancer (dance plus martial arts), Beekeeper (gardening plus making), Alchemist (chemistry plus cooking), Synth Mage (electronic music and digital art) and Minimalist (decluttering plus meditation).
+- **Every two-path signature skill does something no other class does.** Examples:
+  - Epic Tale grows with each skill you use.
+  - Wild Fury hits harder the lower your HP.
+  - Retune cuts your other cooldowns.
+  - Birdsong makes the monster miss.
+  - Let Go makes you briefly immune to damage.
+- **Siren's signature is now Lure:** the monster's next attack hits itself.
+- **Treasure Hunters each chase their own kind of loot:** chests, shop prices, winning gold, relics, trophies, elixirs or potions. Envoy now finds Radiant relics.
+- **The class system now has 98 classes in all:** 89 playable today, with 9 Ascended classes still to come. The planned 56 two-path classes were trimmed to 28 so there are no near-duplicates.
+
 ## v0.16.0 — 2026-10-10 (build 2026-10-10.1)
 
 Specializations and dual-discipline classes.

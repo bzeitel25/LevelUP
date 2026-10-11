@@ -28,14 +28,15 @@ Design rules that every feature follows:
 | v0.14 | Paths v2: Music becomes Art (performing and visual), the new Nature path and Explore the outdoors category with its own talent tree, 16 disciplines, new skills and tips |
 | v0.15 | Choose your class (5 neutral and 16 starter classes with signature skills and perks), adventuring pets, Adventure v2 (caves, villager missions, regional bosses, battle potions), Nature scenes, poses, theme and frame |
 | v0.16 | 32 specializations and 8 dual-discipline classes, Herbalist herb patches on the map |
+| v0.17 | Class system consolidated: 28 two-path classes (one per pair of paths), Siren and Envoy reworked, 89 playable classes |
 
 ## Next up
 
 ### 1. Classes
 
-- Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 56 two-path and 9 Ascended classes. Full design in the Class Compendium doc.
-- Shipped: the class picker with neutral and starter classes and adventuring pets (v0.15), then specializations and dual-discipline classes (v0.16).
-- Next: two-path classes, class gear sets and class talent trees, then Ascended classes and a Suggest a class form.
+- Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 28 two-path and 9 Ascended classes (98 in all). Full design in the Class Compendium doc.
+- Shipped: the class picker with neutral and starter classes and adventuring pets (v0.15), then specializations and dual-discipline classes (v0.16), then two-path classes (v0.17).
+- Next: class gear sets and class talent trees, then Ascended classes and a Suggest a class form.
 
 ### 2. Online world (MMO-style)
 
