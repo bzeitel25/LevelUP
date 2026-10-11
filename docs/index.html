@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-11.1",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-11.2",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -728,6 +728,18 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .cls-card.branch.locked { box-shadow: inset 0 3px 0 color-mix(in srgb, var(--role) 30%, transparent); }
 .cls-card.branch .cls-card-top b { font-size: 14px; }
 @media (max-width: 520px) { .cls-pick-name { display: none; } .cls-role { font-size: 10px; letter-spacing: .02em; padding: 0 5px; } .cls-branches { gap: 6px; } .cls-card.branch { padding: 7px 8px; } .cls-card-meta small { font-size: 11.5px; } }
+.cg-set { display: grid; gap: 8px; min-width: 0; }
+.cg-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14.5px; }
+details.cg-set > summary { cursor: pointer; }
+.cg-bonus { font-size: 13px; padding: 6px 10px; border-radius: 8px; border-left: 3px solid var(--role); background: color-mix(in srgb, var(--role) 10%, var(--panel)); overflow-wrap: anywhere; }
+.cg-bonus .lbl { font-weight: 700; color: var(--role); }
+.cg-others > summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.cg-list { display: grid; gap: 12px; margin-top: 10px; }
+.cg-inv .cg-set + .cg-set { border-top: 1px solid var(--line); padding-top: 10px; }
+.ct-tree { border-top: 3px solid var(--role); }
+.ct-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ct-cap { width: min(100%, 240px); margin: 0 auto; }
+.ct-cap .tal-node::before { display: none; }
 /* ===== PETS (v0.15) ===== */
 .pet-side { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12.5px; color: var(--muted); min-width: 0; }
 .pet-side canvas { width: 39px; height: 30px; flex: none; }
@@ -1242,6 +1254,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     if (!state.stats || typeof state.stats !== "object") state.stats = { clears: state.runs.filter(r => r.win).length, runs: state.runs.length };
     if (!Array.isArray(state.submissions)) state.submissions = [];
     petMigrate();
+    clsGearMigrate();                                   // class gear and trees (v0.15)
   }
 
   // ---------- Derived ----------
@@ -2039,7 +2052,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       <div class="cls-facts">
         <div class="cls-fact"><span class="lbl">Signature skill</span><b>${esc(sig.name)}</b><small>${esc(clsSigLine(sig))}${sig.seasoned ? ` · now ${clsSeasonedX(sig)}×` : ""}</small></div>
         <div class="cls-fact"><span class="lbl">Perk · always on</span>${cur.perk.name ? `<b>${esc(cur.perk.name)}</b>` : ""}<small>${esc(cur.perk.desc)}${cur.perk.herbs ? ` · ${herbsReadyN()} of ${HERB_SPOTS.length} patches grown now` : ""}</small></div>
-        ${cur.gear ? `<div class="cls-fact"><span class="lbl">Gear set · coming soon</span><small>${esc(cur.gear.join(", "))}</small></div>` : ""}
+        ${clsGearFact(cur)}
       </div>
       ${lapsed ? `<p class="hint" style="margin:0">Your ${esc(lapsed.name)} class is locked again (${esc(clsReqs(lapsed).filter(r => r.have < r.need).map(clsReqText).join(", "))}), so you play as a Wanderer until it's back.</p>` : ""}
       ${near.length ? `<div class="cls-sub"><span class="lbl">Crossroads · closest to unlocking</span><div class="cls-grid">${near.map(id => clsCard(CLASS_BY[id], "locked", true)).join("")}</div></div>` : ""}
@@ -2064,6 +2077,252 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     catch (err) { reportError(err); }
   });
   document.addEventListener("toggle", e => { if (e.target && e.target.classList && e.target.classList.contains("cls-all")) clsAllOpen = e.target.open; }, true);
+
+  // ===== FEATURE: class gear and class trees (v0.15) =====
+  // Every non-neutral class has a 4-piece gear set bought with gold once the class is unlocked. Pieces only change
+  // your hero's look; owning all 4 while you play that class adds a small role bonus. Each role also has a class
+  // talent tree (8 nodes and a capstone), with points from your current class's discipline or path level.
+  // Both add into talentFx() before the shared caps (TAL_CAP). Never XP. Saved as state.clsGear and state.clsTree.
+  const CG_PRICE = { starter: 120, two: 180, dual: 180, spec: 250 };
+  const CG_TWO = {
+    loremaster: ["Storyteller's cloak", "Lore lute", "Illuminated tome", "Quill circlet"], bladedancer: ["Silk sash", "Twin sabers", "Ankle bells", "Dancer's wraps"],
+    luthier: ["Carving knife", "Tonewood lute", "Varnish kit", "Maker's apron"], synthmage: ["Studio headphones", "Keytar", "LED visor", "Waveform staff"],
+    cantor: ["Choir robe", "Chant book", "Hand bell", "Candle crown"], impresario: ["Top hat", "Ticket ledger", "Velvet cape", "Golden cane"],
+    wildsinger: ["Feather cloak", "Reed flute", "Sketch satchel", "Songbird charm"], spellblade: ["Runed blade", "Scholar's gambeson", "Focus bracer", "Study band"],
+    alchemist: ["Vial bandolier", "Stained apron", "Mortar and pestle", "Brass goggles"], inventor: ["Blueprint tube", "Spark gloves", "Field toolkit", "Gadget goggles"],
+    sage: ["Sage robe", "Prayer beads", "Scroll case", "Calm staff"], strategist: ["Map case", "Chess pin", "Planner", "Commander's coat"],
+    druid: ["Oak staff", "Leaf mantle", "Seed pouch", "Antler circlet"], forgeblade: ["Welding mask", "Forged blade", "Leather gauntlets", "Spark apron"],
+    vanguard: ["Smart band", "Exo greaves", "Tactical vest", "Holo visor"], paladin: ["Tabard", "Mace", "Kite shield", "Halo pendant"],
+    sentinel: ["Watch cloak", "Lantern", "Tower shield", "House key"], barbarian: ["Fur mantle", "Greataxe", "Trail boots", "Bone charm"],
+    tinker: ["Tool roll", "Gizmo pack", "Soldering pen", "Magnifier"], totemcarver: ["Carving knife", "Totem staff", "Wood-bead necklace", "Bark cloak"],
+    homesteader: ["Straw hat", "Canning jars", "Garden fork", "Quilted vest"], beekeeper: ["Bee veil", "Smoker", "Honey pot", "Hive-frame shield"],
+    oracle: ["Data visor", "Star tablet", "Crystal circuit", "Oracle robe"], magnate: ["Smart suit", "Ledger tablet", "Signet ring", "Briefcase"],
+    scout: ["Pocket drone", "GPS wrist", "Cargo vest", "Trail cap"], minimalist: ["Plain robe", "Single bowl", "Tidy satchel", "Sandals"],
+    shaman: ["Antler staff", "Spirit drum", "Woven cloak", "Moon charm"], forager: ["Forager's basket", "Field knife", "Mushroom guide", "Rain poncho"],
+    // specializations and dual-discipline classes (new for this build)
+    skald: ["War drum", "Bearskin cloak", "Saga helm", "Rune pendant"], siren: ["Shell microphone", "Pearl circlet", "Tide robe", "Sea-glass charm"],
+    illusionist: ["Mirror cloak", "Trick deck", "Painted mask", "Prism monocle"], lightweaver: ["Camera-lens monocle", "Camera rig", "Reflector cape", "Light-meter watch"],
+    knight: ["Plate armor", "Heater shield", "Plumed helm", "Knight's gauntlets"], berserker: ["Wolf-pelt mantle", "War hammer", "Horned helm", "Iron-knuckle wraps"],
+    duelist: ["Fencing foil", "Duelist's coat", "Silk cravat", "Light boots"], courier: ["Courier bag", "Running cap", "Route map", "Swift sneakers"],
+    wizard: ["Pointed hat", "Spell tome", "Wizard robe", "Crystal staff"], enchanter: ["Rune quill", "Glyph ring", "Enchanter's robe", "Ink stone"],
+    warlock: ["Hex tome", "Shadow cloak", "Sigil amulet", "Ink-black gloves"], envoy: ["Envoy's coat", "Sealed letters", "Envoy's signet", "Courtly sash"],
+    feastmaster: ["Banquet toque", "Carving knife", "Serving platter", "Feast apron"], grillmaster: ["Grill spatula", "Smoke-stained apron", "Spice pouch", "Fire mitts"],
+    smith: ["Smith's hammer", "Forge bracers", "Smith's apron", "Ember goggles"], weaver: ["Spindle staff", "Woven shawl", "Thread pouch", "Silk robe"],
+    codebreaker: ["Hacker hoodie", "Cipher tablet", "Night-mode glasses", "Rubber duck"], netwarden: ["Firewall shield", "Admin keyring", "Server cloak", "Status visor"],
+    engineer: ["Torque wrench", "Barrier vest", "Work boots", "Blueprint satchel"], dronemaster: ["Drone controller", "Pilot goggles", "Flight jacket", "Spare-parts bag"],
+    windwalker: ["Wind sash", "Cloud sandals", "Breath beads", "Flowing robe"], bastion: ["Stone gi", "Mountain bracers", "Rooted sandals", "Boulder amulet"],
+    cleric: ["Healer's robe", "Sun pendant", "Prayer book", "Halo circlet"], dreamwalker: ["Night cap", "Dream journal", "Moonlit cloak", "Lavender pouch"],
+    quartermaster: ["Supply pack", "Inventory ledger", "Ration pouch", "Stout boots"], castellan: ["Gatekeeper's keyring", "Castle cloak", "Gate shield", "Iron gauntlets"],
+    trader: ["Trade ledger", "Gold scales", "Trade-route map", "Silk coat"], timekeeper: ["Pocket watch", "Hourglass", "Gearwork monocle", "Chrono robe"],
+    sharpshooter: ["Recurve bow", "Scope monocle", "Arrow quiver", "Camo cloak"], herbalist: ["Herb basket", "Leaf circlet", "Gardening gloves", "Herb pouch"],
+    packleader: ["Wolf-fur cape", "Pack whistle", "Pathfinder boots", "Alpha collar"], wildheart: ["Bark shield", "Moss cloak", "Paw-print amulet", "Rope leash"],
+    auteur: ["Director's beret", "Clapperboard", "Viewfinder", "Script binder"], gladiator: ["Arena helm", "Sparring gloves", "Champion's belt", "Trident"],
+    philosopher: ["Toga", "Laurel wreath", "Dialogue scroll", "Thinking stone"], hearthwright: ["Iron skillet", "Hearth apron", "Oven mitts", "Copper kettle"],
+    mechanomancer: ["Circuit gauntlet", "Code tablet", "Tech visor", "Gear backpack"], ascetic: ["Simple robe", "Prayer beads", "Plain sandals", "Hermit staff"],
+    majordomo: ["Household ledger", "Butler's coat", "Silver keyring", "Feather broom"], outrider: ["Saddle cloak", "Riding boots", "Hunting bow", "Companion whistle"]
+  };
+  CLASSES.forEach(c => { if (!c.gear && CG_TWO[c.id]) c.gear = CG_TWO[c.id]; });
+  // Which existing hero sprite each piece uses (first match wins).
+  const CG_LOOK = [
+    [/clock(work)? arm|gauntlet|bracers?\b/, "gauntlets"], [/gloves|wraps|mitts/, "gloves"], [/\bring\b|signet/, "ring"],
+    [/cape|cloak|mantle|poncho/, "cape"], [/shawl|cravat|scarf/, "scarf"], [/smart band|gps wrist|watch/, "watch"],
+    [/monocle|magnifier|viewfinder|scope/, "monocle"], [/goggles|visor|mask/, "goggles"], [/spectacles|glasses/, "glasses"], [/headphones/, "earpiece"],
+    [/pendant|amulet|charm|whistle/, "amulet"], [/halo/, "halo"], [/crown|circlet/, "circlet"], [/wreath|laurel/, "flower"], [/toque/, "toque"],
+    [/\bhat\b|\bcap\b|beret|helm|band\b|veil/, "headband"],
+    [/robe|\bgi\b|gambeson|toga|tabard|armor|chain mail/, "robe"], [/smock/, "smock"], [/apron/, "apron"], [/hoodie/, "hoodie"], [/vest/, "vest"],
+    [/coat|suit|doublet|jacket/, "suit"], [/sash/, "sash"],
+    [/swift boots|cloud sandals/, "winged"], [/sneakers/, "sneakers"], [/boots|greaves|sandals/, "boots"], [/bells/, "anklet"],
+    [/keyring|key\b/, "keyring"], [/purse/, "purse"], [/pouch|bandolier/, "pouch"], [/harness|tool roll/, "toolbelt"], [/belt/, "belt"],
+    [/collar/, "collar"], [/\bpin\b/, "medal"], [/beads|necklace/, "beads"],
+    [/shield/, "cymbals"], [/\blute|keytar/, "keytar"], [/drum/, "drum"], [/flute|bell\b/, "notes"], [/microphone/, "mic"],
+    [/staff|cane|bow\b|trident/, "staff"], [/hammer|mace|axe/, "bighammer"], [/sword|saber|blade|foil|cleaver|knife/, "knife"],
+    [/camera/, "camera"], [/clapper|chess/, "board"], [/ladle/, "ladle"], [/skillet|platter|bowl/, "pan"], [/spatula/, "paddle"],
+    [/quill/, "quill"], [/\bpen\b/, "pen"], [/brush/, "brush"], [/duster|broom/, "broom"], [/lamp|lantern/, "lamp"],
+    [/crystal|core|stone/, "stone"], [/incense|smoker/, "incense"], [/jars|vial|honey pot|kettle|mortar/, "flask"], [/tablet/, "tablet"],
+    [/drone|gizmo|scales|light-meter|kit\b/, "gadget"], [/wrench|toolkit/, "wrench"], [/hourglass/, "clock"], [/deck/, "cards"], [/duck/, "duck"],
+    [/basket/, "basket"], [/fork/, "trowel"], [/leash/, "leash"], [/satchel|bag|pack\b|case|tube|briefcase|quiver|backpack/, "bag"],
+    [/map|scroll|letters/, "mapscroll"]
+  ];
+  const cgSprite = name => { const n = name.toLowerCase(), m = CG_LOOK.find(([re]) => re.test(n)); return m ? m[1] : "book"; };
+  const CG_ROLES = ["striker", "guardian", "support", "controller", "treasure"];
+  // Pieces are tinted with their role's color: extra palettes after the tier palettes (added on first use).
+  const CG_PAL = [{ A: "#d2563c", a: "#8e2f1c", L: "#f39a80" }, { A: "#3d72c9", a: "#244a8a", L: "#8fb4ee" }, { A: "#2f9e64", a: "#1d6a42", L: "#86dcae" },
+    { A: "#8a55d0", a: "#5a3290", L: "#c49cf2" }, { A: "#c08a10", a: "#7e5a08", L: "#f2cc66" }];
+  let cgPalAt = -1;
+  function cgTier(c) { if (cgPalAt < 0) { cgPalAt = TIER_PAL.length; TIER_PAL.push(...CG_PAL); } return cgPalAt + Math.max(0, CG_ROLES.indexOf(CLASS_ROLE_KEY[c.role])); }
+  // Set bonus by role, while you own all 4 pieces and play that class.
+  const CG_BONUS = { striker: { atkDmg: 4 }, guardian: { hp: 6 }, support: { healPow: 8 }, controller: { ctrlDur: 8 }, treasure: { gold: 4 } };
+  const cgHasSet = c => !!(c && c.gear && c.tier !== "neutral");
+  const cgPieceId = (c, i) => `${c.id}.${i}`;
+  const cgOwned = (c, i) => !!(state.clsGear && state.clsGear[cgPieceId(c, i)]);
+  const cgCount = c => cgHasSet(c) ? c.gear.filter((_, i) => cgOwned(c, i)).length : 0;
+  const cgBonusOf = c => CG_BONUS[CLASS_ROLE_KEY[c.role]] || {};
+  const cgBonusText = c => Object.entries(cgBonusOf(c)).map(([k, v]) => FX_TEXT[k](v)).join(", ");
+  const cgBonusOn = c => cgHasSet(c) && cgCount(c) === 4 && curClassId() === c.id;
+  const cgPrice = c => Math.round(CG_PRICE[c.tier] * shopMult());
+  function clsGearBuy(pid) {
+    const m = /^([a-z]+)\.([0-3])$/.exec(pid || ""), c = m && Object.hasOwn(CLASS_BY, m[1]) ? CLASS_BY[m[1]] : null;
+    if (!c || !cgHasSet(c) || !classUnlocked(c.id)) return;
+    const i = +m[2], price = cgPrice(c);
+    if (cgOwned(c, i) || state.gold < price) return;
+    state.gold -= price; state.clsGear[pid] = true;
+    Sound.play("buy"); buzz(20);
+    toast(`Bought ${esc(c.gear[i])}${cgCount(c) === 4 ? `. ${esc(c.name)} set complete: ${esc(cgBonusText(c))} while you play ${esc(c.name)}` : ""}.`);
+    persist(); render();
+  }
+  // Hero look: owned pieces join the wardrobe. Your current class's pieces show first on Auto; other classes' pieces you can pick by hand.
+  function clsGearLooks(out) {
+    CLASSES.forEach(c => { if (!cgHasSet(c)) return; c.gear.forEach((nm, i) => {
+      const sp = cgSprite(nm); if (!cgOwned(c, i) || !S[sp]) return;
+      out.push({ id: "cg:" + cgPieceId(c, i), name: `${nm} (${c.name})`, sprite: sp, slot: S[sp].slot, tier: cgTier(c), rank: curClassId() === c.id ? 99 : -1 });
+    }); });
+  }
+
+  // --- Class trees: one per role ---
+  const CT_AT = [10, 15, 20, 25, 30, 40, 50, 60, 75];
+  const CT_CAP_SPENT = 6;
+  // [style, [branch name, [[node, fx] x4]] x2, [capstone, fx]]
+  const CLASS_TREES = {
+    striker: ["Big hits that end fights fast", [["Edge", [["Keen Edge", { atkDmg: 4 }], ["Weak Spot", { crit: 2 }], ["Heavy Swing", { critDmg: 15 }], ["Honed Form", { atkDmg: 4 }]]],
+      ["Tempo", [["Quick Hands", { atkSpeed: 4 }], ["Drilled", { cdr: 4 }], ["Focused Power", { skillDmg: 6 }], ["Second Nature", { cdr: 4 }]]]], ["Finisher", { execute: 15 }]],
+    guardian: ["Outlasts anything", [["Bulwark", [["Sturdy", { hp: 5 }], ["Brace", { block: 5 }], ["Stalwart", { hp: 5 }], ["Hold the Line", { block: 5 }]]],
+      ["Iron", [["Thick Hide", { dmgTaken: 3 }], ["Spiked Guard", { thorns: 5 }], ["Read the Blow", { heavyLess: 4 }], ["Unyielding", { dmgTaken: 3 }]]]], ["Second Wind", { secondWind: 15 }]],
+    support: ["Heals and buffs, rarely loses", [["Mending", [["Gentle Hands", { healPow: 10 }], ["Steady Care", { healPow: 10 }], ["Kind Words", { buffDur: 15 }], ["Restoration", { healPow: 10 }]]],
+      ["Aura", [["Encourage", { buffDur: 15 }], ["Hearty", { hp: 4 }], ["Calm Presence", { dmgTaken: 3 }], ["Long Song", { buffDur: 15 }]]]], ["Renewal", { regen: 1 }]],
+    controller: ["Stops the monster acting", [["Binding", [["Firm Grip", { ctrlDur: 15 }], ["Drag", { monSlow: 4 }], ["Lockdown", { ctrlDur: 15 }], ["Patient Opening", { monDelay: 1 }]]],
+      ["Sap", [["Unnerve", { weaken: 4 }], ["Mire", { monSlow: 4 }], ["Sap Strength", { weaken: 4 }], ["Off Balance", { heavyLess: 4 }]]]], ["Stunning Blows", { stunChance: 4 }]],
+    treasure: ["More loot from every run", [["Coin", [["Pocket Change", { gold: 3 }], ["Chest Sense", { chestGold: 10 }], ["Thrifty", { gold: 3 }], ["Lockpick", { chestGold: 10 }]]],
+      ["Curio", [["Collector", { trophy: 4 }], ["Glimmer", { relicFind: 10 }], ["Forager's Luck", { elixirFind: 15 }], ["Keen Appraisal", { relicFind: 10 }]]]], ["Hidden Cache", { cacheChance: 10 }]]
+  };
+  const ctRole = c => c && c.tier !== "neutral" && CLASS_TREES[CLASS_ROLE_KEY[c.role]] ? CLASS_ROLE_KEY[c.role] : null;
+  // Class level: the discipline level for starters and specializations, the lower of two for dual-discipline and two-path classes.
+  function ctLevel(c) {
+    if (!c) return 0;
+    if (c.paths) return Math.min(...c.paths.map(clsPathLv));
+    if (c.discs) return Math.min(...c.discs.map(clsDiscLv));
+    return c.disc ? clsDiscLv(c.disc) : 0;
+  }
+  const ctPts = () => { const c = curClass(); if (!ctRole(c)) return 0; const lv = ctLevel(c); return CT_AT.filter(t => lv >= t).length; };
+  function ctNode(role, id) {
+    const T = CLASS_TREES[role]; if (!T) return null;
+    if (id === "cap") return { id, b: -1, r: 4, name: T[2][0], fx: T[2][1], cap: true };
+    const m = /^([ab])([1-4])$/.exec(id || ""); if (!m) return null;
+    const b = "ab".indexOf(m[1]), r = +m[2] - 1, br = T[1][b];
+    return { id, b, r, name: br[1][r][0], branch: br[0], fx: br[1][r][1] };
+  }
+  const ctIn = role => (state.clsTree && Array.isArray(state.clsTree[role]) ? state.clsTree[role] : []);
+  const ctActive = role => ctIn(role).slice(0, ctPts());
+  const ctFree = role => Math.max(0, ctPts() - ctIn(role).length);
+  function ctCanLearn(role, id) {
+    const n = ctNode(role, id); if (!n) return { ok: false };
+    const have = ctIn(role);
+    if (have.includes(id)) return { ok: false, why: "Learned" };
+    if (!n.cap && n.r > 0 && !have.includes("ab"[n.b] + n.r)) return { ok: false, why: `Needs ${ctNode(role, "ab"[n.b] + n.r).name}` };
+    if (n.cap && have.length < CT_CAP_SPENT) return { ok: false, why: `Needs ${CT_CAP_SPENT} points in this tree` };
+    if (ctFree(role) < 1) return { ok: false, why: "No points to spend", wait: true };
+    return { ok: true };
+  }
+  const ctEffText = n => Object.entries(n.fx).map(([k, v]) => FX_TEXT[k](v));
+  function clsTreeLearn(id) {
+    const role = ctRole(curClass()), n = role && ctNode(role, id); if (!n) return;
+    const chk = ctCanLearn(role, id);
+    if (!chk.ok) { if (chk.why && chk.why !== "Learned") toast(esc(chk.why) + "."); return; }
+    (state.clsTree[role] = ctIn(role).slice()).push(id);
+    Sound.play(n.cap ? "unlock" : "buy"); buzz(n.cap ? [30, 40, 60] : 20);
+    toast(`Learned <b>${esc(n.name)}</b>: ${esc(ctEffText(n).join(", "))}.`);
+    persist(); render();
+  }
+  function clsTreeReset(role) {
+    if (!CLASS_TREES[role] || !ctIn(role).length) return;
+    const had = ctIn(role).length; delete state.clsTree[role];
+    toast(`Class tree reset. ${had} point${had === 1 ? "" : "s"} back to spend.`);
+    persist(); render();
+  }
+  // Effects for talentFx(): the active role tree, plus the full set bonus of the class you play.
+  const clsGtKey = () => JSON.stringify([state.clsTree || {}, cgCount(curClass()), ctPts()]);
+  function clsGearTreeFx(fx) {
+    const c = curClass(), role = ctRole(c);
+    if (role) ctActive(role).forEach(id => { const n = ctNode(role, id); if (n) Object.entries(n.fx).forEach(([k, v]) => { fx[k] = (fx[k] || 0) + v; }); });
+    if (cgBonusOn(c)) Object.entries(cgBonusOf(c)).forEach(([k, v]) => { fx[k] = (fx[k] || 0) + v; });
+  }
+  function clsGearMigrate() {
+    if (!state.clsGear || typeof state.clsGear !== "object" || Array.isArray(state.clsGear)) state.clsGear = {};
+    if (!state.clsTree || typeof state.clsTree !== "object" || Array.isArray(state.clsTree)) state.clsTree = {};
+  }
+
+  // --- UI ---
+  const cgRuleText = () => `Each class beyond the neutral ones has a 4-piece gear set (${CG_PRICE.starter}g a piece for starter classes, ${CG_PRICE.two}g for two-path and dual-discipline, ${CG_PRICE.spec}g for specializations). Pieces only change your hero's look; owning all 4 while you play that class adds a small bonus for its role. Each role also has a class tree of 8 talents and a capstone, with points at your class's level ${CT_AT.join(", ")} (its discipline level, or the lower of its two). Both share the talent caps, never add XP, and resetting the tree is free.`;
+  function cgCard(c, open) {
+    const n = cgCount(c), on = cgBonusOn(c), unl = classUnlocked(c.id), price = cgPrice(c), off = price < CG_PRICE[c.tier], rk = CLASS_ROLE_KEY[c.role];
+    const status = on ? `<b style="color:var(--good)">Active</b>` : n === 4 ? `Active while you play ${esc(c.name)}` : `${n} of 4 pieces`;
+    const body = `<div class="gear-grid">${c.gear.map((nm, i) => {
+      const own = cgOwned(c, i), pid = cgPieceId(c, i);
+      const action = own ? `<span class="req" style="color:var(--xp);font-weight:700">Owned</span>`
+        : unl ? `<button class="btn small ${state.gold >= price ? "primary" : ""}" data-act="cg-buy" data-id="${pid}" ${state.gold >= price ? "" : "disabled"}>Buy · ${price.toLocaleString()}g${off ? ` <s class="muted" style="font-weight:500">${CG_PRICE[c.tier]}</s>` : ""}</button>`
+        : `<span class="req">Unlock ${esc(c.name)} first</span>`;
+      return `<div class="item ${own ? "equipped" : ""}"><canvas class="px item-ic" data-icon="${cgSprite(nm)}:${cgTier(c)}" data-size="40" aria-hidden="true"></canvas><b>${esc(nm)}</b><span class="eff">Look only</span>${action}</div>`;
+    }).join("")}</div>`;
+    const head = `<span class="cls-role r-${rk}">${esc(c.role)}</span> <b>${esc(c.name)} set</b> <span class="muted num" style="font-size:13px">${n} / 4</span>`;
+    const bonus = `<div class="cg-bonus r-${rk}"><span class="lbl">Full set bonus</span> ${esc(cgBonusText(c))} · <span class="muted">${status}</span></div>`;
+    return open ? `<div class="cg-set" data-cls="${c.id}"><div class="cg-head">${head}</div>${bonus}${body}</div>`
+      : `<details class="cg-set" data-cls="${c.id}"><summary class="cg-head">${head}</summary>${bonus}${body}</details>`;
+  }
+  function clsGearShop() {
+    const cur = curClass(), others = CLASSES.filter(c => cgHasSet(c) && c.id !== cur.id && classUnlocked(c.id));
+    return `<article class="panel gear-skill cg-shop">
+      <div class="gear-head"><h3>Class gear</h3><span class="muted" style="font-size:13px">${esc(cur.name)}</span></div>
+      ${cgHasSet(cur) ? cgCard(cur, true) : `<p class="hint" style="margin:0">${esc(cur.name)} is a neutral class, so it has no gear set.${others.length ? " Sets for your other unlocked classes are below." : " Your first set opens with a starter class, at discipline Lv 10."}</p>`}
+      ${others.length ? `<details class="cg-others"><summary>Other unlocked classes (${others.length})</summary><div class="cg-list">${others.map(c => cgCard(c, false)).join("")}</div></details>` : ""}
+      <p class="hint" style="margin:0">${esc(cgRuleText())}</p>
+    </article>`;
+  }
+  function clsGearInv() {
+    const sets = CLASSES.filter(c => cgCount(c));
+    if (!sets.length) return "";
+    return `<article class="panel gear-skill cg-inv">
+      <div class="gear-head"><h3>Class gear</h3><span class="muted" style="font-size:13px">Shows on your hero · bonus while you play that class</span></div>
+      ${sets.map(c => `<div class="cg-set"><div class="cg-head"><span class="cls-role r-${CLASS_ROLE_KEY[c.role]}">${esc(c.role)}</span> <b>${esc(c.name)} set</b> <span class="muted num" style="font-size:13px">${cgCount(c)} / 4${cgBonusOn(c) ? ` · <b style="color:var(--good)">Full set bonus active</b>` : ""}</span></div>
+        <div class="gear-grid">${c.gear.map((nm, i) => cgOwned(c, i) ? `<div class="item inv"><canvas class="px item-ic" data-icon="${cgSprite(nm)}:${cgTier(c)}" data-size="40" aria-hidden="true"></canvas><b>${esc(nm)}</b><span class="eff">Look only</span></div>` : "").join("")}</div></div>`).join("")}
+    </article>`;
+  }
+  // The class's gear set line in the Hero tab class panel.
+  const clsGearFact = c => cgHasSet(c) ? `<div class="cls-fact"><span class="lbl">Gear set · ${cgCount(c)} of 4 owned</span><small>${esc(c.gear.join(", "))}. Full set bonus: ${esc(cgBonusText(c))}.</small></div>` : "";
+  function ctTreeHTML() {
+    const c = curClass(), role = ctRole(c);
+    if (!role) return `<article class="panel tal-tree ct-tree"><div class="tal-head"><div><h3>Class tree</h3><div class="muted" style="font-size:13px">${esc(c.name)} is a neutral class, so it has no class tree. Play a starter class or higher to grow the tree for its role.</div></div></div></article>`;
+    const T = CLASS_TREES[role], lv = ctLevel(c), pts = ctPts(), have = ctIn(role), active = ctActive(role), free = ctFree(role);
+    const next = CT_AT.find(t => lv < t), prev = CT_AT.filter(t => lv >= t).pop() || 0;
+    const node = id => {
+      const n = ctNode(role, id), on = have.includes(id), live = active.includes(id), chk = ctCanLearn(role, id), eff = ctEffText(n);
+      const st = on ? (live ? "on" : "rest") : chk.ok ? "ready" : chk.wait && (n.cap ? have.length >= CT_CAP_SPENT : n.r === 0 || have.includes("ab"[n.b] + n.r)) ? "next" : "locked";
+      return `<div class="tal-node ${st} ${n.cap ? "cap" : ""}">
+        <button class="tal-btn" data-act="ct-learn" data-id="${id}" ${st === "ready" ? "" : `aria-disabled="true"`} aria-label="${esc(n.name)}: ${esc(eff.join(", "))}. ${on ? "Learned" : chk.ok ? "Tap to learn" : esc(chk.why || "")}">
+          ${talIcon(n.cap ? "crown" : n.b ? "tactics" : "power")}<b>${esc(n.name)}</b><span class="tal-eff">${eff.map(esc).join("<br>")}</span>
+          <span class="tal-state">${on ? (live ? "Learned" : "Resting") : chk.ok ? "Tap to learn" : esc(chk.why || "")}</span>
+        </button></div>`;
+    };
+    return `<article class="panel tal-tree ct-tree r-${role}">
+      <div class="tal-head">
+        <div><h3>Class tree · ${esc(c.role)}</h3><div class="tal-style">${esc(T[0])}</div>
+          <div class="muted" style="font-size:13px">${esc(c.name)} · class level <b class="num" style="color:var(--ink)">${lv}</b> (${esc(clsLvLine(c))})</div></div>
+        <div class="tal-pts"><b class="num">${free}</b><span>point${free === 1 ? "" : "s"} to spend</span></div>
+      </div>
+      <div>
+        <div class="meter-label"><span class="muted">${next ? `Next point at class level ${next}` : "Every class point earned"}</span><span class="num muted">${have.length} / ${CT_AT.length} learned</span></div>
+        <div class="rest-bar tal-bar"><i style="width:${next ? Math.round(((lv - prev) / (next - prev)) * 100) : 100}%"></i></div>
+      </div>
+      ${have.length > pts ? `<div class="note warn">This class's level is lower than the picks in your ${esc(c.role)} tree, so the newest ${have.length - pts === 1 ? "pick is" : have.length - pts + " picks are"} resting. Nothing is lost.</div>` : ""}
+      <div class="tal-grid ct-grid">${T[1].map((br, b) => `<div class="tal-col tal-${b ? "tactics" : "power"}"><div class="tal-branch">${esc(br[0])}</div>${[1, 2, 3, 4].map(r => node("ab"[b] + r)).join("")}</div>`).join("")}</div>
+      <div class="ct-cap">${node("cap")}</div>
+      <div class="tal-foot">
+        ${confirm && confirm.kind === "ct-reset" && confirm.id === role
+          ? `<span class="muted" style="font-size:13px">Reset the ${esc(c.role)} tree? Every point comes back to spend again.</span><button class="btn small danger" data-act="ct-reset" data-id="${role}">Reset</button><button class="btn small ghost" data-act="cancel-confirm">Keep</button>`
+          : `<button class="btn small ghost" data-act="ask-ct-reset" data-id="${role}" ${have.length ? "" : "disabled"}>Reset tree (free)</button>`}
+      </div>
+      <p class="hint" style="margin:0">Points come at class level ${CT_AT.join(", ")}. Every ${esc(c.role)} class shares this tree, and only your current class's role tree is active.</p>
+    </article>`;
+  }
+  // ===== END FEATURE: class gear and class trees =====
 
   // ---------- Talent trees ----------
   // One tree per category, each with its own play style (WoW-style): warriors hit harder and faster,
@@ -2195,7 +2454,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
   let talFxCache = null, talFxKey = "";
   function talentFx() {
-    const key = JSON.stringify(state.talents || {}) + "|" + CATEGORIES.map(c => talentPts(c.id)).join(",") + "|" + curClassId();
+    const key = JSON.stringify(state.talents || {}) + "|" + CATEGORIES.map(c => talentPts(c.id)).join(",") + "|" + curClassId() + "|" + clsGtKey();
     if (talFxCache && key === talFxKey) return talFxCache;
     const fx = { stat: {}, disc: {}, titles: [], skills: [], doubleEvery: 0, lastStand: 0 };
     Object.keys(STATS).forEach(k => { fx.stat[k] = 0; });
@@ -2215,6 +2474,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       });
     });
     classPerkFx(fx);                                   // CLASSES (v0.15): class perk effects share the caps
+    clsGearTreeFx(fx);                                 // class tree and full set bonus share the caps too
     Object.entries(TAL_CAP).forEach(([k, cap]) => { fx[k] = Math.min(cap, fx[k]); });
     talFxCache = fx; talFxKey = key;
     return fx;
@@ -2452,8 +2712,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-11.1";
-  const APP_VERSION = "0.17.0";
+  const BUILD = "2026-10-11.2";
+  const APP_VERSION = "0.18.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -2798,7 +3058,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
     ].filter(Boolean);
     return `<section style="display:grid;gap:12px">
       <div class="section-head" style="margin:0"><h2>Talents</h2><span class="muted" style="font-size:13px">${summary.length ? `${summary.length} active effect${summary.length === 1 ? "" : "s"}` : "No talents learned yet"}</span></div>
-      ${summary.length ? `<details class="panel tal-sum"><summary>Active talent effects</summary><ul>${summary.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="hint" style="margin:0">Totals from every tree together, plus your class perk. Some effects have a cap.</p></details>` : ""}
+      ${summary.length ? `<details class="panel tal-sum"><summary>Active talent effects</summary><ul>${summary.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="hint" style="margin:0">Totals from every tree together, plus your class perk, class tree and full gear set. Some effects have a cap.</p></details>` : ""}
+      ${ctTreeHTML()}
       <div class="tal-cats" role="tablist" aria-label="Talent trees">${cats.map(k => {
         const u = unspent(k.id);
         return `<button class="chip tal-chip" role="tab" data-act="tal-cat" data-id="${k.id}" aria-pressed="${k.id === talCat}">${esc(TALENT_TREES[k.id].short)}${u ? `<span class="tal-dot num" aria-label="${u} unspent">${u}</span>` : ""}</button>`;
@@ -3599,6 +3860,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
         </article>`;
       }).join("") : `<article class="panel set-card"><h3>No gear yet</h3><p class="hint" style="margin:0">Practice to unlock gear, run dungeons for gold, then buy items in the Shop. Everything you buy lands here.</p><div><button class="btn small primary" data-act="tab" data-tab="gear">Open the Shop</button></div></article>`}
       <p class="hint" style="margin:0">Equip one item per skill for its stat bonus. Your hero wears your best items automatically, and you can change what shows in the Hero tab. Every dungeon win has a small chance to drop the Radiant version of an item you own (4% in the Goblin Cellar up to 15% in the Endless Spire). Radiant is a look, not a power boost.</p>
+      ${clsGearInv()}
       <article class="panel gear-skill">
         <div class="gear-head"><h3>Trophies</h3><span class="muted" style="font-size:13px">Rare dungeon drops</span></div>
         ${tro.length ? `<div class="trophies">${tro.map(d => `<span class="trophy">${esc(d.trophy)}${state.trophies[d.id] > 1 ? " ×" + state.trophies[d.id] : ""}</span>`).join("")}</div>` : `<p class="hint" style="margin:0">${typeof advBossTrophies === "function" && advBossTrophies() ? "No dungeon trophies yet." : "None yet."} Each dungeon has a 1 in 10 chance to drop its trophy when you win.</p>`}
@@ -3623,6 +3885,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       <div class="section-head" style="margin:0"><h2>Shop</h2><span class="muted" style="font-size:13px"><b class="num" style="color:var(--xp)">${state.gold.toLocaleString()}</b> gold</span></div>
       <p class="hint" style="margin:0">Each skill unlocks gear as you level it. Buy it with dungeon gold, and it goes to your Inventory. One item per skill can be equipped, and its bonus adds to that skill's stat. Items you own can turn up in their Radiant version in dungeons.</p>
       ${renderPotionShop()}
+      ${clsGearShop()}
       ${CATEGORIES.flatMap(c => state.skills.filter(s => s.catId === c.id)).map(s => {
         const lv = earnedLv(s), eq = state.equipped[s.id];
         return `<article class="panel gear-skill">
@@ -6069,6 +6332,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
   function ownedLooks() {
     const out = [];
     state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const sp = lookFor(it); if (S[sp]) out.push({ id: it.id, name: (showsRelic(it.id) ? "Radiant " : "") + it.name, sprite: sp, slot: S[sp].slot, tier: shownTier(it), rank: it.tier + (showsRelic(it.id) ? 0.5 : 0), skill: s }); } }));
+    clsGearLooks(out);                                // class gear pieces (v0.15)
     return out;
   }
   function heroItems() {
@@ -6992,6 +7256,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
           <li>Each category grows a talent tree. Add up your skill levels in a category to get its category level, and you earn talent points at category levels ${TALENT_AT.join(", ")}. Each tree plays differently: combat effects, new battle skills, gold, loot and shop discounts, never XP. Resetting a tree is free.</li>
           <li>Every skill feeds one of 16 disciplines, two in each of 8 paths: Art (performing and visual), Body (strength and endurance), Mind (knowledge and words), Craft (kitchen and workshop), Tech (software and hardware), Spirit (movement and stillness), Life (home, and money and time) and Nature (outdoors and animals). You can change a skill's discipline in its settings.</li>
           <li>Practice unlocks classes, and you choose which one to play in the Hero tab. Everyone starts as a Wanderer; the other neutral classes open with total level, and each discipline's starter class opens at discipline Lv 10 (10 hours of practice across its skills, counted from total minutes, not by adding skill levels). Switching is free outside a battle. A class gives a signature battle skill and a perk, never XP. There are 98 classes in all: 5 neutral, 16 starter, 32 specializations (a discipline at Lv 25), 8 dual-discipline (both disciplines of a path at Lv 10), 28 two-path classes (two paths at Lv 10 each, one class for every pair) and 9 ascended classes still to come.</li>
+          <li>${esc(cgRuleText())}</li>
           <li>Adventuring pets: link a pet to its own Animals skill (like Dog walking or Pet care). It joins your hero at that skill's Lv 3 and learns tricks as the skill levels up. Pets never add XP, and they never get hungry or sad if you skip days.</li>
           <li>On the map, villagers give short missions, caves hide side fights, and each region has a boss whose big attack you can stun, shield or dodge. Healing and Shield potions are found in play, never sold, and you can drink one per fight.</li>
         </ul>
@@ -7262,6 +7527,10 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
       case "tal-learn": learnTalent(id); break;
       case "ask-tal-reset": confirm = { kind: "tal-reset", id: talCat }; render(); break;
       case "tal-reset": confirm = null; resetTree(id); break;
+      case "cg-buy": clsGearBuy(id); break;                                         // class gear and trees (v0.15)
+      case "ct-learn": clsTreeLearn(id); break;
+      case "ask-ct-reset": confirm = { kind: "ct-reset", id }; render(); break;
+      case "ct-reset": confirm = null; clsTreeReset(id); break;
       case "tal-title": state.title = state.title === id ? null : id; persist(); render(); break;
       case "equip": equipItem(id); break;
       case "relic-ver": { if (!hasRelic(id)) break; if (!state.relicOff) state.relicOff = {}; if (b.dataset.val === "1") delete state.relicOff[id]; else state.relicOff[id] = true; Sound.play("tap"); persist(); render(); break; }

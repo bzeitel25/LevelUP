@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.18.0 — 2026-10-11 (build 2026-10-11.2)
+
+Class gear sets and role talent trees.
+
+- **Class gear sets:** every class except the neutral ones has a 4-piece set themed on its real-life skills, like Lightweaver's camera-lens monocle. Buy pieces with gold once the class is unlocked: 120g for starter classes, 180g for dual and two-path classes, 250g for specializations. Pieces show on your hero in the class's role colors.
+- **Full set bonus:** all 4 pieces, while you play that class, give a small role bonus:
+  - Striker: +4% auto-attack damage
+  - Guardian: +6% max HP
+  - Support: heals 8% stronger
+  - Controller: stuns last 8% longer
+  - Treasure Hunter: +4% dungeon gold
+- **Role talent trees:** one tree per role, each with 8 nodes plus a capstone, at the top of the Talents tab. You earn points from your current class's level, at class levels 10 through 75. Picks are saved per role, so all your Striker classes share one tree. Resetting is free.
+- All bonuses share the talent caps, and nothing adds XP.
+
 ## v0.17.0 — 2026-10-11 (build 2026-10-11.1)
 
 A tighter class system: 28 two-path classes.
