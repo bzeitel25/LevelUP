@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.20.0 — 2026-10-13 (build 2026-10-13.2)
+
+Every item has a real icon.
+
+- **Hand-drawn icons for all gear:** item cards used to show a cropped copy of what your hero wears, so a guitar was a line with a dot. Every skill item and every class gear piece now has its own pixel icon drawn to look like the real thing: 187 designs covering all 255 skill items and all 336 class pieces.
+- **Guitars look like guitars:** a worn acoustic, a red electric, a hollowbody, a sapphire stage guitar, an archtop with f-holes and a flaming gold flying-V Mythic Axe. Piano, bass, ukulele, violin, sax and tuba change with the tier (an upright for early pianos, a grand from Concert up, a gold Legendary).
+- **Dance, Acting & theater and DJing** gear now shows dance shoes, theater masks, headphones and turntables instead of guitars.
+- **Class pieces match their names:** kite, tower, gate, anvil, palette and hive-frame shields; broadswords, sabers, foils, cleavers, maces, greataxes, tridents and bows; helms with horns, plumes or crests; cloaks with fur, stars, circuits, camo or moss. Each piece takes its class's role color.
+- **Rarity glow:** sapphire gear glows softly, amethyst adds twinkling sparkles, legendary gold glows brighter, and Radiant relics shimmer through the colors. Specialization pieces sparkle, two-path and dual-discipline pieces glow. Sparkles stay still if your device asks for reduced motion.
+- **Bigger icons:** item icons are a little larger (52 px, 78 px for a new relic) so the detail shows. Dark items keep a faint rim so they stay readable in dark mode.
+- Only the icons changed. What your hero wears looks the same as before.
+
 ## v0.19.0 — 2026-10-13 (build 2026-10-13.1)
 
 Veteran Reserve and honest sessions.

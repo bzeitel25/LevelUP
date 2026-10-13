@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-13.1",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-13.2",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -138,7 +138,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .portrait { width: 80px; height: 80px; border-radius: 3px; flex: none; }
 .wdg .portrait { width: 52px; height: 52px; box-shadow: 0 0 0 2px var(--xp-fill); }
 .wdg.md .portrait { width: 64px; height: 64px; }
-.item-ic { width: 40px; height: 40px; margin-bottom: 2px; }
+.item-ic { width: 52px; height: 52px; margin-bottom: 2px; }
 .hero-card { padding: 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 640px) { .hero-card { grid-template-columns: minmax(0, 1fr); } }
 .hero-stage { display: grid; place-items: center; }
@@ -544,7 +544,7 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .relic-name { background: linear-gradient(90deg, #1fa89b, #b14fd0, #1fa89b); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: relicShine 4s linear infinite; }
 .item.relic { border-color: #5fe3d6; background: linear-gradient(160deg, color-mix(in srgb, #5fe3d6 14%, var(--panel)), color-mix(in srgb, #e08cf2 12%, var(--panel))); }
 .relic-drop { display: flex; gap: 12px; align-items: center; border: 2px solid #5fe3d6; border-radius: 10px; padding: 10px 12px; background: linear-gradient(160deg, color-mix(in srgb, #5fe3d6 16%, var(--panel)), color-mix(in srgb, #e08cf2 14%, var(--panel))); animation: celin .4s cubic-bezier(.2,1.4,.4,1); }
-.relic-drop .item-ic { width: 48px; height: 48px; flex: none; }
+.relic-drop .item-ic { width: 78px; height: 78px; flex: none; }
 .relic-drop b { font-size: 16px; }
 .relic-kicker { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 @keyframes relicShine { to { background-position: -200% 0; } }
@@ -2318,7 +2318,7 @@ details.cg-set > summary { cursor: pointer; }
       const action = own ? `<span class="req" style="color:var(--xp);font-weight:700">Owned</span>`
         : unl ? `<button class="btn small ${state.gold >= price ? "primary" : ""}" data-act="cg-buy" data-id="${pid}" ${state.gold >= price ? "" : "disabled"}>Buy · ${price.toLocaleString()}g${off ? ` <s class="muted" style="font-weight:500">${CG_PRICE[c.tier]}</s>` : ""}</button>`
         : `<span class="req">Unlock ${esc(c.name)} first</span>`;
-      return `<div class="item ${own ? "equipped" : ""}"><canvas class="px item-ic" data-icon="${cgSprite(nm)}:${cgTier(c)}" data-size="40" aria-hidden="true"></canvas><b>${esc(nm)}</b><span class="eff">Look only</span>${action}</div>`;
+      return `<div class="item ${own ? "equipped" : ""}"><canvas class="px item-ic" data-icon="${cgSprite(nm)}:${cgTier(c)}" data-iname="${esc(nm)}" data-fx="${CG_FX[c.tier] || 0}" data-size="52" aria-hidden="true"></canvas><b>${esc(nm)}</b><span class="eff">Look only</span>${action}</div>`;
     }).join("")}</div>`;
     const head = `<span class="cls-role r-${rk}">${esc(c.role)}</span> <b>${esc(c.name)} set</b> <span class="muted num" style="font-size:13px">${n} / 4</span>`;
     const bonus = `<div class="cg-bonus r-${rk}"><span class="lbl">Full set bonus</span> ${esc(cgBonusText(c))} · <span class="muted">${status}</span></div>`;
@@ -2340,7 +2340,7 @@ details.cg-set > summary { cursor: pointer; }
     return `<article class="panel gear-skill cg-inv">
       <div class="gear-head"><h3>Class gear</h3><span class="muted" style="font-size:13px">Shows on your hero · bonus while you play that class</span></div>
       ${sets.map(c => `<div class="cg-set"><div class="cg-head"><span class="cls-role r-${CLASS_ROLE_KEY[c.role]}">${esc(c.role)}</span> <b>${esc(c.name)} set</b> <span class="muted num" style="font-size:13px">${cgCount(c)} / 4${cgBonusOn(c) ? ` · <b style="color:var(--good)">Full set bonus active</b>` : ""}</span></div>
-        <div class="gear-grid">${c.gear.map((nm, i) => cgOwned(c, i) ? `<div class="item inv"><canvas class="px item-ic" data-icon="${cgSprite(nm)}:${cgTier(c)}" data-size="40" aria-hidden="true"></canvas><b>${esc(nm)}</b><span class="eff">Look only</span></div>` : "").join("")}</div></div>`).join("")}
+        <div class="gear-grid">${c.gear.map((nm, i) => cgOwned(c, i) ? `<div class="item inv"><canvas class="px item-ic" data-icon="${cgSprite(nm)}:${cgTier(c)}" data-iname="${esc(nm)}" data-fx="${CG_FX[c.tier] || 0}" data-size="52" aria-hidden="true"></canvas><b>${esc(nm)}</b><span class="eff">Look only</span></div>` : "").join("")}</div></div>`).join("")}
     </article>`;
   }
   // The class's gear set line in the Hero tab class panel.
@@ -2841,8 +2841,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-13.1";
-  const APP_VERSION = "0.19.0";
+  const BUILD = "2026-10-13.2";
+  const APP_VERSION = "0.20.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -3978,7 +3978,7 @@ details.cg-set > summary { cursor: pointer; }
           <div class="gear-grid">${items.map(it => {
             const on = eq === it.id, rad = hasRelic(it.id), shows = showsRelic(it.id), look = lookFor(it);
             return `<div class="item inv ${on ? "equipped" : ""} ${shows ? "relic" : ""}">
-              <canvas class="px item-ic" data-icon="${look}:${shownTier(it)}" data-size="40" aria-hidden="true"></canvas>
+              <canvas class="px item-ic" data-icon="${look}:${shownTier(it)}" data-iname="${esc(it.name)}" data-iskill="${esc(s.id)}" data-size="52" aria-hidden="true"></canvas>
               <b class="${shows ? "relic-name" : ""}">${shows ? "Radiant " : ""}${esc(it.name)}</b>
               <span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>
               ${rad ? `<div class="seg ver" role="group" aria-label="Version"><button data-act="relic-ver" data-id="${it.id}" data-val="0" aria-pressed="${!shows}">Regular</button><button data-act="relic-ver" data-id="${it.id}" data-val="1" aria-pressed="${shows}">Radiant</button></div>`
@@ -4027,7 +4027,7 @@ details.cg-set > summary { cursor: pointer; }
               : unlocked ? `<button class="btn small ${state.gold >= price ? "primary" : ""}" data-act="buy" data-id="${it.id}" ${state.gold >= price ? "" : "disabled"}>Buy · ${price.toLocaleString()}g${off ? ` <s class="muted" style="font-weight:500">${it.price.toLocaleString()}</s>` : ""}</button>`
               : `<span class="req">Unlocks at Lv ${it.lv}</span>`;
             const look = lookFor(it);
-            return `<div class="item ${cls}"><canvas class="px item-ic" data-icon="${look}:${it.tier}" data-size="40" aria-hidden="true"></canvas><b>${esc(it.name)}</b><span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>${!owned && unlocked ? `<span class="req">${state.gold >= price ? "Ready to buy" : `Need ${(price - state.gold).toLocaleString()} more gold`}</span>` : ""}${action}</div>`;
+            return `<div class="item ${cls}"><canvas class="px item-ic" data-icon="${look}:${it.tier}" data-iname="${esc(it.name)}" data-iskill="${esc(s.id)}" data-size="52" aria-hidden="true"></canvas><b>${esc(it.name)}</b><span class="eff">+${it.bonus} ${STATS[s.cat].name}</span>${!owned && unlocked ? `<span class="req">${state.gold >= price ? "Ready to buy" : `Need ${(price - state.gold).toLocaleString()} more gold`}</span>` : ""}${action}</div>`;
           }).join("")}</div>
         </article>`;
       }).join("")}
@@ -4072,7 +4072,7 @@ details.cg-set > summary { cursor: pointer; }
         <div>+<b class="num" style="color:var(--xp)">${r.gold}</b> gold${r.fortune || r.talGold ? ` <span class="muted">(includes ${[r.fortune ? `Fortune +${r.fortune}%` : "", r.talGold ? `${classGoldLabel(r.talGold)} +${r.talGold}%` : ""].filter(Boolean).join(" and ")})</span>` : ""}${r.trophy ? ` · Rare drop: <b style="color:var(--xp)">${esc(r.trophy)}</b>` : ""}</div>
         ${r.elixir ? `<div class="relic-drop elix-drop">${ElixirIcon(r.elixir, 44)}<div><div class="relic-kicker">Rare elixir found</div><b>${esc(ELIXIRS[r.elixir].name)}</b><div class="muted" style="font-size:13px">+${ELIXIRS[r.elixir].pct}% XP for 1 hour of practice. Drink it from your Inventory.</div></div></div>` : ""}
         ${advRunExtra(r)}
-        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-size="48" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}), now on your hero. Switch versions in your Inventory.</div></div></div>` : ""}
+        ${r.relic ? `<div class="relic-drop"><canvas class="px item-ic" data-icon="${r.relic.sprite}:${RELIC_TIER}" data-iname="${esc(r.relic.base)}" data-iskill="${esc(String(r.relic.id).split(":")[0])}" data-size="78" aria-hidden="true"></canvas><div><div class="relic-kicker">Rare relic found</div><b>${esc(r.relic.name)}</b><div class="muted" style="font-size:13px">The Radiant version of your ${esc(r.relic.base)} (${esc(r.relic.skill)}), now on your hero. Switch versions in your Inventory.</div></div></div>` : ""}
         <div style="display:flex;gap:8px;flex-wrap:wrap">${r.relic ? `<button class="btn small" data-act="tab" data-tab="inventory">Open inventory</button>` : ""}<button class="btn small" data-act="tab" data-tab="gear">Spend gold</button><button class="btn small ghost" data-act="close-run">Close</button></div>`}
     </div>`;
   }
@@ -6433,8 +6433,2113 @@ details.cg-set > summary { cursor: pointer; }
 
   function defaultAppearance() { return { skin: 1, hairStyle: 0, hairColor: 1, eyes: 0, eyeStyle: 0, mouth: 0, cheeks: 0, shirt: 3, pants: 6, bg: "meadow", show: {} }; }
 
-  // Render one item on its own, cropped to its pixels (for gear cards).
-  function itemIcon(canvas, sprite, tier, size = 40) {
+  // ===== ITEM ICONS (v0.20) =====
+  // Every gear piece has its own pixel icon, separate from the small version your hero wears.
+  // Icons are drawn on a 26x26 grid: art up to about 20x20, a 1px outline, and room for a rarity glow.
+  // An icon is picked by item name first (IC_RULES), then by the hero sprite, then the old cropped sprite.
+  // Letters: A/a/L/1/2 are the item's finish (tier or class-role color: mid, dark, light, deep, shine).
+  // The shader lights the top-left edge and darkens the bottom-right edge of any color with a ramp.
+  const IC_N = 26, IC_OFF = 3;
+  const IC_COL = {
+    w: "#b07a42", v: "#7a4f28", u: "#dba468",           // wood
+    n: "#7a4a26", N: "#4f2d14",                          // dark wood, leather
+    s: "#c3cad6", S: "#868fa1", i: "#f0f3f8",           // steel
+    m: "#6a7286", M: "#474d5e",                          // gunmetal
+    g: "#f2c14e", G: "#b8860b", h: "#fff0a8",           // gold
+    k: "#3a3d50", K: "#22243a", j: "#5c6280",           // black
+    p: "#eee8d8", P: "#c9bfa4", Z: "#ffffff",           // paper, white cloth
+    r: "#d94a3a", R: "#9e2f24", f: "#f28a72",           // red
+    b: "#4a86d6", B: "#2c5a9e", c: "#9cc8f5",           // blue
+    e: "#4aa86a", E: "#2f7d4a", l: "#8fdca4",           // green
+    q: "#9a58d8", Q: "#64349e", x: "#c89cf2",           // purple
+    t: "#2f9e96", T: "#1f716b", "3": "#7ad8cf",          // teal
+    d: "#f2a0b8", D: "#c46a88",                          // pink
+    o: "#e8743a", O: "#b04a1c", y: "#ffe58a", Y: "#ffb84a", // orange, yellow
+    z: "#a7a3ad", X: "#6e6a78",                          // stone
+    F: "#f3d2a8", H: "#bfe8ff", C: "#6ff0ff", W: "#fffbe6", // cream, glass, cyan glow, warm white
+    U: "#8a6440", V: "#5e4128", "4": "#b98d5e",          // fur
+    "5": "#e9e4d8", "6": "#7fd36a", "7": "#ff5a8a", "8": "#3fd0ff", "9": "#b6ff6a" // smoke, leaf, neon pink, neon blue, neon green
+  };
+  const IC_RAMP = { A: ["L", "a"], J: ["0", "I"], w: ["u", "v"], n: ["w", "N"], s: ["i", "S"], m: ["s", "M"], g: ["h", "G"], k: ["j", "K"], p: ["Z", "P"],
+    r: ["f", "R"], b: ["c", "B"], e: ["l", "E"], q: ["x", "Q"], t: ["3", "T"], d: ["Z", "D"], o: ["Y", "O"], z: ["s", "X"], U: ["4", "V"], F: ["W", "4"] };
+  const IC = {};                                        // key -> (d, v, tier) draws the icon
+  function icCtx() {
+    const g = Array.from({ length: IC_N }, () => new Array(IC_N).fill(null)), over = [];
+    const set = (x, y, ch, layer) => {
+      x = Math.round(x) + IC_OFF; y = Math.round(y) + IC_OFF;
+      if (x < 0 || y < 0 || x >= IC_N || y >= IC_N || ch === "." || ch === " ") return;
+      if (layer) { over.push([x, y, ch]); return; }
+      g[y][x] = ch === "_" ? null : ch;
+    };
+    const d = {
+      g, over, flat: false,
+      p(x, y, ch) { set(x, y, ch); return d; },
+      ps(list, ch) { list.forEach(([x, y]) => set(x, y, ch)); return d; },
+      r(x, y, w, h, ch) { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) set(x + xx, y + yy, ch); return d; },
+      l(x0, y0, x1, y1, ch, w = 1) {
+        const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+        let err = dx - dy, x = x0, y = y0;
+        for (let n = 0; n < 200; n++) { for (let k = 0; k < w; k++) set(dx >= dy ? x : x + k, dx >= dy ? y + k : y, ch); if (x === x1 && y === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+        return d;
+      },
+      e(cx, cy, rx, ry, ch) {
+        for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
+          if (((x - cx) / (rx + 0.35)) ** 2 + ((y - cy) / (ry + 0.35)) ** 2 <= 1) set(x, y, ch);
+        return d;
+      },
+      t(x, y, rows) { rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) set(x + rx, y + ry, row[rx]); }); return d; },
+      o(x, y, rows) { rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) set(x + rx, y + ry, row[rx], true); }); return d; },
+      glow(x, y, ch) { set(x, y, ch, true); return d; },
+      // Mirror the left half onto the right around column cx (art coordinates, axis between cx-1 and cx when even).
+      sym(w = 20) { for (let y = 0; y < IC_N; y++) for (let x = 0; x < w / 2; x++) { const ax = x + IC_OFF, bx = IC_OFF + w - 1 - x; if (g[y][ax]) g[y][bx] = g[y][ax]; } return d; },
+      flip() { g.forEach(row => row.reverse()); return d; }
+    };
+    return d;
+  }
+  // Tier finish letters for a palette index (tiers 0-6, then class-role colors).
+  const IC_FIN = {
+    red: { A: "#d94a3a", a: "#9e2f24", L: "#f28a72" }, cherry: { A: "#b8323a", a: "#7a1e26", L: "#e0676a" }, black: { A: "#3a3d50", a: "#22243a", L: "#6a7090" },
+    wood: { A: "#b07a42", a: "#7a4f28", L: "#dba468" }, natural: { A: "#e2b878", a: "#b0834a", L: "#f6dcaa" }, white: { A: "#eee8d8", a: "#c9bfa4", L: "#ffffff" },
+    steel: { A: "#c3cad6", a: "#868fa1", L: "#f0f3f8" }, iron: { A: "#8a94a4", a: "#5a6272", L: "#b9c1cd" }, gold: { A: "#f0bd3e", a: "#b8860b", L: "#ffe7a0" },
+    brass: { A: "#d9a441", a: "#9a6c1c", L: "#f6d27e" }, copper: { A: "#d07a45", a: "#8e4a22", L: "#f0a878" }, leather: { A: "#8a5a34", a: "#5a3a1e", L: "#b88a5c" },
+    green: { A: "#4aa86a", a: "#2f7d4a", L: "#8fdca4" }, blue: { A: "#4a86d6", a: "#2c5a9e", L: "#9cc8f5" }, purple: { A: "#9a58d8", a: "#64349e", L: "#c89cf2" },
+    pink: { A: "#e98aa8", a: "#b85878", L: "#f6c0d2" }, teal: { A: "#2f9e96", a: "#1f716b", L: "#7ad8cf" }, cream: { A: "#efe2c2", a: "#cbb98e", L: "#fff8e6" },
+    straw: { A: "#e6c66a", a: "#b08f34", L: "#fbe9a6" }, fur: { A: "#8a6440", a: "#5e4128", L: "#b98d5e" }, grey: { A: "#7d8296", a: "#53586c", L: "#a9aec0" },
+    navy: { A: "#34407a", a: "#212a55", L: "#5a68a8" }, orange: { A: "#e8743a", a: "#b04a1c", L: "#ffa86a" }, yellow: { A: "#f2c94e", a: "#c09422", L: "#fff0a0" },
+    hivis: { A: "#d8f24a", a: "#a8bf22", L: "#f0ff9a" }, moss: { A: "#6e8a3a", a: "#4a6224", L: "#9cb862" }, camo: { A: "#6b7a45", a: "#465230", L: "#93a066" },
+    stone: { A: "#a7a3ad", a: "#6e6a78", L: "#d0ccd6" }, bark: { A: "#7a5634", a: "#523820", L: "#a07a54" }, silver: { A: "#d0d6e0", a: "#949cad", L: "#f6f8fc" },
+    shadow: { A: "#4a3a6a", a: "#2c2244", L: "#6e5a96" }, night: { A: "#2c3466", a: "#1a1f44", L: "#4e5aa0" }, lavender: { A: "#b49ae6", a: "#7e64b4", L: "#dccbfa" }
+  };
+  function icFinish(tier, fin) {
+    const tp = TIER_PAL[tier] || TIER_PAL[0], fp = (fin && (IC_FIN[fin] || fin)) || tp;
+    return { A: fp.A, a: fp.a, L: fp.L, "1": tone(fp.a, -0.35), "2": tone(fp.L, 0.55), J: tp.A, I: tp.a, "0": tp.L };
+  }
+  // Build the colored 26x26 grid for an icon: shading, outline, overlay, centered.
+  function icBuild(key, v, tier) {
+    const d = icCtx(); v = v || {}; IC[key](d, v, tier);
+    const g = d.g, fin = icFinish(tier, v.fin), col = ch => fin[ch] || IC_COL[ch] || (ch && ch[0] === "#" ? ch : null);
+    const fam = {}; Object.entries(IC_RAMP).forEach(([m, [lt, dk]]) => { fam[m] = new Set([m, lt, dk].filter(Boolean)); });
+    const at = (x, y) => (g[y] && g[y][x]) || null;
+    const out = Array.from({ length: IC_N }, () => new Array(IC_N).fill(null));
+    for (let y = 0; y < IC_N; y++) for (let x = 0; x < IC_N; x++) {
+      const ch = g[y][x]; if (!ch) continue;
+      let c = ch;
+      if (!d.flat && IC_RAMP[ch]) {
+        const F = fam[ch], lit = !F.has(at(x - 1, y)) || !F.has(at(x, y - 1)), dark = !F.has(at(x + 1, y)) || !F.has(at(x, y + 1));
+        if (lit && !dark && IC_RAMP[ch][0]) c = IC_RAMP[ch][0]; else if (dark && !lit) c = IC_RAMP[ch][1];
+      }
+      out[y][x] = col(c);
+    }
+    for (let y = 0; y < IC_N; y++) for (let x = 0; x < IC_N; x++) {
+      if (g[y][x]) continue;
+      const nb = [[x, y + 1], [x + 1, y], [x - 1, y], [x, y - 1]].map(([a, b]) => at(a, b)).find(Boolean);
+      if (nb) out[y][x] = deepen(col(nb) || OUTLINE);
+    }
+    d.over.forEach(([x, y, ch]) => { out[y][x] = ch === "_" ? null : col(ch); });
+    // center the art
+    let x0 = IC_N, y0 = IC_N, x1 = -1, y1 = -1;
+    out.forEach((row, y) => row.forEach((c, x) => { if (c) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } }));
+    if (x1 < 0) return null;
+    const sx = Math.floor((IC_N - (x1 - x0 + 1)) / 2) - x0, sy = Math.floor((IC_N - (y1 - y0 + 1)) / 2) - y0;
+    const cen = Array.from({ length: IC_N }, () => new Array(IC_N).fill(null));
+    out.forEach((row, y) => row.forEach((c, x) => { const nx = x + sx, ny = y + sy; if (c && nx >= 0 && ny >= 0 && nx < IC_N && ny < IC_N) cen[ny][nx] = c; }));
+    // a faint light rim outside the outline keeps dark items readable on dark panels (invisible on light ones)
+    cen.rim = [];
+    for (let y = 0; y < IC_N; y++) for (let x = 0; x < IC_N; x++) if (!cen[y][x] && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => cen[y + b] && cen[y + b][x + a])) cen.rim.push([x, y]);
+    return cen;
+  }
+  // Rarity effects. Level 0-2 plain, 3 soft glow, 4 glow and sparkles, 5 golden glow, rays and sparkles, 6 radiant prism.
+  const IC_SPARK_AT = [[2, 2], [22, 3], [3, 21], [21, 21], [12, 1], [1, 12], [23, 12], [12, 23]];
+  function icFx(grid, lvl, tier) {
+    if (lvl < 3) return null;
+    const tp = TIER_PAL[tier] || TIER_PAL[0], hue = lvl >= 6;
+    const dist = Array.from({ length: IC_N }, () => new Array(IC_N).fill(9));
+    for (let y = 0; y < IC_N; y++) for (let x = 0; x < IC_N; x++) if (!grid[y][x]) {
+      let best = 9;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const r = grid[y + dy] && grid[y + dy][x + dx]; if (r) best = Math.min(best, Math.hypot(dx, dy)); }
+      dist[y][x] = best;
+    }
+    const a1 = [0, 0, 0, 0.32, 0.42, 0.55, 0.55][lvl], a2 = [0, 0, 0, 0, 0.18, 0.26, 0.3][lvl];
+    const sparks = IC_SPARK_AT.filter(([x, y]) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[y + dy] && grid[y + dy][x + dx] || dist[y + dy] && dist[y + dy][x + dx] < 1.6) return false; return true; })
+      .slice(0, lvl === 4 ? 2 : lvl === 5 ? 3 : 4);
+    return { dist, a1, a2, sparks, glow: tp.A, spark: tp.L, hue };
+  }
+  const icHex = (h, a) => { const c = hex2rgb(h); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
+  function icPaint(canvas, grid, fx, k, frame) {
+    canvas.width = canvas.height = IC_N * k;
+    const c = canvas.getContext("2d"); c.imageSmoothingEnabled = false; c.clearRect(0, 0, IC_N * k, IC_N * k);
+    const box = (x, y, col) => { c.fillStyle = col; c.fillRect(x * k, y * k, k, k); };
+    if (fx) {
+      const cx = IC_N / 2, cy = IC_N / 2;
+      for (let y = 0; y < IC_N; y++) for (let x = 0; x < IC_N; x++) {
+        const dd = fx.dist[y][x]; if (dd > 2.6) continue;
+        let base = fx.glow;
+        if (fx.hue) { const h = (Math.atan2(y - cy, x - cx) / (2 * Math.PI) * 360 + frame * 40 + 360) % 360; base = `hsl(${h},95%,70%)`; }
+        const a = dd <= 1.5 ? fx.a1 : fx.a2; if (!a) continue;
+        if (fx.hue) { c.globalAlpha = a; box(x, y, base); c.globalAlpha = 1; } else box(x, y, icHex(base, a));
+      }
+    }
+    if (!fx && grid.rim) grid.rim.forEach(([x, y]) => box(x, y, "rgba(255,255,255,.16)"));
+    for (let y = 0; y < IC_N; y++) for (let x = 0; x < IC_N; x++) if (grid[y][x]) box(x, y, grid[y][x]);
+    if (fx) fx.sparks.forEach(([x, y], i) => {
+      const big = (i + frame) % 2 === 0, tint = fx.hue ? `hsl(${(i * 90 + frame * 40) % 360},95%,75%)` : fx.spark;
+      box(x, y, "#ffffff");
+      if (big) [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => box(x + dx, y + dy, tint));
+    });
+  }
+  // Rare icons twinkle: one shared timer repaints only the visible animated canvases.
+  const icLive = new Map();
+  let icTimer = null, icFrame = 0;
+  const icReduced = () => { try { return window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
+  function icAnimate() {
+    if (icTimer || icReduced()) return;
+    icTimer = setInterval(() => {
+      if (document.hidden) return;
+      icFrame++;
+      icLive.forEach((o, cv) => { if (!cv.isConnected) { icLive.delete(cv); return; } icPaint(cv, o.grid, o.fx, o.k, icFrame); });
+      if (!icLive.size) { clearInterval(icTimer); icTimer = null; }
+    }, 520);
+  }
+  const icCache = new Map();
+  // --- Music icons ---
+  // Diagonal stringed instruments: body at the lower left, headstock at the upper right (art box 0-19).
+  // Positions along a guitar's center line x + y = 19.
+  const icNeck = (d, x0, y0, x1, y1, ch = "n") => d.l(x0, y0, x1, y1, ch, 2);
+  IC.acoustic = (d, v) => {
+    d.e(4.8, 14.6, 4.4, 4.4, "A").e(10.2, 9.4, 3.2, 3.2, "A");
+    if (v.wood) { d.e(4.8, 14.6, 3.2, 3.2, "w").e(10.2, 9.4, 2.1, 2.1, "w"); }
+    d.e(9, 10.8, 1.25, 1.25, "K").p(8, 10, "k");
+    d.l(3, 14, 5, 16, "N");
+    icNeck(d, 11, 7, 15, 3);
+    d.t(15, 0, [".nn", "nnn", "nn."]).ps([[15, 0], [18, 1], [17, -1], [19, 0]], "s");
+    d.l(4, 15, 15, 4, "p");
+    if (v.worn) d.ps([[2, 12], [3, 12], [7, 18], [8, 17], [12, 9]], "a");
+  };
+  // Solid-body electric, double cutaway (strat style).
+  IC.electric = (d, v) => {
+    d.e(5, 14.4, 4.3, 4.3, "A").e(9, 10.6, 3, 3, "A").e(8.6, 6.8, 1.4, 1.6, "A").e(13, 10.8, 1.6, 1.4, "A");
+    d.l(9, 9, 10, 8, "A", 2);
+    d.e(6.6, 13.6, 2.6, 2.6, v.guard || "p");
+    [[6, 11], [8, 9], [4, 13]].forEach(([x, y]) => d.l(x, y, x + 2, y + 2, "k"));
+    d.l(2, 14, 4, 16, "s");
+    d.p(9, 15, "k").p(10, 14, "k");
+    icNeck(d, 10, 8, 15, 3, v.neck || "u");
+    d.t(14, -1, ["..uuu", ".uuuu", "uuuu.", "uu..."].map(r => r.replace(/u/g, v.neck || "u"))).ps([[16, -2], [18, -2], [19, -1]], "s");
+    d.l(3, 15, 15, 3, "i");
+  };
+  // Single cutaway with a carved top (stage guitar).
+  IC.lespaul = (d, v) => {
+    d.e(5, 14.4, 4.5, 4.5, "A").e(9.4, 10.4, 3.3, 3.3, "A").e(8.2, 7.2, 1.6, 1.8, "A");
+    d.e(5.4, 14, 3.2, 3.2, v.top || "L");
+    d.e(7.5, 12.5, 1.5, 1.5, "k").p(7, 12, "j");
+    [[6, 10], [3, 13]].forEach(([x, y]) => d.l(x, y, x + 2, y + 2, "s"));
+    d.l(2, 15, 4, 17, "g");
+    d.ps([[11, 13], [12, 12], [10, 14]], "g");
+    icNeck(d, 10, 8, 15, 3, "k");
+    d.t(14, -1, [".kkk", "kkkk", "kkk.", "kk.."]).ps([[15, -2], [17, -2], [18, -1], [13, 0]], "g");
+    d.l(3, 16, 15, 3, "i");
+  };
+  // Semi-hollow with f-holes (hollowbody).
+  IC.hollow = (d, v) => {
+    d.e(5, 14.4, 4.6, 4.6, "1").e(9.6, 9.8, 3.6, 3.6, "1");
+    d.e(5, 14.4, 3.7, 3.7, "A").e(9.6, 9.8, 2.7, 2.7, "A").e(5.6, 13.8, 2, 2, "L");
+    d.ps([[3, 11], [4, 10], [5, 9]], "K").ps([[9, 16], [10, 15], [11, 14]], "K");
+    [[6, 10], [4, 12]].forEach(([x, y]) => d.l(x, y, x + 2, y + 2, "k"));
+    d.l(1, 16, 3, 18, "g");
+    icNeck(d, 11, 7, 15, 3, "n");
+    d.t(14, -1, [".nnn", "nnnn", "nnn.", ".n.."]).ps([[15, -2], [17, -2], [18, -1], [13, 0]], "s");
+    d.l(2, 17, 15, 4, "i");
+  };
+  // Big archtop jazz guitar: single cutaway, f-holes, gold tailpiece.
+  IC.archtop = (d, v) => {
+    d.e(5.2, 14.2, 4.9, 4.9, "a").e(9.6, 9.6, 3.6, 3.6, "a").e(8.2, 6.8, 1.7, 1.9, "a");
+    d.e(5.2, 14.2, 4.1, 4.1, "A").e(9.6, 9.6, 2.8, 2.8, "A").e(5.8, 13.6, 2.3, 2.3, "L");
+    d.ps([[2, 12], [3, 11], [4, 10]], "K").ps([[9, 17], [10, 16], [11, 15]], "K");
+    d.l(6, 10, 9, 13, "k");
+    d.l(1, 16, 4, 19, "g").l(2, 16, 4, 18, "g");
+    icNeck(d, 11, 7, 15, 3, "k");
+    d.t(14, -1, [".ggg", "gkkg", "gkg.", "gg.."]).ps([[13, 0], [15, -2]], "h");
+    d.l(3, 16, 15, 4, "i");
+  };
+  // Mythic Axe: a guitar whose body is a double-bit battle axe, with glowing runes.
+  IC.mythaxe = (d, v) => {
+    d.l(9, 10, 1, 13, "A", 3).l(9, 10, 6, 18, "A", 3).e(8, 12, 2.4, 2.4, "A");
+    d.l(8, 11, 2, 13, "L").l(8, 12, 5, 17, "a");
+    d.ps([[4, 13], [6, 15], [7, 12]], "C");
+    d.l(3, 15, 6, 12, "s").l(4, 16, 7, 13, "s");
+    icNeck(d, 9, 9, 15, 3, "k");
+    d.t(14, -2, ["...gg", "..ggg", ".ggg.", "ggg..", ".g..."]).ps([[18, -2], [16, 0]], "h");
+    d.l(5, 14, 15, 3, "i");
+    d.o(0, 9, [".y.", "yYy", "yoY", ".o."]).o(5, 17, [".y.", "yYy", "Yoy", ".o."]);
+  };
+  // Electric bass: offset body, long neck, four pegs.
+  IC.bass = (d, v) => {
+    d.e(4.4, 15, 3.9, 3.9, "A").e(7.8, 11.8, 2.6, 2.6, "A").e(7.4, 9, 1.2, 1.6, "A").e(10.8, 12.6, 1.5, 1.2, "A");
+    d.e(4.8, 14.6, 1.8, 1.8, v.guard || "L");
+    [[4, 12], [6, 10]].forEach(([x, y]) => d.l(x, y, x + 2, y + 2, "k"));
+    d.l(1, 15, 3, 17, v.hw || "s");
+    icNeck(d, 9, 9, 16, 2, "n");
+    d.t(16, -2, [".nnn", "nnn.", "nn.."]).ps([[17, -3], [19, -2], [15, -1], [16, 0]], v.hw || "s");
+    d.l(2, 16, 16, 2, "i");
+  };
+  IC.ukulele = (d, v) => {
+    d.e(7, 13, 3.4, 3.4, "A").e(10.6, 9.4, 2.5, 2.5, "A");
+    if (v.wood) d.e(7, 13, 2.4, 2.4, "w");
+    d.e(9.6, 10.6, 1, 1, "K");
+    d.l(6, 13, 7, 14, "N");
+    icNeck(d, 11, 7, 14, 4);
+    d.t(14, 1, ["nn", "nnn", ".n"]).ps([[14, 0], [17, 2]], "s");
+    d.l(6, 14, 14, 5, "p");
+  };
+  // Violin with its bow crossing behind.
+  IC.violin = (d, v) => {
+    d.l(1, 3, 18, 18, "w").l(0, 2, 1, 3, "k").l(18, 18, 19, 19, "k");
+    d.l(2, 3, 18, 17, "Z");
+    d.e(5.2, 14.4, 3.4, 3.4, "A").e(9, 10.6, 2.6, 2.6, "A");
+    d.ps([[6, 12], [7, 11], [5, 13]], "a").e(7.4, 12.2, 0.8, 0.8, "a");
+    d.ps([[3, 12], [4, 11]], "K").ps([[8, 15], [9, 14]], "K");
+    d.l(3, 16, 5, 18, "k");
+    d.l(6, 13, 14, 5, "k", 1).l(7, 13, 14, 6, "K", 1);
+    d.l(13, 5, 15, 3, "n", 2);
+    d.t(15, 0, ["nn.", "nNn", ".nn"]);
+    d.ps([[14, 4], [16, 4]], "k");
+  };
+  // Lute: pear-shaped bowl, rose, swept-back pegbox.
+  IC.lute = (d, v) => {
+    d.e(6, 13.4, 5, 5, "w").e(9.6, 9.8, 3, 3, "w");
+    d.e(6.6, 12.8, 3.6, 3.6, v.top || "u");
+    d.e(8, 11.4, 1.4, 1.4, "N").p(8, 11, "u");
+    d.l(3, 15, 5, 17, "N");
+    d.l(10, 8, 13, 5, "n", 2);
+    d.t(13, 1, ["..NN", ".NNN", "NNN.", "NN.."]).ps([[16, 1], [17, 0], [15, 3], [16, 2]], "A");
+    d.l(4, 16, 13, 6, "p");
+  };
+  // Keytar: keyboard body slung diagonally with a short neck.
+  IC.keytar = (d, v) => {
+    d.l(0, 13, 11, 2, "A", 6);
+    d.l(1, 16, 11, 6, "Z", 3);
+    for (let i = 0; i < 6; i++) d.p(2 + i * 2, 15 - i * 2, "k").p(3 + i * 2, 15 - i * 2, "k");
+    d.l(1, 18, 11, 8, "a");
+    d.l(11, 3, 16, -2, "k", 2).t(16, -4, ["AAA", "AAA", "aA."]);
+    d.ps([[1, 13], [3, 11]], "8").ps([[5, 9]], "7").ps([[7, 7]], "9");
+  };
+  // Upright piano, front view.
+  IC.upright = (d, v) => {
+    d.r(1, 2, 18, 12, "A").r(0, 1, 20, 2, "a").r(2, 4, 16, 5, "1");
+    d.r(3, 5, 14, 3, v.wood ? "w" : "a");
+    d.p(9, 6, "g").p(10, 6, "g");
+    d.r(0, 10, 20, 2, "a");
+    d.r(1, 12, 18, 3, "Z");
+    for (let x = 2; x < 18; x += 2) d.p(x, 12, "K").p(x, 13, "K");
+    for (let x = 1; x < 19; x += 2) d.p(x, 14, "P");
+    d.r(1, 15, 18, 3, "A").r(2, 18, 2, 2, "a").r(16, 18, 2, 2, "a");
+    d.ps([[8, 17], [10, 17], [12, 17]], "g");
+  };
+  // Grand piano, side view with the lid propped open.
+  IC.grand = (d, v) => {
+    d.l(4, 7, 16, 0, "1").l(4, 6, 15, 0, "1");
+    d.l(16, 0, 16, 7, "k");
+    d.t(0, 7, [
+      "AAAAAAAAAAAAAAAAAAA.",
+      "AAAAAAAAAAAAAAAAAAAA",
+      "LLLLLLLLLAAAAAAAAAAA",
+      "AAAAAAAAAAAAAAAAAAAa",
+      ".aaaaaaaaaaaaaaaaaa."
+    ]);
+    d.r(0, 9, 7, 1, "Z").ps([[1, 9], [3, 9], [5, 9]], "K");
+    d.r(1, 12, 2, 6, "a").r(16, 12, 2, 6, "a").r(9, 12, 1, 4, "a");
+    d.r(7, 15, 4, 1, "g");
+    d.r(0, 18, 3, 1, "k").r(15, 18, 3, 1, "k");
+  };
+  // Saxophone: S-curve with a flared bell and gold keys.
+  IC.sax = (d, v) => {
+    d.t(0, 0, [
+      "....kk..........",
+      ".....kA.........",
+      "......AA........",
+      ".......AA.......",
+      "........AA......",
+      "........AAA.....",
+      "........AAA.....",
+      "........AAAA....",
+      "........AAAA....",
+      ".......AAAAA....",
+      ".......AAAAA....",
+      ".......AAAAA....",
+      ".......AAAAA.1111",
+      ".......AAAAAAAAAA",
+      ".......AAAAAAAAA.",
+      ".......AAAAAAAAA.",
+      "........AAAAAAA..",
+      ".........AAAAA...",
+      "..........AAA....",
+    ]);
+    d.r(13, 12, 4, 1, "1").r(12, 13, 5, 1, "L");
+    [[9, 6], [9, 8], [8, 10], [8, 12], [8, 14]].forEach(([x, y]) => d.p(x, y, "p"));
+    d.ps([[10, 7], [10, 9], [10, 11], [11, 13]], "a");
+  };
+  // Tuba: big bell up top, coiled tubing, valves.
+  IC.tuba = (d, v) => {
+    d.e(12, 2.4, 6.4, 2.2, "A").e(12, 2.2, 4.8, 1.2, "1");
+    d.r(9, 4, 7, 4, "A").r(10, 4, 5, 1, "a");
+    d.e(8, 12.5, 6.5, 6, "A").e(8, 12.5, 3.6, 3.2, "_");
+    d.e(8, 12.5, 3.6, 3.2, "_");
+    d.r(4, 9, 7, 7, "A").r(5, 10, 5, 5, "a");
+    d.r(5, 10, 1, 5, "s").r(7, 10, 1, 5, "s").r(9, 10, 1, 5, "s");
+    d.ps([[5, 9], [7, 9], [9, 9]], "i");
+    d.l(0, 11, 2, 9, "s").p(0, 12, "k");
+  };
+  // Drums.
+  IC.pad = (d, v) => {
+    d.e(9, 11, 9, 5.4, "k").r(0, 11, 19, 3, "k").e(9, 14, 9, 5.4, "K");
+    d.e(9, 11, 9, 5.4, "k").e(9, 10.6, 7.2, 3.8, "m").e(9, 10.2, 3.4, 1.6, "M");
+    d.l(2, 6, 18, 2, "u", 1).l(2, 7, 18, 3, "w", 1).e(18.4, 2.4, 1, 1, "u");
+  };
+  IC.sticks = (d, v) => {
+    d.l(1, 18, 16, 3, "w", 2).l(18, 18, 3, 3, "w", 2);
+    d.e(17, 2, 1.2, 1.2, "u").e(2.4, 2, 1.2, 1.2, "u");
+    d.l(1, 18, 3, 16, "v", 2).l(17, 16, 18, 17, "v", 2);
+    if (v.tape) d.l(3, 15, 4, 14, "A", 2).l(15, 14, 16, 15, "A", 2);
+  };
+  IC.snare = (d, v) => {
+    d.e(10, 6, 9, 3, "Z").e(10, 6, 7.6, 2, "p");
+    d.r(1, 6, 19, 8, "A").e(10, 14, 9, 3, "A").e(10, 6, 9, 3, "Z");
+    d.e(10, 6, 7.6, 2, "p");
+    d.r(1, 7, 19, 1, "s").r(1, 13, 19, 1, "s");
+    [2, 6, 10, 14, 18].forEach(x => d.r(x, 8, 1, 5, "s"));
+    if (v.bolt) d.t(8, 8, [".yy", "yy.", ".yy", "yy."]);
+    if (v.sticks) { d.l(13, 1, 19, -1, "u", 1).l(12, 2, 18, -2, "u", 1); }
+  };
+  // Floor tom with a lightning bolt.
+  IC.thunder = (d, v) => {
+    d.e(10, 4, 8, 2.6, "Z").r(2, 4, 17, 12, "A").e(10, 16, 8, 2.6, "A").e(10, 4, 8, 2.6, "Z").e(10, 4, 6.6, 1.6, "p");
+    d.r(2, 5, 17, 1, "g").r(2, 15, 17, 1, "g");
+    d.t(8, 6, ["...yY", "..yY.", ".yyyY", "...yY", "..yY.", ".yY..", ".y..."]);
+    d.l(3, 17, 2, 20, "s").l(17, 17, 18, 20, "s");
+  };
+  // Drum under a storm cloud, lightning striking it.
+  IC.stormdrum = (d, v) => {
+    d.e(10, 12, 7.4, 2.2, "Z").r(3, 12, 15, 7, "A").e(10, 19, 7.4, 2, "A").e(10, 12, 7.4, 2.2, "Z").e(10, 12, 6, 1.3, "p");
+    d.r(3, 13, 15, 1, "g").r(3, 18, 15, 1, "g");
+    [5, 9, 13, 16].forEach(x => d.r(x, 14, 1, 4, "g"));
+    d.e(6, 3, 3.4, 2.4, "z").e(11, 2.2, 4, 2.8, "z").e(15, 3.6, 3, 2, "z").r(3, 4, 15, 2, "z");
+    d.e(11, 1.6, 2.4, 1.4, "s");
+    d.o(9, 6, ["yy", ".y", "yW", ".y"]).o(14, 6, ["y", "y"]);
+  };
+  // Cymbal on a stand.
+  IC.cymbal = (d, v) => {
+    d.e(10, 6, 9.4, 2.4, "A").e(10, 5.4, 6, 1.2, "L").e(10, 5, 1.4, 0.8, "a");
+    d.r(9, 8, 2, 9, "s");
+    d.l(9, 17, 4, 20, "S").l(10, 17, 15, 20, "S").r(9, 17, 2, 3, "S");
+    d.ps([[3, 6], [6, 7], [14, 7], [17, 6]], "a");
+  };
+  // Skald's war drum: hide head, rope lacing, carried on a strap.
+  IC.wardrum = (d, v) => {
+    d.e(10, 6, 8, 2.6, "F").r(2, 6, 17, 10, "n").e(10, 16, 8, 2.6, "n").e(10, 6, 8, 2.6, "F").e(10, 6, 6.6, 1.6, "W");
+    for (let x = 3; x < 18; x += 3) { d.l(x, 8, x + 2, 14, "A"); d.l(x + 2, 8, x, 14, "A"); }
+    d.r(2, 7, 17, 1, "N").r(2, 15, 17, 1, "N");
+    d.l(1, 4, 6, 0, "N").l(19, 4, 14, 0, "N");
+  };
+  // Shaman's frame drum: round hide with a painted mark and feathers.
+  IC.spiritdrum = (d, v) => {
+    d.e(9, 9, 8.2, 8.2, "n").e(9, 9, 7, 7, "F");
+    d.t(6, 6, ["...A...", "..AAA..", ".A.A.A.", "AAAAAAA", ".A.A.A.", "..AAA..", "...A..."]);
+    d.l(15, 15, 18, 19, "w");
+    d.t(16, 13, ["p.", "pP", ".P"]).t(18, 15, ["A", "a"]);
+  };
+  // Microphones.
+  IC.mic = (d, v) => {
+    const head = v.head || "s";
+    d.e(14, 5, 3.6, 3.6, head);
+    if (head === "s") { [[13, 3], [15, 3], [12, 5], [14, 5], [16, 5], [13, 7], [15, 7]].forEach(([x, y]) => d.p(x, y, "S")); d.p(13, 3, "i"); }
+    d.l(10, 8, 11, 9, "A", 2).l(11, 7, 12, 8, "A");
+    d.l(3, 17, 10, 10, v.body || "k", 3).l(2, 17, 3, 18, v.body || "k", 1);
+    if (v.ring) d.l(6, 13, 8, 15, "g");
+    if (v.sw) d.p(6, 12, "r");
+  };
+  // Vintage ribbon mic on a little stand, all gold.
+  IC.goldmic = (d, v) => {
+    d.e(10, 6.5, 5, 6.5, "A").e(10, 6.5, 3.6, 5, "L");
+    for (let y = 2; y <= 11; y += 2) d.r(7, y, 7, 1, "a");
+    d.r(9, 0, 3, 1, "a");
+    d.r(4, 6, 1, 4, "1").r(16, 6, 1, 4, "1").r(4, 9, 3, 1, "1").r(14, 9, 3, 1, "1");
+    d.r(9, 13, 3, 4, "1").r(5, 17, 11, 2, "A").r(5, 18, 11, 1, "a");
+  };
+  // Shell microphone (Siren): a conch-shell head on a pearl handle.
+  IC.shellmic = (d, v) => {
+    d.t(9, 0, ["...dddd...", ".ddDddDdd.", "dddDddDddd", "dDdDddDdDd", "dDddDDddDd", ".dDdDDdDd.", "..dddddd..", "...DDDD..."]);
+    d.ps([[11, 1], [12, 1]], "Z");
+    d.l(3, 17, 11, 9, "p", 3).l(2, 17, 3, 18, "p", 1);
+    d.l(7, 13, 9, 15, "t").l(6, 12, 8, 14, "3");
+  };
+  IC.scarf = (d, v) => {
+    // folded over a hook: one long tail, one short tail, stripes and fringe
+    d.t(1, 0, [".....AAAAAA.......", "....AAAAAAAA......", "...AAAAaAAAAA.....", "...AAAAaAAAAA.....", "...AAAA.aAAAA.....", "..AAAAA..AAAAA....",
+      "..AAAAA..AAAAA....", "..PPPPP...PPPPP...", "..AAAAA...AAAAA...", ".AAAAA.....AAAAA..", ".AAAAA.....AAAAA..", ".PPPPP.....A.A.A..", ".AAAAA.....A.A.A..",
+      "AAAAA.............", "AAAAA.............", "A.A.A.............", "A.A.A............."].map(r => r.replace(/P/g, v.stripe || "J")));
+  };
+  // Sheet music page with a staff and notes.
+  IC.sheet = (d, v) => {
+    d.r(2, 0, 15, 19, "p").t(14, 0, ["...", "...", "..."]);
+    d.p(16, 0, "_").p(16, 1, "_").p(15, 0, "_").t(14, 0, ["P", "PP"]);
+    for (let y = 3; y <= 15; y += 6) for (let k = 0; k < 4; k++) d.r(3, y + k, 13, 1, k % 2 ? "p" : "P");
+    d.t(4, 2, [".k...", "kk..k", "kk.kk", "...kk"]).t(9, 1, ["...k", "...k", "..kk", "..kk"]);
+    d.t(5, 9, ["..k.", "..k.", "kkk.", "kk.."]).t(10, 9, ["kkkk", "k..k", "k.kk", "kkkk"]);
+    d.t(4, 14, [".A..", "AAA.", "AAAA", ".A.."]);
+  };
+  // Two beamed golden notes with a star burst.
+  IC.notes = (d, v) => {
+    d.t(3, 1, ["....AAAAAAAAAAA", "....AAAAAAAAAAA", "....A.........A", "....A.........A", "....A.........A", "....A.........A", "....A.........A",
+      "....A.........A", "....A.........A", "....A.........A", "....A.........A", ".AAAA......AAAA", "AAAAA.....AAAAA", "AAAAA.....AAAAA", ".AAA.......AAA."]);
+    d.r(7, 3, 11, 1, "a");
+    d.ps([[4, 12], [3, 13], [14, 12], [13, 13]], "L");
+    if (v.spark) d.o(0, 2, [".W.", "WWW", ".W."]);
+  };
+  // Dance shoes: a pair of pointe shoes with ribbons.
+  IC.danceshoes = (d, v) => {
+    const shoe = (x, y) => d.t(x, y, [".AAAA.", "AAaaAA", "AaaaaA", "AAaaAA", "AAAAAA", "AAAAAA", "AAAAAA", ".AAAA.", ".AAAA.", "..LL.."]);
+    shoe(2, 8); shoe(11, 9);
+    d.l(4, 8, 9, 2, "L").l(5, 8, 9, 3, "L").l(13, 9, 10, 2, "L").l(14, 9, 10, 3, "L");
+    d.t(7, 0, ["LL.LL", "LLLLL", ".LaL.", "L...L"]);
+  };
+  // Theater masks: comedy in front, tragedy behind.
+  IC.masks = (d, v) => {
+    d.t(8, 0, [".AAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAaaAAAaaAA", "AAAaAAAaAAA", "AAAAAAAAAAA", "AAAAaaaAAAA", "AAAaAAAaAAA", ".AAAAAAAAA.", "..AAAAAAA..", "...AAAAA..."]);
+    d.t(0, 6, [".pppppppppp", "pppppppppppp", "pppppppppppp", "ppKKpppppKKp", "pKKKKpppKKKKp".slice(0, 12), "pppppppppppp", "pKpppppppppKp".slice(0, 12), "ppKKKKKKKKpp", ".pKKrrrrKKp.", "..pKKKKKKp..", "...pppppp...", ".....pp....."]);
+  };
+  // DJ turntable: deck, record, tonearm.
+  IC.turntable = (d, v) => {
+    d.r(0, 3, 20, 15, "k").r(0, 3, 20, 1, "j");
+    d.e(8, 10.4, 6.2, 6.2, "K").e(8, 10.4, 4.6, 4.6, "k").e(8, 10.4, 2, 2, "A").p(8, 10, "Z");
+    d.e(8, 10.4, 3.4, 3.4, "_");
+    d.e(8, 10.4, 3.4, 3.4, "K").e(8, 10.4, 2, 2, "A").p(8, 10, "Z");
+    d.r(16, 5, 2, 2, "s").l(17, 7, 17, 12, "s").l(17, 12, 13, 15, "s").p(13, 15, "Z");
+    d.r(15, 15, 3, 1, "A").r(15, 13, 1, 1, "9");
+  };
+  IC.headphones = (d, v) => {
+    d.t(2, 0, ["....kkkkkkkk....", "..kkk......kkk..", ".kk..........kk.", "kk............kk", "k..............k", "k..............k", "k..............k"]);
+    d.r(3, 1, 14, 1, "A");
+    d.p(4, 2, "A").p(15, 2, "A");
+    d.t(0, 6, ["..kk", ".kkA", "kkAA", "kkAA", "kkAA", "kkAA", "kkAA", "kkAA", ".kkA", "..kk"]);
+    d.t(16, 6, ["kk..", "Akk.", "AAkk", "AAkk", "AAkk", "AAkk", "AAkk", "AAkk", "Akk.", "kk.."]);
+    d.ps([[2, 9], [17, 9]], "L");
+  };
+  IC.flute = (d, v) => {
+    d.l(1, 17, 18, 2, v.wood ? "w" : "A", 2);
+    [[5, 13], [7, 11], [9, 9], [11, 7], [13, 5]].forEach(([x, y]) => d.p(x, y, "N"));
+    d.l(1, 17, 2, 16, "a", 2).p(16, 3, "K");
+    if (v.reed) d.t(16, 0, ["..e", ".ee", "ee."]);
+  };
+  IC.handbell = (d, v) => {
+    d.r(9, 0, 2, 5, "n").r(8, 0, 4, 1, "n");
+    d.t(3, 5, ["...AAAAAAA...", "..AAAAAAAAA..", "..AAAAAAAAA..", "..AAAAAAAAA..", ".AAAAAAAAAAA.", ".AAAAAAAAAAA.", "AAAAAAAAAAAAA", "aaaaaaaaaaaaa"]);
+    d.r(5, 7, 1, 4, "L");
+    d.e(9.5, 14.5, 1.4, 1.2, "k");
+    d.o(0, 2, ["y.", ".y"]).o(17, 2, [".y", "y."]);
+  };
+  // --- Worn gear icons (head, face, neck, body, hands, feet, belt) ---
+  // HEAD
+  IC.headband = (d, v) => {
+    d.e(9, 10, 9, 4.6, "A").e(9, 9.4, 7.4, 3, "_");
+    d.r(1, 10, 17, 2, "A").e(9, 9.4, 7.4, 3, "_");
+    d.l(2, 12, 16, 12, v.stripe || "A");
+    if (v.stripe) d.l(3, 13, 15, 13, v.stripe);
+    if (v.tails) d.t(15, 11, ["AA..", "AAA.", ".AAA", "..AA", "..A.", ".AA."]);
+    if (v.terry) for (let x = 2; x < 17; x += 2) d.p(x, 13, "L");
+  };
+  IC.cap = (d, v) => {
+    d.t(0, 4, [".....AAAAAAA.......", "...AAAAAAAAAAA.....", "..AAAAAAAAAAAAA....", ".AAAAAAAAAAAAAAA...", ".AAAAAAAAAAAAAAA...",
+      "AAAAAAAAAAAAAAAAJJJJ", ".JJJJJJJJJJJJJJJJJJJ", "..................."]);
+    d.p(8, 3, "J").l(8, 5, 6, 9, "a").l(12, 5, 13, 9, "a");
+    if (v.logo) d.t(9, 7, v.logo);
+  };
+  IC.wizhat = (d, v) => {
+    d.t(0, 0, ["...............AA.", ".............AAAA.", "............AAA...", "...........AAA....", "..........AAAA....", ".........AAAAA....",
+      "........AAAAAA....", "........AAAAAAA...", ".......AAAAAAAA...", ".......AAAAAAAAA..", "......AAAAAAAAAA..", "......JJJJJJJJJJJ.",
+      "...AAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaaaaaa."]);
+    d.ps([[10, 7], [13, 9], [9, 4]], v.star || "g").p(16, 0, v.star || "g");
+  };
+  IC.tophat = (d, v) => {
+    d.r(4, 0, 12, 12, "A").r(4, 9, 12, 2, "J").r(4, 0, 12, 1, "L");
+    d.t(0, 12, ["AAAAAAAAAAAAAAAAAAAA", ".aAAAAAAAAAAAAAAAAa.", "...aaaaaaaaaaaaaa..."]);
+    if (v.card) d.r(13, 7, 2, 3, "p");
+  };
+  IC.beret = (d, v) => {
+    d.e(10, 9, 9.4, 4.6, "A").e(10, 8, 7, 2.6, "L");
+    d.e(10, 8.4, 8.4, 3.6, "A");
+    d.r(9, 3, 2, 2, "a");
+    d.r(3, 13, 15, 2, "a");
+    if (v.pin) d.t(3, 9, ["J.", "JJ"]);
+  };
+  IC.strawhat = (d, v) => {
+    d.e(10, 12, 10, 3.4, "A").e(10, 7, 5, 4.6, "A").r(5, 7, 11, 5, "A");
+    d.r(5, 9, 11, 2, "J");
+    for (let x = 1; x < 20; x += 3) d.p(x, 13, "a");
+    for (let x = 6; x < 15; x += 3) d.p(x, 5, "a");
+    if (v.flower) d.t(13, 8, ["r.", "rr"]);
+  };
+  IC.featcap = (d, v) => {
+    d.t(0, 7, ["....AAAAAAAA......", "..AAAAAAAAAAAA....", ".AAAAAAAAAAAAAAA..", "AAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAA", ".JJJJJJJJJJJJJJJJ."]);
+    d.l(6, 9, 19, 0, v.feather || "p", 2).l(7, 9, 17, 2, "P");
+    d.ps([[9, 6], [11, 5], [13, 3], [15, 2]], "Z");
+  };
+  IC.nightcap = (d, v) => {
+    d.t(0, 0, ["...........AAAA.....", ".........AAAAAAA....", ".......AAAAAAAAAA...", ".....AAAAAAAAAAAA...", "....AAAAAAAAAAAAA...", "...AAAAAAAAAAAAA....",
+      "..AAAAAAAAAAAAAA....", "..AAAAAAAAAAAAA.....", ".AAAAAAAAAAAAAA..AA.", ".pppppppppppppp.....", ".pppppppppppppp....."]);
+    d.l(15, 3, 17, 9, "A", 2).e(17.5, 11, 1.8, 1.8, "p");
+    d.ps([[5, 4], [9, 3], [7, 7], [11, 6]], v.star || "y");
+  };
+  IC.toque = (d, v) => {
+    d.e(5, 6, 4.4, 4, "p").e(10, 4, 5, 4.4, "p").e(15, 6, 4.4, 4, "p").r(3, 7, 14, 4, "p");
+    d.l(7, 5, 7, 9, "P").l(12, 4, 12, 9, "P");
+    d.r(3, 11, 14, 5, v.band || "p").r(3, 11, 14, 1, "P");
+    d.r(3, 15, 14, 1, "P");
+    if (v.tall) d.e(10, 1, 4, 2, "p");
+    if (v.trim) d.r(3, 13, 14, 1, "J");
+  };
+  // Helmets: iron helm by default, with horns, plume, wings, crest or visor.
+  IC.helm = (d, v) => {
+    const M = v.metal || "s";
+    d.e(10, 9, 7, 7, M).r(3, 9, 15, 8, M);
+    d.r(3, 15, 15, 2, M === "s" ? "S" : "a");
+    if (v.visor) { d.r(5, 9, 11, 2, "K"); for (let x = 6; x < 15; x += 2) d.p(x, 12, "K"); }
+    else { d.r(4, 10, 5, 2, "K").r(12, 10, 5, 2, "K").r(9, 9, 3, 7, M); d.r(10, 9, 1, 7, "S"); }
+    d.l(10, 2, 10, 8, M === "s" ? "i" : "L");
+    d.ps([[4, 14], [16, 14], [4, 7], [16, 7]], "S");
+    if (v.horns) { d.t(0, 0, ["p.....", "pp....", ".pp...", ".ppp..", "..ppp."]).t(14, 0, [".....p", "....pp", "...pp.", "..ppp.", ".ppp.."]); }
+    if (v.plume) d.t(7, -1, ["..JJJJJ...", ".JJJJJJJJ.", "JJ..JJJJJJ", "J.....JJJJ"]);
+    if (v.wings) { d.t(0, 2, ["p..", "pp.", "ppp", ".pp"]).t(17, 2, ["..p", ".pp", "ppp", "pp."]); }
+    if (v.crest) d.t(9, -2, ["JJ", "JJ", "JJ", "JJ"]).t(5, 0, ["JJJJJJJJJJ"]).ps([[8, 1], [12, 1]], "J");
+    if (v.trim) d.r(3, 15, 15, 1, "J");
+  };
+  IC.veil = (d, v) => {
+    d.e(10, 4, 6, 3.6, "A").e(10, 6.4, 9.6, 1.6, "A");
+    d.r(2, 7, 17, 11, v.mesh || "p");
+    for (let y = 8; y < 18; y += 2) d.r(2, y, 17, 1, "P");
+    for (let x = 3; x < 19; x += 3) d.r(x, 7, 1, 11, "P");
+    d.r(2, 7, 17, 1, "J");
+    if (v.stars) d.ps([[5, 10], [12, 13], [15, 9], [8, 15]], "y");
+  };
+  // Circlets, crowns, wreaths, halos.
+  IC.circlet = (d, v) => {
+    d.e(10, 11, 9.4, 4, "A").e(10, 10.6, 8, 2.8, "_");
+    d.e(10, 11, 9.4, 4, "A").e(10, 10.4, 8, 2.8, "_");
+    const gem = v.gem || "J";
+    if (v.kind === "pearl") { [[2, 12], [5, 14], [9, 15], [13, 14], [16, 12]].forEach(([x, y]) => d.p(x, y, "Z")); d.e(10, 13.6, 1.4, 1.4, "Z"); }
+    else if (v.kind === "leaf") { [[1, 9], [4, 12], [15, 12], [18, 9]].forEach(([x, y]) => d.t(x - 1, y - 2, [".e", "ee", "e."])); d.t(8, 9, [".ee.", "eeee", ".ee."]); }
+    else if (v.kind === "candle") { [[5, 4], [10, 2], [15, 4]].forEach(([x, y]) => { d.r(x - 1, y + 3, 2, 12 - y - 3 - (x === 10 ? 0 : 0), "p"); d.o(x - 1, y, [".y", "yY", "yo"]); }); }
+    else if (v.kind === "antler") { d.t(0, 0, ["..n...", "n.n...", "nnn.n.", ".nnnn.", "..nnn.", "...nn.", "....nn"]).t(14, 0, ["...n..", "...n.n", ".n.nnn", ".nnnn.", ".nnn..", ".nn...", "nn...."]); }
+    else if (v.kind === "quill") { d.l(15, 11, 19, 1, "p", 2).l(16, 10, 18, 3, "P"); }
+    else if (v.kind === "stars") { [[3, 7], [10, 5], [17, 7]].forEach(([x, y]) => d.t(x - 1, y - 1, [".g.", "ggg", ".g."])); }
+    else if (v.kind === "halo") { d.e(10, 2, 6, 1.6, "g").e(10, 2, 4, 0.6, "_"); }
+    if (v.kind !== "pearl") d.t(8, 12, [".GG.", "GggG", ".GG."]).t(9, 12, [gem === "J" ? "JJ" : gem + gem]).p(9, 13, gem).p(10, 13, gem);
+  };
+  IC.crown = (d, v) => {
+    d.t(0, 2, ["J........J........J.", "JJ......JJJ......JJ.", "JJJ....JJJJJ....JJJ.", "JJJJ..JJJJJJJ..JJJJ.", "JJJJJJJJJJJJJJJJJJJ.",
+      "JJJJJJJJJJJJJJJJJJJ.", "JJJJJJJJJJJJJJJJJJJ.", "IIIIIIIIIIIIIIIIIII."].map(r => r.replace(/J/g, "g").replace(/I/g, "G")));
+    d.r(0, 9, 19, 2, "G").r(0, 10, 19, 1, "g");
+    d.t(8, 6, [".rr.", "rrrr", ".rr."]).t(2, 7, ["b.", "bb"]).t(15, 7, ["e.", "ee"]);
+    [0, 9, 18].forEach(x => d.e(x, 1, 0.9, 0.9, "Z"));
+    for (let x = 1; x < 19; x += 3) d.p(x, 10, "Z");
+  };
+  IC.wreath = (d, v) => {
+    const leaf = (x, y, m) => d.t(x, y, m ? ["ee.", ".ee"] : [".ee", "ee."]);
+    [[0, 9], [1, 6], [3, 3], [6, 1], [1, 12], [3, 15], [6, 17]].forEach(([x, y]) => leaf(x, y, 0));
+    [[17, 9], [16, 6], [14, 3], [11, 1], [16, 12], [14, 15], [11, 17]].forEach(([x, y]) => leaf(x, y, 1));
+    d.l(2, 10, 7, 18, "E").l(17, 10, 12, 18, "E").l(3, 9, 7, 2, "E").l(16, 9, 12, 2, "E");
+    d.r(8, 18, 4, 2, v.ribbon || "J");
+  };
+  IC.lotus = (d, v) => {
+    d.e(10, 15, 9.4, 2.6, "e").e(10, 14.6, 7.6, 1.4, "E");
+    d.t(3, 3, ["......dd......", ".....dddd.....", "..d..dddd..d..", ".ddd.dddd.ddd.", ".dddddddddddd.", "ddddddddddddd.", ".dddddddddddd.", "..dddddddddd..", "....yyyyyy...."].map(r => r.slice(0, 14)));
+    d.ps([[9, 5], [9, 7], [6, 9], [12, 9]], "D");
+    if (v.band) d.r(1, 15, 18, 1, "J");
+  };
+  IC.halo = (d, v) => {
+    d.e(10, 10, 9.6, 4.2, "g").e(10, 9.6, 7.4, 2.4, "_");
+    d.e(10, 10, 9.6, 4.2, "g").e(10, 9.6, 7.4, 2.4, "_");
+    d.o(1, 9, ["h"]).o(10, 13, ["h", ".h"]).o(18, 9, ["h"]);
+    d.o(9, 2, [".W.", "WWW", ".W."]).o(2, 3, ["y"]).o(17, 4, ["y"]);
+  };
+  // FACE
+  IC.goggles = (d, v) => {
+    const L = v.lens || "H", R = v.rim || "g";
+    d.r(0, 9, 20, 3, v.strap || "k");
+    d.e(5, 10, 4, 4, R).e(14, 10, 4, 4, R).r(8, 9, 4, 3, R);
+    d.e(5, 10, 2.8, 2.8, L).e(14, 10, 2.8, 2.8, L);
+    d.ps([[4, 9], [13, 9]], "Z").ps([[5, 8], [14, 8]], "Z");
+    if (v.glow) { d.o(4, 9, ["W"]).o(13, 9, ["W"]); }
+    if (v.dark) d.e(5, 10.6, 2.4, 1.4, "K").e(14, 10.6, 2.4, 1.4, "K");
+  };
+  IC.visor = (d, v) => {
+    d.t(0, 6, ["..JJJJJJJJJJJJJJJJ..", ".JJJJJJJJJJJJJJJJJJ.", "JJJJJJJJJJJJJJJJJJJJ", "JJJJJJJJJJJJJJJJJJJJ", ".JJJJJJJJJJJJJJJJJJ.", "...IIIIIIIIIIIIII..."]);
+    d.r(2, 8, 16, 2, v.lens || "C").r(3, 8, 3, 1, "Z");
+    if (v.data) d.ps([[8, 9], [10, 8], [12, 9], [14, 8]], "K");
+    if (v.leds) for (let x = 3; x < 18; x += 2) d.p(x, 9, ["7", "8", "9"][x % 3]);
+    d.r(0, 7, 1, 4, "k").r(19, 7, 1, 4, "k");
+  };
+  IC.glasses = (d, v) => {
+    const F = v.frame || "k", L = v.lens || "H";
+    d.r(0, 7, 2, 1, F).r(18, 7, 2, 1, F);
+    if (v.round) { d.e(5, 9, 3.6, 3.6, F).e(14, 9, 3.6, 3.6, F).e(5, 9, 2.4, 2.4, L).e(14, 9, 2.4, 2.4, L); }
+    else { d.r(1, 6, 8, 7, F).r(11, 6, 8, 7, F).r(2, 7, 6, 5, L).r(12, 7, 6, 5, L); }
+    d.r(8, 7, 4, 1, F);
+    d.ps([[3, 8], [4, 8], [13, 8], [14, 8], [3, 9], [13, 9]], "Z");
+    if (v.night) d.r(2, 10, 6, 2, "o").r(12, 10, 6, 2, "o");
+  };
+  IC.monocle = (d, v) => {
+    const R = v.rim || "g";
+    d.e(8, 8, 6.8, 6.8, R).e(8, 8, 5.2, 5.2, v.lens || "H");
+    if (v.gear) for (let a = 0; a < 8; a++) d.p(Math.round(8 + Math.cos(a * Math.PI / 4) * 7.6), Math.round(8 + Math.sin(a * Math.PI / 4) * 7.6), R);
+    if (v.prism) { d.l(4, 5, 12, 11, "7").l(4, 6, 11, 11, "y").l(5, 5, 12, 10, "8"); }
+    if (v.camera) { d.e(8, 8, 3.6, 3.6, "k").e(8, 8, 2.2, 2.2, "B").p(7, 7, "Z"); }
+    if (v.cross) d.r(3, 8, 11, 1, "r").r(8, 3, 1, 11, "r");
+    d.ps([[5, 5], [6, 4], [5, 6]], "Z");
+    d.l(13, 13, 15, 16, R).l(15, 16, 17, 15, R).l(17, 15, 19, 19, R);
+  };
+  IC.magnifier = (d, v) => {
+    d.e(7.4, 7.4, 6.8, 6.8, v.rim || "A").e(7.4, 7.4, 5.2, 5.2, "H");
+    d.ps([[4, 4], [5, 3], [3, 5]], "Z");
+    d.l(12, 13, 18, 19, "n", 2);
+    if (v.bug) d.t(5, 5, [".k.k.", "..r..", ".rrr.", "krkrk", ".rrr.", "k...k"]);
+    if (v.leaf) d.t(5, 5, ["..ee", ".eee", "eee.", "e..."]);
+  };
+  IC.earpiece = (d, v) => {
+    d.t(5, 4, ["..AAAA..", ".AAAAAA.", "AAALLAAA", "AAAAAAAA", "AAAAAAA.", ".AAAAA..", "..AAA...", "..AA....", "..AA....", "..AA....", "...k....", "...k...."]);
+    d.e(8, 7, 1.4, 1.4, "k");
+    d.o(14, 3, ["C..", ".C.", ".C.", "C.."]).o(16, 1, ["C...", ".C..", "..C.", "..C.", ".C..", "C..."]);
+  };
+  // NECK
+  IC.amulet = (d, v) => {
+    const ch = v.chain || "g";
+    d.l(1, 0, 8, 10, ch).l(18, 0, 11, 10, ch);
+    const cx = 9.5, cy = 13.5, s = v.shape || "gem";
+    if (s === "gem") d.t(6, 10, ["..GGGG..", ".GJJJJG.", "GJ0JJJJG", "GJJJJJIG", ".GJJJIG.", "..GIIG..", "...GG..."]);
+    else if (s === "sun") { d.e(cx, cy, 3, 3, "g").e(cx, cy, 1.6, 1.6, "y"); [[0, -5], [0, 5], [-5, 0], [5, 0], [-4, -4], [4, 4], [-4, 4], [4, -4]].forEach(([x, y]) => d.p(cx + x * 0.92, cy + y * 0.92, "g")); }
+    else if (s === "moon") d.t(6, 9, ["..sss...", ".sss....", "sss.....", "sss.....", "sss.....", "ssss...s", ".sssssss", "..sssss."]);
+    else if (s === "rune") d.t(6, 9, [".zzzzzz.", "zzzzzzzz", "zzzCzzzz", "zzzCCzzz", "zzzCzCzz", "zzzCzzzz", "zzzzzzzz", ".zzzzzz."]);
+    else if (s === "paw") d.t(6, 9, [".n..n.", "nn..nn", "......", "..nn..", ".nnnn.", "nnnnnn", ".n..n."].map(r => r.replace(/n/g, "J"))).t(5, 9, ["J", "J"]).t(12, 9, ["J", "J"]);
+    else if (s === "bone") d.t(6, 9, ["pp..", "ppp.", ".ppp", "..ppp", "...ppp", "....ppp", "....ppp"]);
+    else if (s === "shell") d.t(6, 9, ["..dddd..", ".ddddDd.", "dDddDddd", "dDdDdDdd", "ddDdDddd", ".dddddd.", "...DD..."]);
+    else if (s === "bird") d.t(5, 10, ["....JJ...", "...JJJk..", "JJJJJJJy.", ".JJJJJJ..", "..JJJ....", "...I....."]);
+    else if (s === "lotus") d.t(6, 10, ["...d....", ".d.dd.d.", "dddddddd", ".dddddd.", "..eeee.."]);
+    else if (s === "halo") { d.e(cx, cy, 3.4, 3.4, "g").e(cx, cy, 2, 2, "_"); d.e(cx, cy, 3.4, 3.4, "g").e(cx, cy, 2, 2, "_"); d.o(9, 13, ["W"]); }
+    else if (s === "stone") d.t(5, 9, ["..zzzzz..", ".zzzzzzz.", "zzzzzzzzz", "zzzzzzzzz", ".zzzzzzzz", "..zzzzz.."]);
+    else if (s === "sigil") d.t(5, 9, ["...qqq...", ".qqQQQqq.", "qqQ.Q.Qqq", "qQQQQQQQq", "qqQ.Q.Qqq", ".qqQQQqq.", "...qqq..."]).o(9, 12, ["7"]);
+    else if (s === "tooth") d.t(7, 9, ["pppp.", "pppp.", ".ppp.", ".pp..", "..p.."]);
+    else if (s === "heart") d.t(6, 9, [".rr.rr.", "rrrrrrr", "rrrrrrr", ".rrrrr.", "..rrr..", "...r..."]);
+    else if (s === "glass") d.t(6, 9, ["..33...", ".3333..", "333333.", "3333333", ".33333.", "..333.."]);
+  };
+  IC.whistle = (d, v) => {
+    const C = v.cord || "J";
+    d.l(2, 0, 5, 9, C).l(16, 0, 9, 6, C);
+    d.t(4, 7, ["..AAAAAAAAAAAAA", ".AAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAA......", "AAAAAAAAA......", "AAAAAAAAA......", ".AAAAAAA.......", "..AAAAA........"]);
+    d.r(15, 7, 3, 4, "a").r(16, 8, 2, 2, "k");
+    d.r(10, 9, 3, 2, "k");
+    d.e(8, 12.4, 1.6, 1.4, "a").p(5, 9, "L").p(6, 8, "L");
+    if (v.carve) d.ps([[7, 13], [9, 14]], "a").ps([[11, 8], [13, 8]], "a");
+  };
+  IC.beads = (d, v) => {
+    const B = v.bead || "A";
+    for (let a = 0; a < 18; a++) { const t = a / 18 * Math.PI * 2; d.p(Math.round(10 + Math.cos(t) * 8.2), Math.round(8 + Math.sin(t) * 7), B); }
+    for (let a = 0; a < 18; a += 3) { const t = a / 18 * Math.PI * 2; d.p(Math.round(10 + Math.cos(t) * 8.2), Math.round(8 + Math.sin(t) * 7), v.alt || "J"); }
+    d.e(10, 15.6, 1.5, 1.5, v.big || "g").r(9, 17, 3, 3, v.tassel || "J").ps([[9, 19], [11, 19]], "_");
+  };
+  IC.collar = (d, v) => {
+    d.e(10, 9, 9.6, 6, "A").e(10, 8.4, 7.4, 4, "_");
+    d.e(10, 9, 9.6, 6, "A").e(10, 8.4, 7.4, 4, "_");
+    d.r(15, 12, 3, 3, "s").r(16, 13, 1, 1, "_");
+    [[2, 10], [4, 13], [7, 14], [13, 14]].forEach(([x, y]) => d.p(x, y, v.studs || "s"));
+    d.e(10, 17, 2.4, 2.4, v.tag || "g").p(9, 16, "h");
+    if (v.heart) d.t(9, 16, ["r.r", ".r."]);
+  };
+  IC.medal = (d, v) => {
+    d.t(3, 0, ["AAAA......AAAA", ".AAAA....AAAA.", "..AAAA..AAAA..", "...AAAAAAAA...", "....aAAAAa....", ".....aaaa....."].map(r => r.replace(/A/g, v.rib || "J").replace(/a/g, v.rib ? v.rib.toUpperCase() : "I")));
+    d.l(5, 0, 8, 4, v.stripe || "p").l(14, 0, 11, 4, v.stripe || "p");
+    d.e(10, 12.6, 5, 5, "g").e(10, 12.6, 3.6, 3.6, "G").e(10, 12.6, 2.6, 2.6, "g");
+    d.t(9, 11, [".h.", "hhh", ".h."]);
+  };
+  IC.badge = (d, v) => {
+    d.e(10, 10, 8.4, 8.4, v.rim || "g").e(10, 10, 6.6, 6.6, "A");
+    if (v.knight) d.t(7, 5, ["..pp..", ".pppp.", "pppKpp", "ppppp.", "..ppp.", ".pppp.", "pppppp", "pppppp"]);
+    else d.t(8, 6, ["..p..", ".ppp.", "ppppp", ".ppp.", ".p.p."]);
+  };
+  IC.cravat = (d, v) => {
+    d.t(3, 0, [".pppp.....pppp.", "ppppppp.ppppppp", ".pppppppppppppp", "...ppppppppp...", "....AAAAAAA....", ".....AAAAA.....", "....AAAAAAA....",
+      "...AAAAAAAAA...", "...AAAAAAAAA...", "....AAAAAAA....", ".....AAAAA.....", "......AAA......"]);
+    d.t(9, 4, ["JJJ", ".J."]);
+    d.l(6, 6, 8, 11, "a").l(14, 6, 12, 11, "a");
+  };
+  // BODY: robe, armor, coat, vest, hoodie, apron, smock, lab coat, poncho, cloak, sash, jersey
+  // Shirt-shaped garments share one silhouette: 12-wide body, 4-wide sleeves (len = body rows below the sleeves).
+  function icShirt(d, len = 5, ch = "A") {
+    const rows = [".....AAA....AAA.....", "...AAAAAA..AAAAAA...", "..AAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA",
+      "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "aaaa.AAAAAAAAAA.aaaa"];
+    for (let i = 0; i < len; i++) rows.push(".....AAAAAAAAAA.....");
+    rows.push(".....aaaaaaaaaa.....");
+    d.t(0, 0, rows.map(r => ch === "A" ? r : r.replace(/A/g, ch).replace(/a/g, ch === "p" ? "P" : ch.toUpperCase())));
+    return rows.length;
+  }
+  IC.robe = (d, v) => {
+    d.t(0, 0, [".....AAA....AAA.....", "...AAAAAA..AAAAAA...", "..AAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA",
+      "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "AAAA.AAAAAAAAAA.AAAA", "aaaa.AAAAAAAAAA.aaaa", "....AAAAAAAAAAAA....",
+      "....AAAAAAAAAAAA....", "...AAAAAAAAAAAAAA...", "...AAAAAAAAAAAAAA...", "..AAAAAAAAAAAAAAAA..", "..AAAAAAAAAAAAAAAA..", "..aaaaaaaaaaaaaaaa.."]);
+    const T = v.trim || "J";
+    d.l(7, 0, 9, 6, T).l(12, 0, 10, 6, T).l(9, 6, 9, 17, T);
+    d.r(8, 0, 4, 1, v.inner || "a").r(9, 1, 2, 2, v.inner || "a");
+    if (v.belt !== false) d.r(5, 9, 10, 1, v.belt || "J");
+    if (v.cuffs) { d.r(0, 10, 4, 1, T).r(16, 10, 4, 1, T); }
+    if (v.hem) d.r(2, 16, 16, 1, v.hem);
+    if (v.mark) d.t(11, 11, v.mark);
+    if (v.dots) v.dots.forEach(([x, y, c]) => d.p(x, y, c));
+  };
+  IC.gi = (d, v) => {
+    icShirt(d, 4);
+    d.l(7, 0, 12, 7, "a").l(12, 0, 8, 5, "a");
+    d.r(5, 10, 10, 2, v.belt || "k").t(8, 12, ["k..k", "k..k", "k..k"].map(r => r.replace(/k/g, v.belt || "k")));
+  };
+  IC.armor = (d, v) => {
+    d.t(0, 0, ["...MMM......MMM.....", ".MMMMMMMAAMMMMMMM...", "MMMMMMAAAAAAMMMMMM..", "MMMAAAAAAAAAAAAMMM..", ".MMAAAAAAAAAAAAMM...", "..AAAAAAAAAAAAAAA...",
+      "..AAAAAAAAAAAAAAA...", "..AAAAAAAAAAAAAAA...", "..AAAAAAAAAAAAAAA...", "...AAAAAAAAAAAAA....", "...AAAAAAAAAAAAA....", "...AAAAAAAAAAAAA....",
+      "....AAAAAAAAAAA.....", "...aaaaaaaaaaaaa....", "...a.a.a.a.a.a.a...."].map(r => r.replace(/M/g, v.shoulder || "A")).map(r => r.slice(0, 19)));
+    if (v.kind === "mail") { for (let y = 3; y < 13; y++) for (let x = 3 + (y % 2); x < 16; x += 2) d.p(x, y, "a"); }
+    if (v.kind === "plate") { d.l(9, 3, 9, 12, "L").l(10, 3, 10, 12, "a"); d.ps([[4, 4], [14, 4], [4, 11], [14, 11]], "g"); d.r(3, 8, 13, 1, "a"); }
+    if (v.kind === "quilt") { for (let y = 4; y < 13; y += 3) d.r(3, y, 13, 1, "a"); for (let x = 5; x < 16; x += 4) d.r(x, 3, 1, 10, "a"); }
+    if (v.kind === "stone") { d.ps([[5, 5], [6, 5], [11, 7], [12, 7], [7, 10], [13, 11]], "a"); d.r(3, 9, 13, 1, "J"); }
+    if (v.tabard) { d.r(6, 2, 7, 12, v.tabard).r(9, 4, 1, 7, "p").r(7, 6, 5, 1, "p"); }
+    if (v.belt) d.r(3, 12, 13, 1, v.belt);
+  };
+  IC.toga = (d, v) => {
+    d.t(1, 0, ["...pppppppp......", ".pppppppppppp....", "pppppppppppppp...", "ppppppppppppppp..", ".ppppppppppppppp.", "..pppppppppppppp.", "..pppppppppppppp.",
+      "..pppppppppppppp.", "...ppppppppppppp.", "...ppppppppppppp.", "...ppppppppppppp.", "....pppppppppppp.", "....pppppppppppp.", "....pppppppppppp.", "....PPPPPPPPPPPP."]);
+    d.l(4, 1, 15, 12, "J", 2).l(5, 1, 15, 11, "0");
+    d.l(6, 6, 6, 13, "P").l(10, 8, 10, 13, "P");
+    d.p(5, 1, "g");
+  };
+  IC.coat = (d, v) => {
+    const n = icShirt(d, v.long ? 6 : 4);
+    if (v.tails) d.t(5, n - 1, ["AAA....AAA", "AAA....AAA", "aaa....aaa"]);
+    d.t(8, 0, ["pppp", ".pp.", ".pp.", "..".padStart(3, ".")].map(r => r.replace(/p/g, v.shirt || "p")));
+    d.l(7, 0, 9, 6, v.lapel || "a").l(12, 0, 10, 6, v.lapel || "a");
+    if (v.tie) d.t(9, 1, ["JJ", "JJ", "JJ", "JJ", ".J"]);
+    if (v.bow) d.t(8, 1, ["J..J", "JJJJ", "J..J"]);
+    const btn = v.btn || "g";
+    (v.buttons ? [[8, 8], [8, 11], [11, 8], [11, 11], [8, 14], [11, 14]] : [[10, 8], [10, 11]]).forEach(([x, y]) => d.p(x, y, btn));
+    if (!v.buttons) d.l(9, 7, 9, n - 2, "a");
+    if (v.fur) d.t(2, 0, ["..UUUUUUUUUUUU..", ".UU4UUU..UUU4UU.", "UUUU........UUUU"]);
+    if (v.epaulets) d.r(0, 4, 4, 1, "g").r(16, 4, 4, 1, "g").r(1, 5, 2, 1, "g").r(17, 5, 2, 1, "g");
+    if (v.laces) d.ps([[9, 6], [10, 7], [9, 8], [10, 9], [9, 10]], "p");
+    if (v.puff) { d.r(0, 4, 4, 3, "J").r(16, 4, 4, 3, "J"); d.r(1, 5, 2, 1, "0").r(17, 5, 2, 1, "0"); }
+    if (v.pocket) d.r(12, 10, 2, 1, "a");
+    if (v.cuffs) d.r(0, 12, 4, 1, v.cuffs).r(16, 12, 4, 1, v.cuffs);
+  };
+  IC.vest = (d, v) => {
+    d.t(2, 0, ["..AAA....AAA..", ".AAAA....AAAA.", ".AAAAA..AAAAA.", "AAAAAA..AAAAAA", "AAAAAAA.AAAAAA".replace(".", "A").slice(0, 14), "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "aaaaaaaaaaaaaa"]);
+    d.t(2, 0, ["..A......A....".slice(0, 14)]).t(0, 0, ["", ""]);
+    d.l(9, 4, 9, 13, "a");
+    if (!v.fur && !v.tactical) d.ps([[10, 6], [10, 9], [10, 12]], v.btn || "g");
+    if (v.fur) { d.t(2, 0, ["..UUU....UUU..", ".UU4U....U4UU.", ".UUUU....UUUU.", "UUU........UUU"]); d.r(2, 14, 14, 1, "U"); }
+    if (v.hivis) { d.r(2, 6, 14, 1, "s").r(2, 10, 14, 1, "s").r(9, 6, 1, 5, "A"); }
+    if (v.pockets) { d.r(3, 8, 4, 3, "a").r(11, 8, 4, 3, "a").r(3, 8, 4, 1, "L").r(11, 8, 4, 1, "L"); }
+    if (v.tactical) { [3, 6, 11, 14].forEach(x => d.r(x, 7, 2, 4, "a").p(x, 7, "L")); d.r(2, 12, 14, 1, "k"); }
+    if (v.quilt) for (let y = 5; y < 14; y += 2) d.r(3, y, 13, 1, "a");
+    if (v.plate) { d.r(3, 5, 5, 6, "J").r(11, 5, 5, 6, "J"); d.ps([[4, 6], [12, 6]], "0"); }
+    if (v.glow) d.r(9, 4, 1, 9, "C");
+  };
+  IC.hoodie = (d, v) => {
+    const n = icShirt(d, 4);
+    d.t(5, 0, ["..AAAAAA..", ".AAAAAAAA.", "AAAkkkkAAA", "AAkkkkkkAA", ".AAkkkkAA."].map(r => r.replace(/k/g, v.inner || "k")));
+    d.l(8, 5, 8, 8, "p").l(11, 5, 11, 8, "p");
+    d.r(6, n - 6, 8, 3, "a").r(7, n - 6, 6, 1, "A");
+    if (v.mark) d.t(8, 9, v.mark);
+  };
+  IC.apron = (d, v) => {
+    d.l(4, 0, 6, 4, v.strap || "A").l(15, 0, 13, 4, v.strap || "A").l(1, 7, 4, 7, v.strap || "A").l(15, 7, 19, 8, v.strap || "A");
+    d.t(4, 3, [".AAAAAAAAAA.", ".AAAAAAAAAA.", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA",
+      "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "aaaaaaaaaaaa"]);
+    d.r(4, 6, 12, 1, v.tie || "a");
+    d.r(6, 10, 8, 3, "a").r(10, 10, 1, 3, "A").r(6, 10, 8, 1, "L");
+    if (v.tools) { d.r(7, 8, 1, 3, "s").r(12, 7, 1, 4, "n").p(11, 7, "s").p(13, 7, "s"); }
+    if (v.stain) v.stain.forEach(([x, y, c]) => d.p(x, y, c));
+    if (v.flour) [[5, 4], [9, 5], [13, 8], [7, 13], [12, 15], [6, 16], [14, 12]].forEach(([x, y]) => d.p(x, y, "Z"));
+    if (v.heart) d.t(8, 4, ["r.r", "rrr", ".r."]);
+    if (v.spark) d.o(14, 12, [".y.", "yWy", ".y."]).o(5, 14, ["y"]);
+    if (v.cross) d.t(8, 4, [".r.", "rrr", ".r."]);
+  };
+  IC.labcoat = (d, v) => {
+    const n = icShirt(d, 6, "p");
+    d.t(8, 0, ["bbbb", ".bb.", ".bb."]);
+    d.l(7, 0, 9, 6, "P").l(12, 0, 10, 6, "P").l(9, 6, 9, n - 2, "P");
+    d.r(12, 8, 3, 2, "P").p(12, 7, "b").p(13, 7, "r");
+    d.ps([[8, 9], [8, 13]], "s");
+  };
+  IC.smock = (d, v) => {
+    icShirt(d, 4);
+    d.t(8, 0, ["a..a", ".aa."]);
+    [[6, 6, "r"], [12, 7, "b"], [8, 10, "y"], [13, 12, "e"], [7, 14, "q"], [1, 7, "o"], [17, 9, "r"], [11, 15, "b"], [2, 11, "e"]].forEach(([x, y, c]) => d.p(x, y, c));
+  };
+  IC.poncho = (d, v) => {
+    d.t(0, 0, [".......AAAAAA.......", "......AAAAAAAA......", "......AAaaaaAA......", ".....AAAaaaaAAA.....", "....AAAAAAAAAAAA....", "...AAAAAAAAAAAAAA...",
+      "..AAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAAAAAA.", "...AAAAAAAAAAAAAA...", "....aaaaaaaaaaaa...."]);
+    d.l(10, 4, 10, 12, "a");
+    if (v.drops) d.o(1, 1, ["C...", "C..."]).o(17, 2, ["C", "C"]).o(3, 14, ["C"]).o(16, 15, ["C"]);
+  };
+  // Cloak seen from the front, draped from the shoulders, with a clasp.
+  IC.cloak = (d, v) => {
+    d.t(0, 0, [".......AAAAAA.......", "......AAAAAAAA......", ".....AAAkkkkAAA.....", ".....AAkkkkkkAA.....", "....AAAkkkkkkAAA....", "...AAAAAkkkkAAAAA...",
+      "..AAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAA.", ".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "aAAAaAAAAaAAAAaAAAAa", ".aa..aaaa.aaaa.aaa.."].map(r => r.replace(/k/g, v.inner || "k")));
+    d.l(5, 8, 3, 15, "a").l(10, 8, 10, 15, "a").l(14, 8, 16, 15, "a");
+    if (v.fur) d.t(1, 5, ["..UUUUUUUUUUUUUU..", ".UU4UU4UUUU4UU4UU.", "UUUUUUUUUUUUUUUUUU", ".U..U..U..U..U..U."].map(r => r.slice(0, 18)));
+    if (v.collar) d.r(3, 6, 14, 1, v.collar);
+    const P = v.pattern;
+    if (P === "stars") [[3, 9, "y"], [7, 13, "y"], [15, 10, "y"], [12, 14, "y"], [2, 13, "Z"], [17, 8, "Z"], [9, 9, "Z"]].forEach(([x, y, c]) => d.p(x, y, c));
+    if (P === "circuit") { d.l(3, 9, 3, 13, "C").l(3, 13, 6, 13, "C").p(6, 12, "C").l(16, 8, 16, 12, "C").l(13, 12, 16, 12, "C").p(13, 14, "C").l(8, 10, 12, 10, "C").p(8, 11, "C"); }
+    if (P === "leaves") [[2, 9], [6, 12], [15, 9], [12, 13], [3, 14], [17, 13], [9, 10]].forEach(([x, y]) => d.t(x, y, [".6", "6E"]));
+    if (P === "camo") [[2, 8, "a"], [3, 9, "a"], [6, 12, "k"], [7, 12, "k"], [15, 8, "a"], [16, 9, "a"], [13, 13, "k"], [17, 12, "L"], [2, 13, "L"], [9, 10, "L"], [10, 14, "a"]].forEach(([x, y, c]) => d.p(x, y, c));
+    if (P === "feather") for (let y = 8; y < 16; y += 2) for (let x = 1 + (y % 4 ? 2 : 0); x < 19; x += 4) d.t(x, y, ["L", ".a"]);
+    if (P === "mirror") { d.l(2, 13, 6, 9, "Z").l(3, 14, 7, 10, "i").l(13, 14, 17, 10, "Z"); }
+    if (P === "moss") [[1, 15], [2, 14], [4, 15], [7, 14], [12, 15], [15, 14], [16, 15], [18, 14], [2, 9], [17, 10]].forEach(([x, y]) => d.p(x, y, "6"));
+    if (P === "moon") d.t(13, 9, [".yy", "yy.", "yy.", ".yy"]).p(5, 11, "y");
+    if (P === "flame") [[2, 14], [6, 15], [12, 15], [16, 14]].forEach(([x, y]) => d.t(x, y, [".o", "oy"]));
+    if (P === "bark") for (let x = 2; x < 19; x += 3) d.l(x, 8, x + (x % 2), 15, "a");
+    if (P === "weave") for (let y = 8; y < 16; y += 2) for (let x = 1 + (y % 4 ? 2 : 0); x < 19; x += 4) d.p(x, y, "J");
+    if (P === "heart") d.t(13, 10, ["r.r", "rrr", ".r."]);
+    if (P === "wind") { d.l(2, 9, 6, 9, "Z").l(13, 11, 17, 11, "Z").l(4, 13, 8, 13, "Z"); }
+    if (P === "eye") d.t(13, 10, [".ZZZ.", "ZZkZZ", ".ZZZ."]);
+    if (P === "shield") d.t(12, 9, ["JJJJ", "JJJJ", ".JJ."]);
+    if (P === "gear") d.t(13, 9, [".g.g", "gggg", ".gGg", "gggg"].map(r => r.slice(0, 4)));
+    if (v.trim) d.r(0, 15, 20, 1, v.trim);
+    d.t(8, 6, [v.clasp || "gggg", ".GG."]);
+  };
+  IC.sash = (d, v) => {
+    // a cloth sash tied at the waist: a curved band, a knot at the hip and two hanging tails
+    for (let x = 0; x < 20; x++) { const y = Math.round(4 + Math.sin(x / 19 * Math.PI) * 3); d.r(x, y, 1, 4, "A"); d.p(x, y + 3, "a"); }
+    if (v.stripe || v.reflect) for (let x = 0; x < 20; x++) d.p(x, Math.round(5 + Math.sin(x / 19 * Math.PI) * 3), v.reflect ? "s" : v.stripe);
+    if (v.scale) for (let x = 1; x < 20; x += 3) d.p(x, Math.round(6 + Math.sin(x / 19 * Math.PI) * 3), "J");
+    d.t(11, 6, [".AAAA.", "AAJJAA", "AAJJAA", ".AAAA."]);
+    d.l(12, 10, 10, 18, "A", 2).l(15, 10, 17, 17, "A", 2).ps([[10, 19], [17, 18]], "a");
+    if (v.stripe) d.ps([[11, 14], [16, 14]], v.stripe);
+    if (v.wind) d.o(0, 13, ["ZZZ..", ".....", ".ZZZZ"]);
+  };
+  IC.jersey = (d, v) => {
+    icShirt(d, 3);
+    d.t(7, 0, ["JJJJJJ", ".JJJJ."]).r(0, 11, 4, 2, "J").r(16, 11, 4, 2, "J");
+    d.t(7, 5, ["ppp.p", "..p.p", ".pp.p", "p...p", "ppp.p"]);
+  };
+  // HANDS
+  IC.glove = (d, v) => {
+    d.t(3, 0, ["....A.A.A.....", "...AAAAAA.....", "..AAAAAAAA....", "..AAAAAAAA....", ".AAAAAAAAA....", ".AAAAAAAAAA.AA", ".AAAAAAAAAAAAA",
+      ".AAAAAAAAAAAA.", ".AAAAAAAAAAA..", ".AAAAAAAAAA...", "..AAAAAAAA....", "..AAAAAAAA....", "..JJJJJJJJ....", "..JJJJJJJJ....", "..IIIIIIII...."]);
+    d.t(5, 0, ["A.A.A.A", "A.A.A.A", "A.A.A.A", "A.A.A.A", "A.A.A.A"]).ps([[6, 0], [8, 0], [10, 0]], "_");
+    d.ps([[6, 1], [8, 1], [10, 1]], "a").l(6, 2, 6, 5, "a").l(8, 2, 8, 5, "a").l(10, 2, 10, 5, "a");
+    if (v.fingerless) d.r(5, 0, 7, 3, "_").t(5, 0, ["F.F.F.F", "F.F.F.F", "F.F.F.F"]);
+    if (v.wraps) for (let y = 5; y < 15; y += 2) d.l(4, y, 13, y - 1, "L");
+    if (v.studs) d.ps([[6, 7], [8, 7], [10, 7]], v.studs);
+    if (v.spark) d.o(13, 0, [".y.", "yWy", ".y."]).o(1, 3, ["y"]);
+  };
+  IC.boxing = (d, v) => {
+    d.e(9, 7, 7, 6.6, "A").e(4, 9, 2.6, 3.4, "A");
+    d.l(5, 4, 9, 2, "L").p(4, 5, "L");
+    d.l(6, 9, 8, 11, "a");
+    d.r(4, 13, 10, 5, "J").r(4, 14, 10, 1, "Z");
+  };
+  IC.mitt = (d, v) => {
+    d.t(3, 0, ["....AAAAA....", "...AAAAAAA...", "..AAAAAAAAA..", "..AAAAAAAAA..", "..AAAAAAAAA.AA", "..AAAAAAAAAAAA", "..AAAAAAAAAAAA",
+      "..AAAAAAAAAAA.", "..AAAAAAAAAA..", "..AAAAAAAAAA..", "..AAAAAAAAAA..", "..pppppppppp..", "..pppppppppp..", "..PPPPPPPPPP.."]);
+    if (v.quilt) for (let y = 3; y < 11; y += 2) for (let x = 6 + (y % 4 ? 1 : 0); x < 14; x += 3) d.p(x, y, "a");
+    if (v.fire) d.o(5, 0, ["o..", ".o."]).o(14, 1, ["y", "o"]);
+  };
+  IC.gauntlet = (d, v) => {
+    const M = v.metal || "s";
+    d.t(2, 0, ["....M.M.M.......", "...MMMMMM.......", "..MMMMMMMM......", "..MMMMMMMM......", ".MMMMMMMMMM.MM..", ".MMMMMMMMMMMMMM.", ".MMMMMMMMMMMMM..",
+      ".MMMMMMMMMMMM...", ".MMMMMMMMMMM....", "..MMMMMMMMM.....", ".MMMMMMMMMMM....", "MMMMMMMMMMMMM...", "MMMMMMMMMMMMM...", "MMMMMMMMMMMMM...", ".MMMMMMMMMMM...."].map(r => r.replace(/M/g, M)));
+    d.t(5, 0, ["M.M.M", "M.M.M", "M.M.M", "M.M.M"].map(r => r.replace(/M/g, M)));
+    const D = M === "s" ? "S" : M === "A" ? "a" : M === "g" ? "G" : M === "n" ? "N" : M === "z" ? "X" : M === "m" ? "M" : "a";
+    d.r(3, 6, 11, 1, D).r(3, 9, 11, 1, D).r(2, 11, 13, 1, D);
+    d.r(2, 12, 13, 2, v.cuff || "J");
+    d.ps([[4, 12], [8, 12], [12, 12]], "g");
+    if (v.gears) { d.e(6, 3.6, 1.6, 1.6, "g").p(6, 3, "G").e(10, 7.6, 1.4, 1.4, "g"); }
+    if (v.circuit) { d.l(4, 5, 4, 9, "C").l(4, 9, 9, 9, "C").p(10, 4, "C").l(10, 4, 10, 7, "C"); }
+  };
+  IC.bracer = (d, v) => {
+    d.t(3, 1, [".AAAAAAAAAAA.", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", ".AAAAAAAAAAA.", ".AAAAAAAAAAA.", ".AAAAAAAAAAA.", ".AAAAAAAAAAA.",
+      "..AAAAAAAAA..", "..AAAAAAAAA..", "..AAAAAAAAA..", "..AAAAAAAAA..", "..AAAAAAAAA..", "...aaaaaaa..."]);
+    d.e(9, 2, 5.4, 1, "k");
+    d.r(4, 4, 11, 1, v.band || "J").r(5, 12, 9, 1, v.band || "J");
+    if (v.laces) for (let y = 6; y < 11; y += 2) d.l(7, y, 11, y + 1, "p").l(7, y + 1, 11, y, "p");
+    if (v.rivets) d.ps([[5, 6], [13, 6], [6, 10], [12, 10], [9, 8]], "g");
+    if (v.ember) d.o(8, 7, [".o.", "oyo", ".o."]);
+    if (v.rune) d.t(8, 6, [".C.", "CCC", ".C.", ".C."]);
+    if (v.stone) d.ps([[6, 6], [7, 6], [11, 8], [12, 8], [8, 10]], "a");
+  };
+  IC.clockarm = (d, v) => {
+    d.t(2, 0, ["....g.g.g.......", "...gggggg.......", "..gggggggg......", "..gggggggg.gg...", "..ggggggggggg...", "..gggggggggg....", "...gggggggg.....",
+      "....mmmmmm......", "...mmmmmmmm.....", "...mmmmmmmm.....", "...mmmmmmmm.....", "...mmmmmmmm.....", "...mmmmmmmm.....", "....mmmmmm......"]);
+    d.e(8, 10.4, 2.6, 2.6, "g").e(8, 10.4, 1, 1, "G").p(8, 7, "g").p(8, 14, "g").p(5, 10, "g").p(11, 10, "g");
+    d.ps([[5, 1], [7, 1], [9, 1]], "_");
+    d.r(4, 6, 8, 1, "G");
+  };
+  IC.ring = (d, v) => {
+    d.e(10, 12, 7, 6.4, v.band || "g").e(10, 12.4, 4.6, 4.2, "_");
+    d.e(10, 12, 7, 6.4, v.band || "g").e(10, 12.4, 4.6, 4.2, "_");
+    if (v.signet) { d.r(6, 2, 9, 6, v.band || "g").r(7, 3, 7, 4, v.band === "s" ? "S" : "G"); d.t(9, 4, v.sym || [".h.", "hhh"]); }
+    else d.t(6, 1, ["..GGGGG..", ".GJJJJJG.", "GJ0JJJJIG", "GJJJJJJIG", ".GJJJJIG.", "..GIIIG.."].map(r => v.gem ? r.replace(/[J0I]/g, v.gem) : r));
+  };
+  IC.watch = (d, v) => {
+    d.r(6, 0, 8, 20, v.strap || "k").r(6, 0, 8, 1, v.strap === "s" ? "S" : "K").r(6, 19, 8, 1, v.strap === "s" ? "S" : "K");
+    if (v.digital) { d.r(3, 4, 14, 12, "m").r(5, 6, 10, 4, "l").t(6, 7, ["EE.E.", "E.EEE"]); for (let y = 11; y < 15; y += 2) for (let x = 5; x < 15; x += 3) d.r(x, y, 2, 1, "s"); }
+    else if (v.smart) { d.r(4, 4, 12, 12, "k").r(5, 5, 10, 10, "K").t(7, 7, ["8..8..", "8888..", "....9.", "...999"].map(r => r.slice(0, 6))); }
+    else { d.e(10, 10, 6.6, 6.6, v.case || "s").e(10, 10, 5, 5, "p").l(10, 10, 10, 6, "k").l(10, 10, 13, 10, "k").p(10, 5, "r").p(15, 10, "P").p(5, 10, "P").p(10, 15, "P"); }
+    if (v.meter) { d.r(0, 0, 20, 20, "_"); d.r(6, 0, 8, 20, "k"); d.r(3, 3, 14, 14, "m").e(10, 11, 5, 4, "p").r(5, 11, 11, 4, "m").l(10, 11, 13, 7, "r").ps([[6, 9], [8, 7], [12, 7], [14, 9]], "k"); }
+  };
+  IC.pocketwatch = (d, v) => {
+    d.l(1, 0, 5, 5, "g").l(5, 5, 7, 4, "g").l(0, 3, 2, 1, "g");
+    d.e(11, 11, 8, 8, "g").e(11, 11, 6.4, 6.4, "p").r(10, 1, 3, 2, "g").r(11, 0, 1, 1, "g");
+    d.l(11, 11, 11, 6, "k").l(11, 11, 14, 13, "k").p(11, 11, "r");
+    [[11, 5], [17, 11], [11, 17], [5, 11]].forEach(([x, y]) => d.p(x, y, "k"));
+    if (v.gears) d.e(15, 7, 1.6, 1.6, "G");
+  };
+  // FEET
+  IC.boot = (d, v) => {
+    d.t(2, 0, [".AAAAAAA.......", ".AAAAAAA.......", ".AAAAAAA.......", ".AAAAAAA.......", ".AAAAAAA.......", ".AAAAAAA.......", ".AAAAAAA.......",
+      ".AAAAAAA.......", ".AAAAAAAAA.....", ".AAAAAAAAAAA...", ".AAAAAAAAAAAAA.", ".AAAAAAAAAAAAAA", ".AAAAAAAAAAAAAA", "kkkkkkkkkkkkkkk", "KKKKK...KKKKKK."]);
+    if (!v.tall) d.r(2, 0, 9, 2, "_");
+    d.r(3, v.tall ? 0 : 2, 7, 1, v.top || "a");
+    if (v.laces) d.ps([[8, 6], [7, 7], [8, 8], [7, 5], [9, 9]], v.laces);
+    if (v.cuff) d.r(3, v.tall ? 0 : 2, 7, 2, v.cuff);
+    if (v.toe) d.r(12, 10, 5, 3, v.toe);
+    if (v.wings) d.t(0, 0, ["pp.....", "ppp....", ".ppp...", "..ppp..", "...pp.."]).o(0, 4, ["Z", "ZZ"]);
+    if (v.wind) d.o(14, 2, ["ZZZZ", ".....", "..ZZZZ"]).o(13, 7, [".ZZZ"]);
+    if (v.buckle) d.r(3, 8, 7, 1, "k").p(7, 8, "g");
+    if (v.plates) { d.r(3, 4, 7, 1, "a").r(3, 7, 7, 1, "a"); d.ps([[5, 5], [8, 5]], "g"); }
+    if (v.spur) d.t(0, 11, ["s.", "ss"]);
+    if (v.cloud) d.o(0, 13, [".ZZ..ZZ..ZZZ..ZZ", "ZZZZZZZZZZZZZZZZZ"]);
+  };
+  IC.sneaker = (d, v) => {
+    d.t(0, 4, ["....AAAAA...........", "...AAAAAAAA.........", "...AAAAAAAAAA.......", "..AAAAAAAAAAAAA.....", "..AAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA",
+      "pppppppppppppppppppp", ".PPPPPPPPPPPPPPPPPP."]);
+    d.l(4, 9, 12, 7, v.swoosh || "p").l(5, 10, 13, 8, v.swoosh || "p");
+    d.ps([[8, 5], [9, 6], [10, 7]], "p");
+    if (v.fast) d.o(0, 2, ["ZZZ", "....", ".ZZ"]);
+    if (v.wings) d.t(1, 0, ["pp..", ".ppp", "..pp"]);
+  };
+  IC.sandal = (d, v) => {
+    const sole = (x, y) => d.t(x, y, [".AAAA.", "AAAAAA", "AAAAAA", "AAAAAA", "AAAAAA", ".AAAA.", ".AAAA.", ".AAAA.", "AAAAAA", "AAAAAA", "AAAAAA", ".AAAA."]);
+    sole(2, 3); sole(11, 5);
+    const S = v.strap || "n";
+    [[2, 3], [11, 5]].forEach(([x, y]) => { d.r(x, y + 3, 6, 2, S).r(x, y + 8, 6, 1, S).l(x + 2, y + 1, x + 3, y + 3, S); });
+    if (v.roots) d.o(1, 15, ["N..N", ".N..N"]).o(10, 17, ["N.N", ".N.N"]);
+    if (v.cloud) d.o(0, 14, [".ZZ..ZZZ..ZZ..ZZ", "ZZZZZZZZZZZZZZZZZZ"]);
+  };
+  IC.greaves = (d, v) => {
+    d.t(4, 0, ["AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAA", ".AAAAAAA.", ".AAAAAAA.", ".AAAAAAA.", ".AAAAAAA.", "..AAAAA..", ".AAAAAAA.", "AAAAAAAAA", "AAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "kkkkkkkkkkkkkk"]);
+    d.r(4, 3, 9, 1, "a").r(5, 8, 7, 1, "a").ps([[6, 5], [10, 5]], "C").l(8, 1, 8, 6, "C");
+  };
+  IC.anklet = (d, v) => {
+    d.e(10, 8, 9, 4, "g").e(10, 7.4, 7.4, 2.6, "_");
+    d.e(10, 8, 9, 4, "g").e(10, 7.4, 7.4, 2.6, "_");
+    (v.bells ? [[4, 12], [10, 13], [16, 12]] : [[10, 13]]).forEach(([x, y]) => d.t(x - 1, y, v.bells ? [".g.", "ggg", "gGg", ".k."] : [".J.", "JJJ", ".J."]));
+  };
+  // BELT
+  IC.belt = (d, v) => {
+    d.e(10, 9, 9.6, 6, "A").e(10, 8.4, 8, 4.4, "_");
+    d.e(10, 9, 9.6, 6, "A").e(10, 8.4, 8, 4.4, "_");
+    if (v.title) { d.e(10, 13, 5, 4, "g").e(10, 13, 3.4, 2.6, "G").t(9, 12, [".h.", "hhh", ".h."]); d.ps([[3, 13], [17, 13]], "J"); }
+    else { d.r(7, 11, 6, 5, v.buckle || "s").r(8, 12, 4, 3, "_").r(9, 13, 3, 1, v.buckle || "s"); d.r(8, 12, 4, 3, "A"); d.r(9, 13, 3, 1, v.buckle || "s"); }
+    if (v.tools) { d.r(2, 12, 3, 5, "n").r(3, 11, 1, 2, "s").r(15, 12, 3, 4, "n").l(16, 10, 16, 11, "w").r(15, 9, 3, 1, "s"); }
+    if (v.holes) d.ps([[15, 13], [17, 12]], "a");
+  };
+  // Triangle shawl with a woven pattern and fringe.
+  IC.shawl = (d, v) => {
+    d.t(0, 2, ["AAAAAAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAAAAAA.", "..AAAAAAAAAAAAAAAA..", "...AAAAAAAAAAAAAA...", "....AAAAAAAAAAAA....", ".....AAAAAAAAAA.....",
+      "......AAAAAAAA......", ".......AAAAAA.......", "........AAAA........", ".........AA........."]);
+    d.r(0, 2, 20, 1, "a");
+    for (let y = 4; y < 11; y += 2) for (let x = y - 1; x < 21 - y; x += 3) d.p(x, y, "J");
+    d.l(0, 3, 9, 12, "0").l(19, 3, 10, 12, "0");
+    d.o(9, 12, ["J.J", "J.J"]).o(0, 3, ["J", "", "J"]).o(19, 3, ["J", "", "J"]);
+  };
+  // --- Weapons, staffs, shields and hand tools ---
+  // Long items lie on the diagonal: grip at the lower left, business end at the upper right.
+  IC.sword = (d, v) => {
+    const M = v.metal || "s", k = v.kind || "broad";
+    if (k === "foil") {
+      d.l(6, 13, 19, 0, M).l(5, 13, 6, 14, M);
+      d.e(5.4, 14.4, 2.2, 2.2, "g").e(5.4, 14.4, 1, 1, "G");
+      d.l(4, 15, 1, 18, "k", 1).l(3, 15, 1, 17, "k", 1).p(0, 19, "g");
+      return;
+    }
+    const tip = k === "short" ? [14, 4] : [18, 0];
+    if (k === "saber") {
+      d.l(6, 13, 10, 8, M, 2).l(10, 8, 14, 5, M, 2).l(14, 5, 19, 3, M, 2).l(7, 13, 18, 4, "i");
+      d.l(3, 13, 7, 17, "g").t(1, 13, ["gg", "g."]).l(2, 14, 2, 17, "g");
+    } else {
+      d.l(6, 13, tip[0], tip[1], M, 2).l(6, 12, tip[0] - 1, tip[1] + 1, M === "s" ? "i" : "L");
+      d.p(tip[0] + 1, tip[1] - 1, M);
+      if (k === "broad") d.l(7, 13, tip[0], tip[1] + 2, M);
+      d.l(2, 11, 8, 17, v.guard || "g", 1).l(3, 11, 8, 16, v.guard || "g");
+    }
+    d.l(4, 15, 1, 18, v.grip || "n", 2);
+    d.e(0.6, 19, 1.2, 1.2, v.guard || "g");
+    if (v.runes) [[9, 9], [11, 7], [13, 5], [15, 3]].forEach(([x, y]) => d.p(x, y, "C"));
+    if (v.hot) { d.l(13, 5, 18, 0, "o", 2).l(15, 3, 18, 0, "y"); d.o(17, -1, ["y"]); }
+    if (v.gem) d.p(5, 14, v.gem);
+  };
+  IC.twinsabers = (d, v) => {
+    d.l(4, 15, 15, 1, "s", 1).l(5, 15, 16, 2, "i", 1).l(15, 1, 17, 0, "s");
+    d.l(15, 15, 4, 1, "s", 1).l(14, 15, 3, 2, "i", 1).l(4, 1, 2, 0, "s");
+    d.l(2, 14, 6, 17, "g").l(17, 14, 13, 17, "g");
+    d.l(3, 16, 1, 19, "J", 1).l(16, 16, 18, 19, "J", 1);
+    d.p(9, 8, "s").p(10, 8, "s");
+  };
+  IC.knife = (d, v) => {
+    const k = v.kind || "chef";
+    if (k === "cleaver") {
+      d.t(6, 1, ["....sssssss", "...ssssssss", "..sssssssss", ".ssssssssss", "sssssssssss", "ssssssssss.", "sssssssss..", "ssssssss...", ".ssssss....", "..SSSS....."]);
+      d.e(14, 3, 0.8, 0.8, "_"); d.e(14, 3, 0.8, 0.8, "_");
+      d.l(6, 6, 11, 1, "i");
+      d.l(6, 10, 1, 15, v.grip || "k", 2).ps([[3, 12], [5, 10]], "s");
+      return;
+    }
+    if (k === "chef") {
+      d.t(6, 0, [".............s", "............ss", "...........sss", "..........ssss", ".........sssss", "........ssssss", ".......ssssss.", "......ssssss..", ".....ssssss...",
+        "....ssssss....", "...ssssss.....", "..sssss.......", ".ssss.........", "SSS...........".slice(0, 14)]);
+      d.l(7, 12, 18, 1, "i");
+      d.l(6, 13, 1, 18, v.grip || "k", 2).ps([[3, 16], [5, 14]], "s");
+      return;
+    }
+    const long = k === "carving" ? 1 : 0;
+    d.l(7, 12, 17 + long, 2 - long, "s", 2).l(7, 13, 17 + long, 3 - long, "s");
+    d.l(8, 13, 18 + long, 3 - long, "S").p(18 + long, 1 - long, "s");
+    d.l(7, 11, 16 + long, 2 - long, "i");
+    if (k === "field") { d.l(9, 12, 16, 5, "S"); d.l(4, 12, 8, 16, "s"); }
+    else d.l(6, 12, 8, 14, "s");
+    d.l(5, 14, 1, 18, v.grip || (k === "field" ? "n" : "k"), 2);
+    d.ps([[3, 16], [4, 15]], "s");
+    if (k === "carving") d.p(10, 9, "S");
+  };
+  IC.hammer = (d, v) => {
+    const k = v.kind || "smith", H = v.metal || "m";
+    d.l(2, 18, 12, 8, "w", 2).l(2, 17, 11, 8, "u");
+    if (k === "war") {
+      d.t(7, 0, ["...HHH.....", "..HHHHH....", ".HHHHHHH...", "HHHHHHHHH..", ".HHHHHHHHH.", "..HHHHHHHHH", "...HHHHHHH.", "....HHHHH..", ".....HHH..."].map(r => r.replace(/H/g, H)));
+      d.ps([[8, 1], [17, 6], [12, 0], [18, 10]], "s");
+      d.l(11, 2, 16, 7, H === "m" ? "s" : "L");
+    } else if (k === "claw") {
+      d.t(8, 1, ["..mmm.....", ".mmmmm....", "mmmmmmm...", ".mmmmmmm..", "..mmmmmmm.", "...mm.mmmm", "....m..mm.", ".......m.."]);
+      d.l(10, 2, 13, 5, "s");
+    } else {
+      d.t(7, 0, ["...HH......", "..HHHH.....", ".HHHHHH....", "HHHHHHHH...", ".HHHHHHHH..", "..HHHHHHHH.", "...HHHHHHHH", "....HHHHHH.", ".....HHHH..", "......HH..."].map(r => r.replace(/H/g, H)));
+      d.l(9, 2, 15, 8, H === "m" ? "s" : "L");
+      d.r(9, 6, 2, 2, "_").p(10, 7, "_");
+    }
+    d.l(2, 18, 4, 16, v.grip || "n", 2);
+    if (v.ember) d.o(16, 0, [".o.", "oyo", ".o."]).o(4, 2, ["y"]).o(18, 10, ["o"]);
+    if (v.band) d.l(5, 15, 6, 14, v.band, 2);
+  };
+  IC.mace = (d, v) => {
+    d.l(1, 18, 11, 8, "n", 2);
+    d.e(14, 5, 4.6, 4.6, v.metal || "s").e(14, 5, 2.6, 2.6, v.metal === "g" ? "G" : "S");
+    [[14, -1], [20, 5], [14, 11], [8, 5], [18, 1], [18, 9], [10, 9], [10, 1]].forEach(([x, y]) => d.p(x, y, v.metal || "s"));
+    d.p(14, 5, "J");
+    d.l(9, 10, 11, 12, "g");
+    d.l(1, 18, 3, 16, "J", 2);
+  };
+  IC.greataxe = (d, v) => {
+    d.l(1, 19, 16, 4, "n", 2).l(1, 18, 15, 4, "w");
+    d.t(9, 0, ["......sss..", "....ssssss.", "..sssssssss", ".ssssssss.s", "sssssssss..", ".ssssssss..", "..ssssss...", "...sss....."]);
+    d.t(14, 6, ["sss....", "ssssss.", ".ssssss", "..sssss", "...ssss", "....ss."]);
+    d.l(10, 1, 17, 1, "i").l(18, 8, 20, 10, "i");
+    d.l(13, 5, 15, 7, "J", 2);
+  };
+  IC.trident = (d, v) => {
+    d.l(0, 19, 13, 6, "n", 2);
+    d.l(13, 6, 17, 2, "g", 2);
+    d.l(10, 6, 14, 2, "g").l(14, 2, 15, 0, "g");
+    d.l(13, 10, 17, 6, "g").l(17, 6, 19, 5, "g");
+    d.l(17, 2, 19, 0, "g");
+    d.t(11, 7, ["gg", "gg"]);
+    d.ps([[15, 0], [19, 0], [19, 5]], "h");
+    d.l(1, 18, 3, 16, "J", 2);
+  };
+  IC.bow = (d, v) => {
+    const k = v.kind || "long", W = v.wood || "w";
+    // bow arcs from the top left to the bottom right, string on the inside, arrow pointing up-right
+    const arc = k === "recurve" ? [[1, 1], [2, 1], [3, 1], [4, 2], [6, 2], [8, 3], [10, 4], [12, 6], [14, 8], [15, 10], [16, 12], [17, 14], [18, 16], [18, 17], [18, 18], [17, 18]]
+      : [[1, 0], [3, 1], [5, 1], [7, 2], [9, 3], [11, 5], [13, 7], [15, 9], [16, 11], [17, 13], [18, 15], [18, 17], [19, 19]];
+    for (let i = 0; i < arc.length - 1; i++) d.l(arc[i][0], arc[i][1], arc[i + 1][0], arc[i + 1][1], W, 2);
+    d.l(1, 1, 18, 18, "p");
+    d.l(10, 6, 12, 8, "n", 2);
+    d.l(3, 16, 15, 4, "w").t(14, 2, ["..s", ".ss", "ss."]);
+    d.t(1, 16, [".J", "J.", ".J"]).t(2, 17, ["J"]);
+    if (v.camo) d.ps([[6, 1], [14, 8]], "E");
+    if (v.trim) d.ps([[4, 1], [16, 11]], "g");
+  };
+  IC.quiver = (d, v) => {
+    d.t(4, 5, ["..AAAAAAA..", ".AAAAAAAAA.", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAAAA",
+      "AAAAAAAAAAA", "AAAAAAAAAAA", ".AAAAAAAAA.", "..aaaaaaa.."].map(r => r));
+    d.r(4, 7, 11, 1, "J").r(4, 14, 11, 1, "J");
+    d.e(9.5, 5.4, 4, 1, "K");
+    [[6, 4], [9, 3], [12, 4]].forEach(([x, y], i) => { d.r(x, y - 3, 1, 4, "w"); d.t(x - 1, y - 6, [i % 2 ? ".r." : ".p.", i % 2 ? "rrr" : "ppp", i % 2 ? "r.r" : "p.p"]); });
+    d.l(1, 6, 4, 9, "N").l(15, 15, 18, 18, "N");
+  };
+  // Staffs: a long shaft with a head chosen by v.head.
+  IC.staff = (d, v) => {
+    const W = v.wood || "w", h = v.head || "orb";
+    d.l(0, 19, 13, 6, W, 2);
+    if (h !== "cane") d.l(0, 18, 12, 6, W === "w" ? "u" : W === "g" ? "h" : W);
+    if (h === "orb" || h === "crystal") {
+      d.l(12, 6, 14, 4, "g", 2).t(12, 2, ["g...", ".g..", "..g."]).t(16, 6, ["g...", ".g..", "..g."].map(r => [...r].reverse().join("")));
+      if (h === "crystal") d.t(13, -1, ["..CC.", ".CCCC", "CCCHC", ".CCC.", "..C.."]); else d.e(16, 2, 2.6, 2.6, v.orb || "C");
+      d.o(16, 1, ["W"]);
+    } else if (h === "oak") {
+      d.t(11, 0, ["..WWW...", ".WW.WW..", "WW...W..", "W....WW.", "WW..WW..", ".WWWW...", "..WW...."].map(r => r.replace(/W/g, W)));
+      d.t(15, 0, [".6.", "666", ".6E"]).t(9, 2, ["6.", "66"]);
+    } else if (h === "data") {
+      d.t(13, 0, ["..CCC.", ".C...C", "CCCCC.", "C...C.", "CCCCC."]).r(14, 2, 3, 3, "8").o(14, 1, ["W"]);
+    } else if (h === "brush") {
+      d.l(12, 7, 14, 5, "s", 2).t(14, 0, ["...JJ", "..JJJ", ".JJJJ", "JJJJ.", "JJJ.."]).p(18, 0, "0");
+      d.o(1, 12, ["r."]).o(4, 9, ["b"]);
+    } else if (h === "totem") {
+      d.t(11, -1, [".WWWWW", "WkWWkW", "WWWWWW", "WkkkkW", ".WWWW.", ".JJJJ.", "J.JJ.J"].map(r => r.replace(/W/g, W)));
+    } else if (h === "antler") {
+      d.t(10, -1, ["..p...p...", "..p..p....", "p.pp.p..p.", ".ppppp.p..", "...pppp...", "....pp....", "....p....."]);
+      d.l(10, 8, 9, 10, "J").t(8, 10, ["J", "J"]);
+    } else if (h === "spindle") {
+      d.l(13, 6, 18, 1, W, 2).e(10, 9, 2.6, 2.6, "J").l(13, 3, 18, 3, "p").l(14, 2, 18, 5, "p").l(15, 1, 17, 6, "p");
+    } else if (h === "wave") {
+      d.l(13, 6, 16, 3, "k", 2).t(13, -1, ["C...C...", ".C.C.C..", "..C...C.", "......C."].map(r => r.slice(0, 8))).o(17, 0, ["W"]);
+      d.p(14, 1, "8").p(16, 2, "7");
+    } else if (h === "crook") {
+      d.t(11, 0, ["..WWWW.", ".WW..WW", "WW....W", "W.....W", "W......", ".......", "......."].map(r => r.replace(/W/g, W)));
+      d.l(11, 4, 11, 7, W).t(16, 4, ["Y", "y", "Y"]).p(17, 3, "k");
+    } else if (h === "calm") {
+      d.l(13, 6, 17, 2, W, 2).e(18, 1, 1.6, 1.6, "J").t(10, 6, ["...ll", ".ll..", "ll...", "l...."]).p(18, 1, "0");
+    } else if (h === "cane") {
+      d.l(0, 19, 13, 6, "k", 1).l(13, 6, 15, 4, "k").e(16.2, 2.8, 2.4, 2.4, "g").p(15, 2, "h");
+      d.l(1, 18, 2, 17, "g");
+    } else if (h === "paint") {
+      d.t(13, 0, ["...JJ.", "..JJJJ", ".JJJJ.", "JJJJ..", ".JJ..."]);
+    }
+    if (v.gem) d.p(12, 7, v.gem);
+  };
+  // Shields, front view.
+  IC.shield = (d, v) => {
+    const k = v.kind || "heater";
+    if (k === "round") {
+      d.e(9.5, 9.5, 9.4, 9.4, v.rim || "s").e(9.5, 9.5, 8, 8, "A");
+      for (let x = 3; x < 18; x += 3) d.l(x, 2, x, 17, "a");
+      d.e(9.5, 9.5, 8, 8, "_");
+      d.e(9.5, 9.5, 8, 8, "A"); [4, 7, 12, 15].forEach(x => d.l(x, 2, x, 17, "a"));
+      d.e(9.5, 9.5, 2.4, 2.4, v.rim || "s").p(9, 9, "i");
+      [[9, 1], [1, 9], [18, 9], [9, 18]].forEach(([x, y]) => d.p(x, y, "S"));
+      return;
+    }
+    if (k === "tower") {
+      d.r(2, 0, 16, 20, v.rim || "s").r(3, 1, 14, 18, "A");
+      d.r(9, 1, 2, 18, "J").r(3, 9, 14, 2, "J");
+      [[4, 2], [15, 2], [4, 17], [15, 17]].forEach(([x, y]) => d.p(x, y, "g"));
+      return;
+    }
+    if (k === "gate") {
+      d.t(1, 0, [".SSSSSSSSSSSSSSSS.", "SzzzzzzzzzzzzzzzzS", "SzzzzzzzzzzzzzzzzS"]).r(1, 3, 18, 15, "z").r(1, 0, 1, 18, "S").r(18, 0, 1, 18, "S");
+      d.r(4, 4, 12, 14, "K");
+      for (let x = 5; x < 16; x += 3) d.r(x, 4, 1, 14, "m");
+      for (let y = 6; y < 18; y += 4) d.r(4, y, 12, 1, "m");
+      for (let x = 5; x < 16; x += 3) d.p(x, 18, "m");
+      d.ps([[3, 1], [8, 1], [13, 1]], "X");
+      return;
+    }
+    if (k === "palette") {
+      d.e(10, 10, 9.6, 8, "w").e(5, 15, 2, 1.6, "_").e(5.2, 15, 2, 1.6, "_");
+      d.e(5, 6, 1.4, 1.4, "r").e(10, 4, 1.4, 1.4, "y").e(15, 6, 1.4, 1.4, "b").e(16, 11, 1.4, 1.4, "e").e(12, 15, 1.4, 1.4, "q");
+      d.e(10, 10, 2, 1.2, "Z");
+      d.r(14, 15, 2, 2, "J");
+      return;
+    }
+    if (k === "anvil") {
+      d.t(0, 2, ["AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAA.", ".AAAAAAAAAAAAAAAAA..", "....AAAAAAAAAAAA....", ".....AAAAAAAAAA.....", "......AAAAAAAA......",
+        "......AAAAAAAA......", "......AAAAAAAA......", ".....AAAAAAAAAA.....", "...AAAAAAAAAAAAAA...", "..AAAAAAAAAAAAAAAA..", "..aaaaaaaaaaaaaaaa.."]);
+      d.r(0, 2, 20, 1, "L").o(5, 0, [".o..", "oyo.", ".o.y"]);
+      d.t(8, 7, ["JJJJ", "JJJJ"]);
+      return;
+    }
+    if (k === "hive") {
+      d.r(0, 0, 20, 2, "w").r(1, 2, 2, 16, "w").r(17, 2, 2, 16, "w").r(1, 18, 18, 2, "w").r(-1, 0, 1, 2, "w").r(20, 0, 1, 2, "w");
+      d.r(3, 2, 14, 16, "G");
+      for (let y = 2; y < 18; y += 3) for (let x = 3 + ((y - 2) / 3 % 2 ? 2 : 0); x < 16; x += 4) d.t(x, y, ["gg", "gY"].map(r => r));
+      d.r(3, 12, 14, 6, "Y").ps([[4, 12], [8, 13], [12, 12], [15, 13]], "G");
+      d.r(9, 6, 2, 3, "J");
+      d.o(14, 4, [".k.", "kyk", ".k."]);
+      return;
+    }
+    // heater, kite, bark, firewall
+    const rows = k === "kite"
+      ? ["SSSSSSSSSSSSSSSS", "SAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAS", ".SAAAAAAAAAAAAS.", ".SAAAAAAAAAAAAS.", "..SAAAAAAAAAAS..", "..SAAAAAAAAAAS..",
+        "...SAAAAAAAAS...", "...SAAAAAAAAS...", "....SAAAAAAS....", "....SAAAAAAS....", ".....SAAAAS.....", ".....SAAAAS.....", "......SAAS......", "......SAAS......", ".......SS......."]
+      : ["SSSSSSSSSSSSSSSSSS", "SAAAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAAAS", "SAAAAAAAAAAAAAAAAS",
+        ".SAAAAAAAAAAAAAAS.", ".SAAAAAAAAAAAAAAS.", "..SAAAAAAAAAAAAS..", "..SAAAAAAAAAAAAS..", "...SAAAAAAAAAAS...", "....SAAAAAAAAS....", ".....SAAAAAAS.....", "......SAAAAS......", ".......SAAS.......", "........SS........"];
+    const R = v.rim || (k === "bark" ? "N" : "s");
+    d.t(k === "kite" ? 2 : 1, 0, rows.map(r => r.replace(/S/g, R)));
+    const cx = 9.5;
+    if (v.emblem === "cross") { d.r(8, 2, 3, 13, "J").r(4, 5, 12, 3, "J"); }
+    else if (v.emblem === "lion") d.t(6, 4, ["..gggg..", ".gggggg.", "gggkkggg", "ggggggg.", ".gggggg.", "..g..g.."]);
+    else if (v.emblem === "bend") { d.l(2, 1, 16, 15, "J", 3); }
+    else if (v.emblem === "flame") d.t(6, 3, ["...o....", "..oyo...", "..oyyo..", ".oyyyo.o", ".oyWyoo.", "oyyWyyo.", ".oyyyo..", "..ooo..."]);
+    else if (v.emblem === "leaf") d.t(6, 3, ["....66..", "...666..", "..6666..", ".66E66..", ".6E66...", "6E66....", "E......."]);
+    else if (v.emblem === "chevron") { d.l(3, 9, 9, 3, "J", 2).l(16, 9, 10, 3, "J", 2); }
+    else if (v.emblem === "boss") d.e(cx, 7, 2.4, 2.4, "s");
+    if (k === "bark") { for (let x = 3; x < 17; x += 3) d.l(x, 1, x + 1, 12, "a"); d.t(7, 3, ["..66.", ".666.", "666E.", ".E..."]); }
+    if (k === "firewall") { d.r(2, 4, 16, 1, "a").r(2, 8, 16, 1, "a").ps([[6, 1], [10, 5], [14, 1], [6, 9], [12, 9]], "a").l(6, 1, 6, 3, "a").l(10, 5, 10, 7, "a").l(14, 1, 14, 3, "a"); d.t(6, 9, ["..o...", ".oyo..", "oyWyo.", ".oyo.."]); }
+    d.l(2, 1, 2, 8, R === "s" ? "i" : "L");
+  };
+  // Hand tools
+  IC.wrench = (d, v) => {
+    const M = v.metal || "s";
+    d.l(2, 17, 13, 6, M, 3);
+    d.t(11, 0, ["...MM...", "..MMM.MM", "..MM..MM", "..MMMMM.", ".MMMMM..", "MMMM....", "MMM....."].map(r => r.replace(/M/g, M)));
+    d.e(3, 17, 2.6, 2.6, M).e(3, 17, 1.2, 1.2, "_");
+    d.l(4, 14, 12, 6, "i");
+    if (v.torque) { d.l(1, 19, 5, 15, "r", 2); d.e(9, 10, 1.8, 1.8, "k").p(9, 9, "Z"); }
+    if (v.grip) d.l(3, 16, 6, 13, v.grip, 3);
+  };
+  IC.toolbox = (d, v) => {
+    d.r(6, 2, 8, 2, "k").r(7, 3, 6, 1, "_").r(7, 3, 6, 2, "_");
+    d.r(6, 2, 1, 4, "k").r(13, 2, 1, 4, "k");
+    d.r(0, 6, 20, 12, "A").r(0, 6, 20, 3, "a").r(0, 6, 20, 1, "L");
+    d.r(8, 8, 4, 3, "s").r(9, 9, 2, 1, "S");
+    d.r(0, 17, 20, 1, "a");
+    if (v.tools) { d.l(15, 6, 18, 2, "s").l(3, 5, 4, 1, "w").p(4, 0, "m"); }
+    if (v.cross) d.t(8, 11, [".r.", "rrr", ".r."]);
+    if (v.spray) d.r(15, 1, 3, 5, "b").r(16, 0, 1, 1, "k");
+  };
+  IC.tools = (d, v) => {
+    d.l(1, 18, 14, 5, "s", 2);
+    d.t(12, 0, ["...ss...", "..sss.ss", "..ss..ss", "..sssss.", ".sssss..", "sss....."]);
+    d.l(18, 18, 7, 7, "w", 2).l(17, 18, 6, 7, "u");
+    d.t(1, 0, ["mmm......", "mmmm.....", "mmmmm....", ".mmmmm...", "..mmmmm..", "...mmmmm.", "....mmmm.", ".....mm.."]);
+    d.l(3, 2, 8, 7, "s");
+  };
+  IC.brush = (d, v) => {
+    d.l(1, 19, 11, 9, v.handle || "A", 2).l(1, 18, 10, 9, "L");
+    d.l(11, 9, 13, 7, "s", 2).p(12, 9, "S");
+    d.t(13, 1, ["....p", "...pp", "..ppp", ".pppp", "pppp.", "ppp..", ".p..."].map(r => r.replace(/p/g, v.tip || "n")));
+    if (v.paint) d.t(15, 0, ["..P", ".PP", "PP."].map(r => r.replace(/P/g, v.paint)));
+  };
+  IC.brushes = (d, v) => {
+    d.t(3, 9, ["AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", "AAAAAAAAAAAAA", ".aaaaaaaaaaa."]);
+    d.r(3, 9, 13, 1, "L");
+    [[5, 1, "r", 4], [8, 0, "b", 9], [11, 2, "y", 13], [13, 3, "e", 16]].forEach(([x, y, c, tx]) => {
+      d.l(x, y + 3, x, 9, "w").r(x - 1, y + 2, 2, 1, "s").t(x - 1, y - 1, [".n", "nn", c + c].map(r => r));
+    });
+    d.r(3, 12, 13, 2, "J");
+  };
+  IC.quill = (d, v) => {
+    d.l(1, 19, 5, 15, "k");
+    d.t(3, 0, ["...........PPP", "..........PPPP", ".........PPPPP", "........PPPPP.", ".......PPPPPP.", "......PPPPPP..", ".....PPPPPP...", "....PPPPPP....",
+      "...PPPPPP.....", "...PPPPP......", "..PPPPP.......", "..PPPP........", ".PPPP.........", ".PPP..........", "PPP..........."].map(r => r.replace(/P/g, v.feather || "p")));
+    d.l(5, 13, 16, 1, v.vein || "P");
+    d.l(3, 16, 5, 14, "g");
+    if (v.glow) d.o(16, 0, [".W.", "W.W", ".W."]).o(0, 17, ["C"]);
+    if (v.rune) d.ps([[8, 7], [10, 5], [12, 4]], "C");
+  };
+  IC.pen = (d, v) => {
+    d.l(5, 14, 15, 4, v.body || "k", 3).l(5, 13, 14, 4, v.body === "k" || !v.body ? "j" : "L");
+    d.l(14, 3, 17, 0, v.cap || "g", 3).l(16, 0, 18, -2, v.cap || "g");
+    d.l(15, 6, 16, 5, v.cap || "g");
+    d.t(1, 14, ["...gg", "..ggg", ".ggg.", "gGg..", "G...."].map(r => r));
+    d.p(3, 16, "k");
+    d.l(7, 13, 8, 12, v.cap || "g");
+  };
+  IC.solder = (d, v) => {
+    d.l(8, 11, 18, 1, "k", 3).l(8, 10, 17, 1, "j");
+    d.l(4, 15, 8, 11, "s", 2).l(1, 18, 4, 15, "S").p(0, 19, "o");
+    d.o(0, 17, ["y.", ".y"]).o(2, 19, ["5"]);
+    d.l(17, 3, 20, 7, "r");
+  };
+  // Kitchen tools
+  IC.ladle = (d, v) => {
+    d.l(5, 9, 17, 0, v.metal || "A", 2).l(16, 0, 18, -1, v.metal || "A");
+    d.e(5, 13, 4.6, 4, v.metal || "A").e(5, 12.4, 3.2, 1.8, v.metal ? "S" : "a");
+    d.e(4, 12, 1, 0.6, "L");
+  };
+  IC.whisk = (d, v) => {
+    const M = v.metal || "s";
+    d.t(3, 0, ["....MMMMMM....", "..MM..MM..MM..", ".M...M..M...M.", "M...M....M...M", "M...M....M...M", "M...M....M...M", "M...M....M...M",
+      ".M...M..M...M.", ".M...M..M...M.", "..M..M..M..M..", "...M..MM..M...", "....M.MM.M....", ".....MMMM.....", "......MM......"].map(r => r.replace(/M/g, M)));
+    d.t(8, 14, ["AA", "AA", "AA", "AA", "LA", "aa"].map(r => r.replace(/A/g, v.handle || "A")));
+  };
+  IC.rollingpin = (d, v) => {
+    d.l(4, 15, 15, 4, v.wood ? "w" : "A", 4).l(4, 14, 14, 4, v.wood ? "u" : "L");
+    d.l(1, 18, 4, 15, "n", 2).l(16, 3, 18, 1, "n", 2);
+    d.e(1, 18.6, 1, 1, "n").e(18.6, 1, 1, 1, "n");
+    if (v.flour) d.o(6, 18, ["Z.Z..Z"]).o(14, 9, ["Z"]);
+  };
+  IC.peel = (d, v) => {
+    d.l(0, 19, 8, 11, "w", 2);
+    d.t(6, 0, ["....wwwwww....", "..wwwwwwwwww..", ".wwwwwwwwwwww.", "wwwwwwwwwwwwww", "wwwwwwwwwwwwww", "wwwwwwwwwwwwww", "wwwwwwwwwwwwww", ".wwwwwwwwwwww.", "..wwwwwwwwww..", "....wwwwww...."]);
+    d.e(13, 4.5, 4.6, 3.6, "Y").e(13, 4.5, 3.6, 2.8, "o");
+    d.ps([[11, 3], [14, 5], [15, 3], [12, 6]], "r").ps([[13, 3], [11, 5]], "e");
+    d.l(8, 10, 10, 9, "w", 2);
+  };
+  IC.spatula = (d, v) => {
+    d.l(1, 19, 9, 11, "k", 2).l(9, 11, 11, 9, "s");
+    d.t(10, 0, ["..sssss.", ".ssssss.", "sssssss.", "sssssss.", "ssssss..", "sssss...", ".sss....", "..s....."]);
+    for (let i = 0; i < 3; i++) d.l(12 + i * 2, 1, 11 + i, 4 + i, "S");
+    if (v.fire) d.o(0, 0, [".o.", "oyo", "oyo"]).o(16, 9, [".o", "oy"]);
+  };
+  IC.skillet = (d, v) => {
+    const M = v.metal || "m";
+    d.e(8, 10, 7.6, 7.6, M).e(8, 10, 6, 6, M === "A" ? "a" : "M");
+    d.l(14, 8, 19, 3, M, 2);
+    d.p(18, 3, "_");
+    d.ps([[4, 6], [5, 5], [6, 5]], M === "A" ? "L" : "s");
+    if (v.egg) d.e(8, 11, 3, 2.6, "Z").e(8.4, 11, 1.2, 1.2, "Y");
+  };
+  IC.saucepan = (d, v) => {
+    d.e(8, 6, 7.6, 2.6, "A").r(0, 6, 17, 9, "A").e(8, 15, 7.6, 2.6, "A").e(8, 6, 6.4, 1.6, "a");
+    d.l(1, 7, 1, 14, "L");
+    d.l(16, 7, 19, 5, "k", 2).l(16, 7, 20, 7, "k");
+    if (v.steam) d.o(4, 0, ["5..5", ".5..5", "5..5"]);
+  };
+  IC.platter = (d, v) => {
+    d.e(10, 13, 10, 4, "s").e(10, 12.6, 8.4, 2.8, "i");
+    d.e(10, 9, 7.6, 6, "s").e(10, 9.6, 7.6, 6, "s").r(2, 9, 17, 4, "s");
+    d.e(10, 7, 7, 6, "s").e(9, 5, 3, 2, "i");
+    d.e(10, 1.4, 1.2, 1.2, "g").r(1, 12, 19, 1, "S");
+  };
+  IC.bowl = (d, v) => {
+    d.e(10, 9, 9.4, 2.6, "A").t(1, 9, ["AAAAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAAAA.", "..AAAAAAAAAAAAAA..", "...AAAAAAAAAAAA...", ".....AAAAAAAA.....", "......aaaaaa......"]);
+    d.e(10, 8.6, 8, 1.6, "a");
+    if (v.food) d.e(10, 8, 6, 1.4, v.food);
+    if (v.steam) d.o(6, 0, [".5..5", "5..5.", ".5..5", "5..5."]);
+  };
+  IC.kettle = (d, v) => {
+    d.e(9, 12, 7, 6, "A").r(4, 6, 10, 3, "A").e(9, 5.6, 4, 1.4, "a").r(8, 3, 2, 2, "k");
+    d.t(3, 1, ["...kkkkkk...", "..k......k..", ".k........k."]);
+    d.l(15, 11, 19, 7, "A", 2);
+    d.l(3, 9, 3, 15, "L");
+    d.r(3, 17, 12, 1, "a");
+  };
+  IC.mortar = (d, v) => {
+    d.l(8, 10, 16, 0, "z", 3).e(16, 1, 1.6, 1.6, "z");
+    d.e(10, 10, 9, 2.6, "z").t(1, 10, ["zzzzzzzzzzzzzzzzzz", ".zzzzzzzzzzzzzzzz.", "..zzzzzzzzzzzzzz..", "...zzzzzzzzzzzz...", ".....zzzzzzzz.....", "....XXXXXXXXXX...."]);
+    d.e(10, 9.6, 7.6, 1.4, "X").ps([[6, 9], [9, 10], [13, 9]], "6");
+    d.l(8, 10, 9, 9, "z", 2);
+  };
+  IC.jars = (d, v) => {
+    const jar = (x, y, c) => { d.r(x + 1, y, 5, 2, "s").r(x, y + 2, 7, 9, "H").r(x + 1, y + 3, 5, 7, c).r(x, y + 2, 7, 1, "H").r(x + 1, y + 2, 1, 7, "Z"); };
+    jar(0, 7, "r"); jar(6, 4, "6"); jar(12, 8, "Y");
+    d.r(7, 8, 5, 2, "p").r(13, 12, 5, 2, "p");
+  };
+  IC.honeypot = (d, v) => {
+    d.e(10, 12, 8, 7, "g").r(4, 3, 12, 3, "g").e(10, 3, 6, 1.4, "G");
+    d.r(3, 6, 14, 2, "Y").ps([[5, 8], [12, 8], [13, 9]], "Y");
+    d.r(5, 11, 10, 4, "p").t(7, 12, ["kk.kk", "..k.."]);
+    d.l(12, 1, 19, -2, "w", 2).e(11, 2, 1.6, 1.6, "w");
+    d.o(14, 14, ["y"]);
+  };
+  IC.forktool = (d, v) => {
+    d.l(1, 19, 11, 9, "w", 2).l(1, 18, 10, 9, "u");
+    d.t(10, 0, ["s..s..s", "s..s..s", "s..s..s", "s..s..s", ".sssss.", "..sss..", "...s..."].map(r => r)).l(11, 7, 12, 8, "s");
+    d.r(10, 4, 7, 1, "s");
+    d.l(9, 10, 11, 8, "J", 2);
+  };
+  IC.trowel = (d, v) => {
+    d.l(1, 19, 7, 13, "w", 2).l(7, 13, 9, 11, "s");
+    d.t(8, 1, ["......ss", "....ssss", "..ssssss", ".sssssss", "ssssssss", "sssssss.", ".sssss..", "..ss...."].map(r => r));
+    d.l(9, 9, 15, 3, "S");
+  };
+  IC.broom = (d, v) => {
+    d.l(9, 11, 19, 1, "w", 2);
+    d.t(0, 9, ["......JJJJ..", ".....yyyyyy.", "....yyyyyyy.", "...yyyyyyy..", "..yyyyyyy...", ".yyyyyyy....", "yyyyyyy.....", "yyyyyy......", ".yyy........"]);
+    d.l(1, 15, 6, 10, "Y").l(3, 16, 8, 11, "Y");
+  };
+  IC.duster = (d, v) => {
+    d.l(1, 19, 10, 10, "n", 2);
+    d.e(14, 6, 5, 5, "p").e(12, 4, 3, 3, "Z").e(17, 8, 2.6, 3, "P");
+    d.ps([[15, 1], [19, 5], [18, 3], [12, 9], [10, 7]], "p").ps([[13, 6], [16, 4], [15, 8]], "P");
+    d.r(9, 10, 2, 2, v.band ? "J" : "g");
+  };
+  IC.leash = (d, v) => {
+    d.t(0, 0, [".AAAAA.", "AA...AA", "A.....A", "AA...AA", ".AAAAA.", "...AA..", "...AA.."]);
+    d.t(4, 6, ["AA.......", ".AA......", "..AAA....", "....AAA..", "......AA.", ".......AA", "......AA.", "....AAA..", "...AA....", "...AA....", "....AAA..", "......AAA"]);
+    d.t(12, 15, ["sss.", "s.s.", "sss.", ".ss.", ".s.."]);
+  };
+  IC.petbrush = (d, v) => {
+    d.l(1, 19, 7, 13, "A", 3).l(1, 18, 6, 13, "L");
+    d.t(6, 1, ["......AAAAA", "....AAAAAAAA", "...AAAAAAAAA", "..AAAAAAAAA.", ".AAAAAAAAA..", "AAAAAAAAA...", "AAAAAAAA....", ".AAAAA......", "..AAA......."]);
+    for (let y = 2; y < 8; y += 2) for (let x = 8 + (y % 4 ? 1 : 0); x < 17 - y / 2; x += 2) d.p(x, y, "z");
+    d.p(9, 3, "Z").p(11, 5, "Z");
+  };
+  // --- Books, bags, gadgets and other objects ---
+  // Closed book, front view: spine on the left, page edges on the right and bottom.
+  const IC_EMBLEM = {
+    bubble: ["pppppp", "pkpkpp", "pppppp", ".pp...", "p....."], star: ["..g..", ".ggg.", "ggggg", ".g.g."], flag: ["rrpp", "rrpp", "bbbb", "k..."],
+    rune: [".C.", "CCC", ".C.", "C.C"], globe: [".bb.", "beeb", "bbeb", ".bb."], cross: [".r.", "rrr", ".r."], moon: [".yy", "yy.", "yy.", ".yy"],
+    coin: [".gg.", "gGhg", "gGgg", ".gg."], note: ["..k", "..k", "kkk", "kk."], eye: [".ppp.", "ppkpp", ".ppp."], leaf: ["..66", ".666", "66E.", "E..."],
+    mushroom: [".rrr.", "rZrrr", "..p..", "..p.."], sun: ["g.g.g", ".ggg.", "ggygg", ".ggg.", "g.g.g"], hex: [".q.q.", "qqqqq", ".q.q.", "qqqqq"],
+    skull: [".pp.", "pkkp", ".pp."], chart: ["y...y", ".y.y.", "..y..", "y...."], heart: ["r.r", "rrr", ".r."], quill: ["...p", "..pp", ".pp.", "k..."],
+    lines: ["pppp", "....", "pppp", "....", "ppp."], check: ["p.pp", "....", "p.pp", "....", "p.pp"], key: ["gg..", "gggg", "gg.g"]
+  };
+  IC.book = (d, v) => {
+    const thick = v.thick ? 1 : 0;
+    d.r(3, 1, 14 + thick, 18, "p").r(4, 2, 14 + thick, 17, "P");
+    d.r(2, 0, 14, 18, "A").r(2, 0, 2, 18, "a").r(4, 0, 1, 18, "1");
+    d.r(16, 1, 1 + thick, 17, "p").r(3, 18, 14, 1, "p");
+    if (thick) for (let y = 2; y < 18; y += 2) d.p(17, y, "P");
+    if (v.corners) { d.t(14, 0, ["gg", ".g"]).t(14, 16, [".g", "gg"]).p(5, 0, "g").p(5, 17, "g"); }
+    if (v.clasp) d.r(15, 7, 3, 3, v.clasp).p(16, 8, "k");
+    if (v.band) d.r(5, 13, 11, 1, v.band);
+    if (v.mark) d.r(12, 17, 2, 3, v.mark).p(12, 19, "_");
+    if (v.spiral) for (let y = 1; y < 18; y += 2) d.p(2, y, "s").p(3, y, "S");
+    if (v.strap) d.r(2, 8, 16, 2, "N").r(16, 7, 2, 4, "N").p(17, 8, "g");
+    if (v.label) d.r(7, 3, 6, 3, "p").r(8, 4, 4, 1, "P");
+    if (v.emblem) { const e = IC_EMBLEM[v.emblem] || v.emblem, w = Math.max(...e.map(r => r.length)); d.t(Math.round(9.5 - w / 2), v.label ? 8 : Math.round(9 - e.length / 2), e); }
+    if (v.glow) d.o(Math.round(9.5 - 1), 7, [".W.", "W.W", ".W."].map(r => r));
+    if (v.title) d.r(6, 3, 8, 1, v.title).r(7, 5, 6, 1, v.title);
+  };
+  // Open book (ledgers, planners, charts).
+  IC.openbook = (d, v) => {
+    d.t(0, 3, ["AAAAAAAAA..AAAAAAAAA", "ApppppppppppppppppppA".slice(0, 20)]);
+    d.r(1, 2, 8, 13, "p").r(11, 2, 8, 13, "p").r(9, 3, 2, 12, "P");
+    d.t(1, 1, [".ppppppp", "pppppppp"]).t(11, 1, ["ppppppp.", "pppppppp"]);
+    d.r(0, 3, 1, 14, "A").r(19, 3, 1, 14, "A").r(0, 15, 20, 2, "A").r(9, 15, 2, 1, "a").r(0, 16, 20, 1, "a");
+    const P = v.page || "lines";
+    if (P === "lines") for (let y = 4; y < 14; y += 2) { d.r(2, y, 6, 1, "P").r(12, y, 6, 1, "P"); }
+    if (P === "ledger") { for (let y = 4; y < 14; y += 2) { d.r(2, y, 4, 1, "P").r(12, y, 4, 1, "P").p(7, y, "e").p(17, y, y % 4 ? "r" : "e"); } d.r(6, 3, 1, 11, "b").r(16, 3, 1, 11, "b"); }
+    if (P === "calendar") { d.r(2, 3, 6, 1, "r").r(12, 3, 6, 1, "r"); for (let y = 5; y < 14; y += 2) for (let x = 2; x < 8; x += 2) { d.p(x, y, "P").p(x + 10, y, "P"); } d.p(14, 9, "r").p(4, 7, "b"); }
+    if (P === "stars") { d.r(1, 2, 8, 13, "k").r(11, 2, 8, 13, "k"); [[3, 4], [6, 6], [4, 10], [13, 5], [16, 8], [14, 12], [7, 12]].forEach(([x, y]) => d.p(x, y, "y")); d.l(3, 4, 6, 6, "j").l(13, 5, 16, 8, "j"); }
+    if (P === "notes") { for (let y = 4; y < 14; y += 3) { d.r(2, y, 6, 1, "P").r(12, y, 6, 1, "P"); } d.t(3, 5, ["..k", "kkk"]).t(13, 8, [".k", "kk"]); }
+    if (P === "tickets") { d.r(2, 4, 6, 3, "r").r(12, 4, 6, 3, "y").r(2, 9, 6, 3, "y").r(12, 9, 6, 3, "r"); d.ps([[4, 5], [14, 5], [4, 10], [14, 10]], "p"); }
+    if (P === "coins") { for (let y = 4; y < 14; y += 2) d.r(2, y, 6, 1, "P"); d.e(14.5, 9, 2.6, 2.6, "g").e(14.5, 9, 1.2, 1.2, "G"); }
+    if (P === "illuminated") { d.r(2, 3, 3, 3, "r").p(3, 4, "g"); for (let y = 4; y < 14; y += 2) { d.r(6, y, 2, 1, "P"); d.r(12, y, 6, 1, "P"); } d.r(2, 8, 6, 1, "P").r(2, 10, 6, 1, "P").r(2, 12, 6, 1, "P"); d.ps([[13, 12], [17, 3]], "g"); }
+    if (v.gold) { d.r(0, 15, 20, 1, "g").p(0, 3, "g").p(19, 3, "g"); }
+    if (v.mark) d.r(10, 13, 1, 6, v.mark);
+  };
+  IC.cards = (d, v) => {
+    const card = (x, y, fill) => d.r(x, y, 10, 13, fill || "p");
+    if (v.deck) {
+      d.t(1, 3, [".pppppppp.", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", "pppppppppp", ".pppppppp."]);
+      d.l(3, 1, 13, 4, "_");
+      d.r(5, 1, 10, 13, "p").r(9, 0, 10, 13, "p");
+      d.r(1, 3, 10, 13, "A").r(2, 4, 8, 11, "J").r(3, 5, 6, 9, "A");
+      d.t(14, 2, ["r.r", "rrr", ".r."]).t(15, 8, [".k.", "kkk", ".k."]).p(16, 11, "k");
+      d.ps([[4, 7], [7, 10], [5, 12]], "0");
+      return;
+    }
+    card(6, 0, "p"); card(3, 3, "p"); card(0, 6, "p");
+    d.r(0, 6, 10, 2, v.band || "A");
+    d.t(3, 10, v.glyph || [".kk.", "k..k", "kkkk", "k..k"]);
+    d.r(7, 3, 2, 1, "P").r(10, 0, 2, 1, "P");
+  };
+  IC.libcard = (d, v) => {
+    d.r(0, 3, 20, 14, "p").r(0, 3, 20, 3, "A");
+    d.r(2, 8, 5, 6, "c").e(4.5, 10, 1.4, 1.4, "F").r(3, 12, 4, 2, "B");
+    d.r(9, 8, 8, 1, "P").r(9, 10, 6, 1, "P").r(9, 12, 7, 1, "P");
+    for (let x = 9; x < 18; x += 2) d.r(x, 14, 1, 2, "k");
+    d.r(2, 4, 3, 1, "L");
+  };
+  IC.scroll = (d, v) => {
+    d.r(2, 3, 16, 14, v.paper || "p");
+    d.e(2, 4, 2, 2, "P").e(18, 16, 2, 2, "P").r(0, 3, 4, 3, "P").r(16, 15, 4, 3, "P");
+    d.r(1, 2, 2, 15, "P").r(17, 3, 2, 15, "P");
+    d.e(1.5, 2.5, 1.6, 1.6, "n").e(18.5, 17.5, 1.6, 1.6, "n");
+    const k = v.kind || "text";
+    if (k === "text") for (let y = 5; y < 15; y += 2) d.r(5, y, y === 13 ? 6 : 10, 1, "P");
+    if (k === "map") { d.l(5, 14, 8, 9, "r").l(8, 9, 12, 10, "r").l(12, 10, 14, 6, "r"); d.ps([[5, 13], [7, 11], [10, 9]], "_"); d.t(13, 4, ["r.r", ".r.", "r.r"]); d.e(7, 6, 1.6, 1.2, "e").p(14, 13, "b").p(15, 13, "b"); }
+    if (k === "stars") { d.r(3, 4, 14, 12, "k"); [[5, 6], [8, 8], [12, 5], [14, 9], [6, 13], [11, 12], [15, 14]].forEach(([x, y]) => d.p(x, y, "y")); d.l(5, 6, 8, 8, "j").l(8, 8, 12, 5, "j").l(12, 5, 14, 9, "j"); }
+    if (k === "route") { d.l(4, 13, 7, 8, "b").l(7, 8, 11, 11, "b").l(11, 11, 15, 5, "b"); d.p(15, 5, "r").p(4, 13, "e"); d.t(7, 4, ["e.", "ee"]); }
+    if (k === "dialogue") { d.t(4, 5, ["kkkkk.", "kkk...", "......", "..kkkk", "....kk", "......", "kkkk..."]); }
+    if (v.seal) d.e(15, 14, 2.2, 2.2, v.seal).p(15, 14, v.seal === "r" ? "R" : "G");
+    if (v.ribbon) d.r(9, 2, 2, 16, v.ribbon);
+  };
+  IC.letters = (d, v) => {
+    d.r(0, 2, 15, 10, "p").l(0, 2, 7, 8, "P").l(14, 2, 7, 8, "P");
+    d.r(5, 7, 15, 11, "p").l(5, 7, 12, 13, "P").l(19, 7, 12, 13, "P");
+    d.e(12, 13, 2.2, 2.2, v.seal || "r").p(12, 13, "R");
+    d.r(5, 17, 15, 1, "P");
+  };
+  IC.clapper = (d, v) => {
+    d.l(1, 6, 17, 1, "k", 3);
+    for (let i = 0; i < 4; i++) d.l(3 + i * 4, 6 - i, 5 + i * 4, 4 - i, "p");
+    d.r(1, 8, 18, 3, "k");
+    for (let x = 2; x < 19; x += 4) d.r(x, 8, 2, 3, "p");
+    d.r(1, 11, 18, 8, "k").r(3, 13, 6, 1, "j").r(11, 13, 6, 1, "j").r(3, 16, 14, 1, "j");
+    d.p(1, 7, "s");
+  };
+  IC.binder = (d, v) => {
+    d.r(3, 0, 15, 20, "A").r(3, 0, 3, 20, "a");
+    [3, 9, 15].forEach(y => d.r(1, y, 4, 2, "s"));
+    d.r(8, 4, 8, 5, "p").r(9, 5, 6, 1, "P").r(9, 7, 4, 1, "P");
+    d.r(16, 2, 2, 16, "p");
+  };
+  // Bags and containers
+  IC.satchel = (d, v) => {
+    d.t(1, 0, ["....NNNNNNNNNN....", "...N..........N...", "..N............N..", "..N............N.."]);
+    d.r(0, 4, 20, 14, "A").r(0, 17, 20, 1, "a");
+    d.t(0, 4, ["AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaaaaaa."].map(r => r.replace(/A/g, v.flap || "L").replace(/a/g, "a")));
+    d.r(9, 8, 2, 4, v.buckle || "g").p(9, 9, "k");
+    if (v.emblem) d.t(3, 12, IC_EMBLEM[v.emblem] || v.emblem);
+    if (v.scroll) d.t(14, 1, ["pp", "pp", "pp"]).p(15, 0, "n");
+    if (v.pens) d.ps([[3, 2], [4, 1], [3, 3]], "k").ps([[16, 2], [16, 3]], "b");
+    if (v.cross) d.t(13, 12, [".r.", "rrr", ".r."]);
+  };
+  IC.backpack = (d, v) => {
+    d.t(2, 0, ["...AAAAAAAAAA...", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaa."].map(r => r));
+    d.t(3, 1, ["..LLLLLLLLLL..", ".LLLLLLLLLLLL.", "LLLLLLLLLLLLLL", "LLLLLLLLLLLLLL", ".aaaaaaaaaaaa."]);
+    d.r(9, 4, 2, 3, v.buckle || "s");
+    d.r(4, 9, 12, 6, "a").r(5, 10, 10, 4, "A").r(5, 10, 10, 1, "L").r(9, 10, 2, 2, v.buckle || "s");
+    if (v.roll) { d.r(1, 16, 18, 4, v.roll).r(1, 16, 18, 1, "Z"); d.r(5, 16, 1, 4, "N").r(14, 16, 1, 4, "N"); }
+    if (v.tech) { d.p(13, 6, "C").r(5, 12, 3, 1, "8"); }
+    if (v.gear) d.t(7, 10, [".g.g.", "ggggg", ".gGg.", "ggggg", ".g.g."]);
+    if (v.patch) d.t(12, 11, v.patch);
+  };
+  IC.duffel = (d, v) => {
+    d.t(5, 2, ["..NNNNNNNN..", ".N........N.", "N..........N"]);
+    d.e(3, 12, 3, 5, "A").e(17, 12, 3, 5, "A").r(3, 7, 14, 11, "A");
+    d.e(3, 12, 2, 4, "a").e(17, 12, 2, 4, "a");
+    d.r(3, 7, 14, 1, v.zip || "s").r(6, 9, 8, 6, "a").r(7, 10, 6, 4, "J");
+    d.r(3, 16, 14, 1, "a");
+    if (v.stripe) d.r(1, 12, 18, 1, v.stripe);
+  };
+  IC.briefcase = (d, v) => {
+    d.r(7, 2, 6, 2, "k").r(8, 3, 4, 1, "_");
+    d.r(0, 5, 20, 13, "A").r(0, 5, 20, 1, "L").r(0, 9, 20, 1, "a");
+    d.r(4, 8, 2, 3, "g").r(14, 8, 2, 3, "g");
+    d.r(0, 17, 20, 1, "a");
+  };
+  IC.tube = (d, v) => {
+    const B = v.body || "A";
+    d.r(5, 3, 10, 15, B).r(5, 3, 2, 15, "L").r(13, 3, 2, 15, "a");
+    d.e(10, 3, 5, 1.6, v.cap || "k").r(5, 0, 10, 3, v.cap || "k").e(10, 0.4, 5, 1.2, v.cap || "j");
+    d.r(5, 17, 10, 2, v.cap || "k");
+    d.r(5, 7, 10, 1, "a").r(5, 13, 10, 1, "a");
+    if (v.paper) d.t(8, -3, ["pbp", "ppp"]);
+    if (v.strap !== false) { d.l(2, 1, 5, 6, "N").l(15, 13, 18, 19, "N").l(1, 0, 2, 1, "N"); }
+  };
+  IC.pouch = (d, v) => {
+    d.t(3, 1, ["...AAAAAAAA...", "....aAAAAa....", "...JJJJJJJJ...", "..AAAAAAAAAA..", ".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", ".AAAAAAAAAAAA.", "..aaaaaaaaaa.."]);
+    d.t(1, 3, ["J.", ".J"]).t(17, 3, [".J", "J."]).ps([[2, 5], [17, 5]], "J");
+    if (v.top) d.t(5, 0, v.top);
+    if (v.mark) d.t(7, 7, IC_EMBLEM[v.mark] || v.mark);
+    if (v.dust) d.o(5, 0, ["Z.Z..", ".Z..Z"]);
+  };
+  IC.purse = (d, v) => {
+    d.t(2, 2, ["..gg........gg..", ".g..g......g..g.", "..gg.AAAAAA.gg..", "...AAAAAAAAAA...", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAA.", "..aaaaaaaaaaaa.."]);
+    d.r(4, 4, 12, 1, "g").r(9, 4, 2, 2, "G");
+    d.o(14, 13, [".gg.", "gGhg", ".gg."]);
+  };
+  IC.bandolier = (d, v) => {
+    d.l(0, 2, 18, 17, "n", 3);
+    [[3, 4, "e"], [7, 7, "r"], [11, 10, "C"], [15, 13, "q"]].forEach(([x, y, c]) => { d.r(x, y - 4, 2, 2, "s").r(x - 1, y - 2, 4, 4, "H").r(x, y - 1, 2, 3, c).p(x - 1, y - 2, "Z"); });
+  };
+  IC.basket = (d, v) => {
+    d.t(4, 0, ["..wwwwwwwwww..", ".w..........w.", "w............w"]);
+    d.r(0, 7, 20, 2, "w");
+    if (v.herbs) d.t(2, 3, [".6..6.66..e.6.", "666e6666e6666.", "66666666666666"].map(r => r)).t(9, 2, [".r", "rr"]);
+    if (v.mush) d.t(3, 3, [".rrr...ZZZ...", "rZrrr.ZZZZZ..", "..p.....p....", "..p..66.p.6.."]);
+    d.t(1, 8, ["wwwwwwwwwwwwwwwwww", "wvwvwvwvwvwvwvwvww", ".wwwwwwwwwwwwwwww.", ".vwvwvwvwvwvwvwvw.", ".wwwwwwwwwwwwwwww.", "..wvwvwvwvwvwvww..", "..wwwwwwwwwwwwww..", "...vvvvvvvvvvvv..."]);
+    d.r(1, 9, 18, 1, "v");
+  };
+  IC.medbag = (d, v) => {
+    d.t(6, 1, [".kkkkkk.", "k......k", "k......k"]);
+    d.t(0, 4, [".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaaaaaa."]);
+    d.r(0, 6, 20, 1, "a").r(8, 4, 4, 2, "g");
+    d.t(7, 8, ["..pp..", "..pp..", "pppppp", "pppppp", "..pp..", "..pp.."]).t(8, 9, [".rr.", ".rr.", "rrrr", "rrrr", ".rr.", ".rr."].map(r => r.slice(0, 4)));
+    d.r(8, 8, 4, 6, "p").r(9, 8, 2, 6, "r").r(7, 10, 6, 2, "p").r(8, 10, 4, 2, "r").r(9, 9, 2, 4, "r");
+  };
+  IC.mat = (d, v) => {
+    d.e(4, 12, 4, 5, "A").e(4, 12, 2.6, 3.6, "a").e(4, 12, 1, 1.6, "A");
+    d.t(4, 7, ["AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAA", "aaaaaaaaaaaaaaa"]);
+    d.e(4, 12, 4, 5, "A").e(4, 12, 2.6, 3.6, "a").e(4, 12, 1, 1.6, "L");
+    d.r(9, 7, 2, 10, v.strap || "k").r(15, 7, 2, 10, v.strap || "k");
+  };
+  IC.cushion = (d, v) => {
+    d.e(10, 13, 9.6, 4.6, "A").e(10, 10, 9, 4.6, "A").e(10, 9.4, 7.6, 3.2, "L").e(10, 9.6, 6.6, 2.4, "A");
+    d.p(10, 10, "a").l(2, 14, 18, 14, "a");
+    if (v.trim) d.l(1, 12, 19, 12, v.trim);
+  };
+  IC.block = (d, v) => {
+    d.t(2, 2, ["....AAAAAAAAAAAA", "...LLLLLLLLLLLLA", "..LLLLLLLLLLLLAA", ".LLLLLLLLLLLLAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAa", "AAAAAAAAAAAAAAaa",
+      "AAAAAAAAAAAAAaaa", "AAAAAAAAAAAAaaa.", "AAAAAAAAAAAAaa..", "AAAAAAAAAAAAa...", "aaaaaaaaaaaa...."]);
+    [[3, 8], [6, 10], [9, 7], [11, 11], [5, 13], [13, 5], [8, 4]].forEach(([x, y]) => d.p(x, y, "a"));
+  };
+  IC.kettlebell = (d, v) => {
+    d.t(4, 0, ["...AAAAAA...", "..AA....AA..", ".AA......AA.", ".AA......AA.", "..AA....AA.."]);
+    d.e(10, 12, 8, 7, "A").e(7, 9, 2, 1.6, "L");
+    if (v.weight) d.t(8, 12, v.weight);
+  };
+  IC.barbell = (d, v) => {
+    d.r(0, 9, 20, 2, "s").r(0, 10, 20, 1, "S");
+    [[2, 4, 3, 12], [5, 5, 2, 10], [13, 5, 2, 10], [15, 4, 3, 12]].forEach(([x, y, w, h]) => d.r(x, y, w, h, "A"));
+    d.r(7, 8, 1, 4, "s").r(12, 8, 1, 4, "s");
+    d.ps([[3, 5], [16, 5]], "L");
+  };
+  IC.incense = (d, v) => {
+    d.e(10, 15, 8, 3.4, "A").r(2, 13, 17, 3, "A").e(10, 13, 8, 2, "a").e(10, 12.6, 6.4, 1.2, "z");
+    d.r(9, 4, 1, 9, "n").r(12, 6, 1, 7, "n").o(9, 3, ["o"]).o(12, 5, ["o"]);
+    d.o(7, -1, [".5..5", "5..5.", ".5..5", "..5.."]);
+    d.r(4, 17, 3, 2, "a").r(13, 17, 3, 2, "a");
+  };
+  IC.smoker = (d, v) => {
+    d.r(4, 6, 9, 13, "s").r(4, 6, 9, 1, "i").r(4, 18, 9, 1, "S");
+    d.t(4, 2, ["..sssss..", ".sssssss.", "sssssssss", "sssssssss"]).r(7, 0, 3, 3, "s");
+    d.r(13, 9, 6, 8, "n").l(13, 9, 18, 9, "N").l(13, 16, 18, 16, "N").r(14, 11, 4, 1, "N").r(14, 13, 4, 1, "N");
+    d.o(5, -2, [".5.5", "5.5.", ".5.."]);
+    d.r(5, 10, 7, 1, "S");
+  };
+  // Optics, cameras, lab gear
+  IC.camera = (d, v) => {
+    const k = v.kind || "dslr";
+    if (k === "disposable") {
+      d.r(0, 5, 20, 11, "y").r(0, 5, 20, 3, "e").r(0, 13, 20, 3, "e");
+      d.e(10, 10.5, 3.6, 3.6, "k").e(10, 10.5, 2.2, 2.2, "B").p(9, 9, "Z");
+      d.r(2, 6, 3, 2, "Z").r(15, 3, 3, 2, "k").r(1, 9, 3, 2, "k");
+      return;
+    }
+    d.r(3, 3, 6, 3, "k").r(0, 5, 20, 12, "k").r(0, 5, 20, 1, "j");
+    d.r(0, 8, 3, 9, "K").r(15, 3, 3, 2, "j").r(16, 6, 3, 1, "r");
+    d.e(10, 11, 5, 5, "m").e(10, 11, 3.6, 3.6, "K").e(10, 11, 2.2, 2.2, "B").p(9, 10, "Z").p(8, 9, "c");
+    if (k === "rig") {
+      d.r(0, 0, 20, 20, "_");
+      d.t(0, 3, ["..kkkkk.............", "kkkkkkkkkkkk........", "kjjjjjjjjjjk........", "kkkkkkkkkkkkmmmmmmmm", "kkkkkkkkkkkkmMMMMMMm", "kkkkkkkkkkkkmMMMMMMm",
+        "kkkkkkkkkkkkmmmmmmmm", "kkkkkkkkkkkk.mmmmmm.", "kkkkkkkkkkkk........", "KKKkkkkkkkkk........"]);
+      d.r(16, 6, 1, 4, "r").e(19, 7.5, 0.6, 1.8, "B");
+      d.r(2, 13, 3, 6, "k").r(9, 13, 2, 3, "m").r(4, 0, 6, 2, "m").r(5, 0, 4, 1, "s").p(9, 1, "r");
+      d.r(9, 5, 2, 1, "r");
+    }
+  };
+  IC.lens = (d, v) => {
+    d.e(10, 10, 9, 9, "k").e(10, 10, 7.4, 7.4, v.ring || "m").e(10, 10, 6.2, 6.2, "K").e(10, 10, 4.6, 4.6, "B").e(10, 10, 2.6, 2.6, "Q");
+    d.ps([[7, 7], [8, 6], [7, 8]], "Z").ps([[12, 12]], "c");
+    if (v.gold) for (let a = 0; a < 16; a++) d.p(10 + Math.cos(a / 16 * Math.PI * 2) * 8.2, 10 + Math.sin(a / 16 * Math.PI * 2) * 8.2, "g");
+    if (v.red) d.p(10, 1, "r").p(11, 1, "r");
+  };
+  IC.camstrap = (d, v) => {
+    d.l(1, 4, 16, 4, "A", 3).l(1, 15, 16, 15, "A", 3);
+    d.e(17, 9.5, 2.6, 6.6, "A").e(17, 9.5, 1, 4.6, "_");
+    for (let x = 2; x < 16; x += 2) { d.p(x, 5, "J").p(x + 1, 16, "J"); }
+    d.r(0, 3, 2, 5, "k").r(0, 14, 2, 5, "k").p(0, 6, "s").p(0, 17, "s");
+  };
+  IC.binoculars = (d, v) => {
+    d.r(3, 1, 5, 9, "A").r(12, 1, 5, 9, "A").r(8, 3, 4, 3, "a");
+    d.e(5.4, 13, 4.6, 4.6, "A").e(14.6, 13, 4.6, 4.6, "A").r(1, 9, 9, 5, "A").r(10, 9, 9, 5, "A");
+    d.e(5.4, 14, 3, 3, "K").e(14.6, 14, 3, 3, "K").e(5.4, 14, 1.8, 1.8, v.lens || "B").e(14.6, 14, 1.8, 1.8, v.lens || "B");
+    d.ps([[4, 13], [13, 13]], "Z");
+    d.r(9, 0, 2, 3, "k");
+  };
+  IC.telescope = (d, v) => {
+    d.l(2, 13, 15, 2, "A", 4).l(14, 1, 19, -2, "A", 5).l(3, 13, 15, 3, "L");
+    d.l(0, 15, 3, 13, "k", 2);
+    d.l(5, 9, 8, 12, v.band || "g", 2).l(10, 5, 13, 8, v.band || "g", 2);
+    d.l(8, 11, 4, 19, "n").l(8, 11, 12, 19, "n").l(8, 11, 8, 19, "n");
+    d.p(18, 0, "c");
+  };
+  IC.microscope = (d, v) => {
+    d.r(2, 17, 16, 3, "A").r(2, 17, 16, 1, "L");
+    d.t(9, 3, ["..AA", ".AAA", "AAA.", "AA..", "AA..", "AA..", "AAA.", ".AAA", "..AA", "..AA", "..AA", ".AAA", "AAAA", "AAA."].map(r => r));
+    d.l(6, 0, 10, 8, "k", 2).l(5, -1, 7, 1, "k", 2);
+    d.r(3, 12, 8, 2, "k").r(5, 10, 2, 2, "s").r(4, 11, 4, 1, "c");
+    d.e(12, 8, 1.4, 1.4, "g");
+  };
+  IC.flask = (d, v) => {
+    const L = v.liquid || "e";
+    d.r(7, 0, 6, 2, v.cork || "w").r(8, 2, 4, 5, "H");
+    d.t(1, 7, ["......HHHHHH......", ".....HHHHHHHH.....", "....HHHHHHHHHH....", "...HHHHHHHHHHHH...", "..HHHHHHHHHHHHHH..", ".HHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHH",
+      "HHHHHHHHHHHHHHHHHH", "HHHHHHHHHHHHHHHHHH", ".HHHHHHHHHHHHHHHH.", "..ssssssssssssss.."]);
+    d.t(2, 11, ["...LLLLLLLLLLL..", "..LLLLLLLLLLLLL.", ".LLLLLLLLLLLLLLL", ".LLLLLLLLLLLLLLL", "LLLLLLLLLLLLLLLL", "..LLLLLLLLLLLL.."].map(r => r.replace(/L/g, L)));
+    d.ps([[6, 13], [11, 14], [9, 12]], "Z").l(8, 3, 8, 6, "Z").l(3, 13, 2, 15, "Z");
+    if (v.bubbles !== false) d.o(9, -4, ["....W", ".W...", "...W."]);
+  };
+  IC.stone = (d, v) => {
+    const c = v.color || "r", D = c === "r" ? "R" : c === "q" ? "Q" : c === "C" ? "t" : c === "b" ? "B" : c === "e" ? "E" : c === "z" ? "X" : "a";
+    d.t(2, 1, ["....cccccccc....", "...cccccccccc...", "..cccccccccccc..", ".cccccccccccccc.", "cccccccccccccccc", "cccccccccccccccc", "cccccccccccccccc", "cccccccccccccccc",
+      "cccccccccccccccc", ".cccccccccccccc.", "..cccccccccccc..", "...cccccccccc...", ".....cccccc....."].map(r => r.replace(/c/g, c)));
+    if (v.facets !== false) { d.l(6, 2, 2, 6, "Z").l(8, 1, 10, 6, D).l(10, 6, 17, 6, D).l(10, 6, 5, 12, D).l(10, 6, 14, 12, D); d.t(5, 3, ["ZZ", "Z."]); }
+    if (v.circuit) { d.l(5, 8, 9, 8, "C").l(9, 8, 9, 11, "C").l(12, 4, 12, 7, "C").l(12, 7, 15, 7, "C"); }
+    if (v.ink) d.e(10, 8, 4, 2.4, "K");
+    if (v.glow) d.o(1, 0, ["W..", "...", "..."]).o(17, 11, ["W"]);
+  };
+  IC.crystalball = (d, v) => {
+    d.e(10, 8, 7.6, 7.6, v.color || "x").e(8, 6, 3, 3, "Z").e(10, 8, 7.6, 7.6, v.color || "x");
+    d.e(7.6, 5.6, 2.2, 1.8, "W").e(12, 10, 3, 2, v.color === "C" ? "t" : "Q");
+    d.t(3, 15, [".gggggggggggg.", "gGGGGGGGGGGGGg", ".GGGGGGGGGGGG.", "..gggggggggg.."]);
+    d.o(13, 3, ["W"]).o(5, 11, ["W"]);
+  };
+  IC.lamp = (d, v) => {
+    d.r(3, 17, 12, 2, "A").r(3, 17, 12, 1, "L");
+    d.l(8, 17, 5, 10, "A", 2).l(5, 10, 11, 5, "A", 2);
+    d.t(9, 0, ["...AAA...", "..AAAAA..", ".AAAAAAA.", "AAAAAAAAA", "AAAAAAAAA"].map(r => r)).t(10, 5, ["yyyyyyy"]);
+    d.o(9, 6, [".y.y.y.y", "........", "..y...y."]);
+  };
+  IC.lantern = (d, v) => {
+    v = Object.assign({ metal: "m" }, v);
+    d.e(10, 1.6, 3, 1.6, v.metal || "k").e(10, 1.6, 1.6, 0.6, "_");
+    d.t(4, 3, ["...MMMMMM...", "..MMMMMMMM..", "..MyyyyyyM..", "..MyyWWyyM..", "..MyyWWyyM..", "..MyyyyyyM..", "..MyyyyyyM..", "..MMMMMMMM..", "...MMMMMM..."].map(r => r.replace(/M/g, v.metal || "k")));
+    d.ps([[8, 5], [8, 6], [8, 7], [8, 8], [8, 9], [11, 5], [11, 9]], v.metal === "g" ? "G" : "K");
+    d.r(5, 12, 10, 1, v.metal || "k").r(7, 13, 6, 2, v.metal || "k");
+    d.o(2, 6, ["y"]).o(17, 7, ["y"]);
+  };
+  IC.flashlight = (d, v) => {
+    d.l(2, 17, 12, 7, v.body || "k", 4).l(2, 16, 11, 7, v.body === "r" ? "f" : "j");
+    d.l(12, 5, 16, 9, "s", 2).t(12, 2, ["...ss", "..ssss", ".sss.s"].map(r => r)).l(14, 3, 18, 7, "s", 2);
+    d.e(16, 5, 2, 2, v.beam || "y");
+    d.o(17, 0, ["..r", ".r.", "r.."].map(r => r.replace(/r/g, v.beam || "y")));
+    d.r(6, 12, 2, 2, "r");
+  };
+  // Keys, money, time
+  IC.keyring = (d, v) => {
+    const M = v.metal || "g";
+    d.e(8, 6, 5.6, 5.6, M).e(8, 6, 4, 4, "_");
+    d.e(8, 6, 5.6, 5.6, M).e(8, 6, 4, 4, "_");
+    d.t(8, 9, ["MMM.......", "MMMMMMMMMM", "MMM....M.M", "........M."].map(r => r.replace(/M/g, M))).t(2, 11, ["MMM", "M.M", "MMM", ".M.", ".M.", ".MM", ".M.", ".MM"].map(r => r.replace(/M/g, v.metal2 || "s")));
+    d.t(12, 13, ["MMM", "M.M", "MMM", ".M.", ".MM", ".M.", ".MM"].map(r => r.replace(/M/g, M)));
+    if (v.tag) d.r(16, 2, 4, 5, v.tag).p(17, 3, "p");
+  };
+  IC.key = (d, v) => {
+    const M = v.metal || "g";
+    d.e(5, 5, 4.6, 4.6, M).e(5, 5, 2, 2, "_");
+    d.e(5, 5, 4.6, 4.6, M).e(5, 5, 2, 2, "_");
+    d.l(8, 8, 17, 17, M, 2);
+    d.t(12, 15, ["M..", "MM.", ".MM"].map(r => r.replace(/M/g, M))).t(15, 12, ["MM.", ".MM", "..M"].map(r => r.replace(/M/g, M)));
+  };
+  IC.scales = (d, v) => {
+    d.r(9, 2, 2, 15, v.metal || "g").r(5, 17, 10, 2, v.metal || "g").e(10, 1.4, 1.4, 1.4, v.metal || "g");
+    d.r(1, 4, 18, 1, v.metal || "g");
+    d.l(2, 5, 0, 11, "k").l(2, 5, 4, 11, "k").l(17, 5, 15, 11, "k").l(17, 5, 19, 11, "k");
+    d.e(2, 12, 3, 1.4, v.metal || "g").e(17, 12, 3, 1.4, v.metal || "g");
+    d.e(17, 10.6, 1.4, 1, "Y");
+  };
+  IC.hourglass = (d, v) => {
+    d.r(2, 0, 16, 2, v.wood || "w").r(2, 18, 16, 2, v.wood || "w");
+    d.r(3, 2, 1, 16, v.wood || "w").r(16, 2, 1, 16, v.wood || "w");
+    d.t(5, 2, ["HHHHHHHHHH", ".HyyyyyyH.", "..HyyyyH..", "...HyyH...", "....HH....", "....HH....", "...HHyH...", "..HHHyHH..", ".HHyyyyyH.", "HyyyyyyyyH"]);
+    d.t(5, 12, ["HyyyyyyyyH", "HyyyyyyyyH", ".HHHHHHHH."]).p(9, 7, "y");
+    d.l(6, 3, 6, 4, "Z");
+  };
+  // Devices
+  IC.tablet = (d, v) => {
+    d.r(2, 0, 16, 20, v.body || "k").r(3, 1, 14, 17, "K");
+    const s = v.screen || "code";
+    if (s === "code") { d.r(4, 3, 6, 1, "9").r(6, 5, 8, 1, "8").r(6, 7, 5, 1, "y").r(4, 9, 4, 1, "9").r(6, 11, 9, 1, "8").r(6, 13, 6, 1, "7").r(4, 15, 3, 1, "9"); }
+    if (s === "cipher") { [[4, 3], [8, 3], [12, 3], [6, 6], [10, 6], [4, 9], [12, 9], [8, 12], [6, 15], [11, 15]].forEach(([x, y]) => d.r(x, y, 2, 2, "9")) }
+    if (s === "stars") { [[5, 4], [9, 6], [14, 3], [12, 10], [6, 12], [10, 15], [15, 14]].forEach(([x, y]) => d.p(x, y, "y")); d.l(5, 4, 9, 6, "8").l(9, 6, 14, 3, "8").l(9, 6, 12, 10, "8"); }
+    if (s === "chart") { d.r(4, 14, 2, 3, "8").r(7, 11, 2, 6, "8").r(10, 8, 2, 9, "9").r(13, 4, 2, 13, "9"); d.l(4, 10, 14, 2, "y"); }
+    if (s === "runes") { d.t(5, 4, ["C.C.C", ".C.C.", "CCCCC", "..C..", ".C.C.", "C...C"]).o(9, 2, ["W"]); }
+    d.r(9, 18, 2, 1, "j");
+  };
+  IC.terminal = (d, v) => {
+    d.r(1, 0, 18, 14, v.body || "q").r(2, 1, 16, 12, "K");
+    d.t(3, 2, ["9999.....", "..C.C.C..", "99999999.", "...C.C...", "9999.99..", "C.CCC.C..", "99......."]).o(13, 8, ["W", "W"]);
+    d.r(7, 14, 6, 2, v.body || "q").r(0, 16, 20, 4, "k");
+    for (let x = 1; x < 19; x += 2) d.p(x, 17, "j").p(x + 1, 18, "j");
+    d.o(0, 0, ["C"]).o(19, 2, ["C"]);
+  };
+  IC.keyboard = (d, v) => {
+    d.t(0, 5, [".kkkkkkkkkkkkkkkkkk.", "kkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkk", "KKKKKKKKKKKKKKKKKKKK"]);
+    for (let y = 6; y < 12; y += 2) for (let x = 1 + (y === 8 ? 1 : 0); x < 19; x += 2) d.p(x, y, "p");
+    d.r(5, 12, 10, 1, "p");
+    d.ps([[17, 6], [1, 10]], "J").p(15, 6, "8").p(3, 8, "7");
+    if (v.cable) d.l(10, 5, 10, 1, "k").l(10, 1, 14, 0, "k");
+  };
+  IC.duck = (d, v) => {
+    d.t(1, 1, [".....yyyy.....", "....yyyyyy....", "....yyyykyy...", "....yyyyyyYYY.", "....yyyyyyYYYY", ".....yyyyy....", "y...yyyyyyy...", "yy.yyyyyyyyyy.",
+      "yyyyyyyyyyyyyy", "yyyyyyyyyyyyyy", "yyyyyyyyyyyyy.", ".yyyyyyyyyyy..", "..yyyyyyyyy..."]);
+    d.t(1, 1, [".....hhh", "....h"]).ps([[5, 9], [6, 9], [7, 10], [8, 10]], "Y");
+    if (v.hat) d.t(4, -2, ["...kk..", "..kkkk.", ".kkkkkk"]);
+  };
+  IC.labelmaker = (d, v) => {
+    d.t(2, 0, ["..AAAAAAAAAAA.", ".AAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", ".aaaaaaaaaaaa."]);
+    d.r(4, 2, 10, 3, "l").r(5, 3, 5, 1, "E");
+    for (let y = 6; y < 12; y += 2) for (let x = 4; x < 14; x += 2) d.p(x, y, "k");
+    d.r(16, 3, 4, 3, "p").r(17, 4, 2, 1, "k");
+  };
+  IC.drone = (d, v) => {
+    d.r(6, 8, 8, 5, v.body || "k").r(7, 9, 6, 3, "m").e(10, 12.6, 1.4, 1.4, "K").p(10, 12, "B");
+    d.l(6, 9, 2, 5, "k").l(13, 9, 17, 5, "k").l(6, 12, 2, 16, "k").l(13, 12, 17, 16, "k");
+    [[2, 5], [17, 5], [2, 16], [17, 16]].forEach(([x, y]) => d.r(x - 2, y, 5, 1, "s"));
+    d.p(7, 9, "r").p(12, 9, "e");
+  };
+  IC.controller = (d, v) => {
+    d.l(4, 7, 3, 0, "k").p(3, 0, "r");
+    d.r(0, 7, 20, 11, v.body || "k").r(0, 7, 20, 1, "j");
+    d.e(5, 12, 2.4, 2.4, "m").e(14, 12, 2.4, 2.4, "m").p(5, 12, "K").p(14, 12, "K");
+    d.r(8, 9, 4, 3, "8").p(9, 14, "r").p(10, 15, "e");
+  };
+  IC.gizmo = (d, v) => {
+    d.r(1, 4, 18, 14, "A").r(1, 4, 18, 1, "L");
+    d.e(6, 10, 3, 3, "g").e(6, 10, 1.2, 1.2, "G").p(6, 6, "g").p(6, 14, "g").p(2, 10, "g").p(10, 10, "g");
+    d.r(12, 7, 5, 3, "k").p(13, 8, "9").p(15, 8, "7");
+    d.r(12, 12, 2, 4, "s").r(15, 12, 2, 4, "s");
+    d.l(4, 4, 2, 0, "k").o(1, 0, ["r"]).l(16, 4, 17, 1, "s");
+  };
+  IC.varnish = (d, v) => {
+    d.e(7, 6, 6, 1.6, "s").r(1, 6, 13, 12, "o").e(7, 18, 6, 1.6, "o").e(7, 6, 6, 1.6, "s").e(7, 6, 4.6, 1, "Y");
+    d.r(1, 10, 13, 5, "p").r(3, 11, 9, 1, "P").r(3, 13, 6, 1, "P");
+    d.l(12, 4, 18, -2, "w", 2).r(11, 4, 3, 3, "s").t(10, 6, ["nn", "Yn"]);
+  };
+  // Training gear and boards
+  IC.chessboard = (d, v) => {
+    d.r(0, 9, 20, 11, v.frame || "n");
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) d.r(1 + c * 2, 10 + r * 2, 2, 2, (r + c) % 2 ? "k" : "p");
+    if (v.king) d.t(7, -2, ["..g..", ".ggg.", "..g..", ".AAA.", ".AAA.", "..A..", ".AAA.", "AAAAA", "AAAAA", "....."]);
+    else d.t(3, 3, [".pp.", "pppp", ".pp.", ".pp.", "pppp"]).t(13, 1, ["..kk", ".kkk", "kkkk", "..kk", ".kkk", "kkkk"]);
+  };
+  IC.chessclock = (d, v) => {
+    d.r(0, 6, 20, 13, v.body || "n").r(0, 6, 20, 1, "u");
+    d.e(5, 12, 3.6, 3.6, "p").e(14, 12, 3.6, 3.6, "p");
+    d.l(5, 12, 5, 9, "k").l(5, 12, 7, 12, "k").l(14, 12, 14, 9, "k").l(14, 12, 12, 13, "k").p(5, 9, "r").p(14, 9, "r");
+    d.r(3, 3, 4, 3, "s").r(13, 4, 4, 2, "s").r(4, 2, 2, 1, "s");
+  };
+  IC.easel = (d, v) => {
+    d.l(4, 19, 9, 0, "w").l(15, 19, 10, 0, "w").l(10, 4, 13, 19, "v");
+    d.r(2, 2, 16, 11, "p").r(2, 2, 16, 1, "Z");
+    d.e(7, 8, 3, 2.6, "c").r(3, 9, 14, 3, "6").e(13, 6, 2.4, 2.4, "y").l(4, 11, 9, 7, "E").l(9, 7, 13, 11, "E");
+    d.r(1, 13, 18, 1, "w");
+  };
+  IC.vmask = (d, v) => {
+    d.t(0, 3, ["..AAAA......AAAA..", ".AAAAAAA..AAAAAAA.", "AAAAAAAAAAAAAAAAAA", "AAAKKKKAAAAKKKKAAA", "AAKKKKKKAAKKKKKKAA", "AAAKKKKAAAAKKKKAAA", ".AAAAAAAAAAAAAAAA.", "...AAAAA..AAAAA..."]);
+    d.ps([[1, 5], [16, 5], [8, 4], [9, 4]], "g").ps([[3, 4], [14, 4]], "L");
+    d.l(17, 9, 19, 18, "n").t(15, 0, [".dd", "ddd", ".d."]);
+  };
+  IC.weldmask = (d, v) => {
+    d.t(1, 0, ["...AAAAAAAAAAAA...", "..AAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAA", "AAAKKKKKKKKKKKKAAA", "AAAKllllllllllKAAA",
+      "AAAKKKKKKKKKKKKAAA", "AAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAAAA.", "..AAAAAAAAAAAAAA..", "...AAAAAAAAAAAA...", ".....AAAAAAAA.....", "......aaaaaa......"]);
+    d.r(5, 6, 3, 1, "E").o(16, 13, ["o.", "yo", ".y"]);
+    d.r(0, 6, 1, 3, "k").r(19, 6, 1, 3, "k");
+  };
+  IC.viewfinder = (d, v) => {
+    d.l(3, 16, 12, 7, "k", 4).l(3, 15, 11, 7, "j");
+    d.e(14, 5, 4.4, 4.4, "k").e(14, 5, 3, 3, "B").e(14, 5, 1.6, 1.6, "Q").p(13, 4, "Z");
+    d.r(0, 15, 5, 5, "m").r(1, 16, 3, 3, "K");
+    d.l(6, 15, 4, 19, "J").l(10, 11, 14, 14, "s");
+  };
+  IC.toolroll = (d, v) => {
+    d.r(0, 6, 20, 10, "A").r(0, 6, 20, 1, "L").r(0, 15, 20, 1, "a");
+    [[2, "s"], [5, "w"], [8, "s"], [11, "r"], [14, "s"], [17, "w"]].forEach(([x, c], i) => { d.r(x, 2 + (i % 2), 1, 6, c); d.r(x - (i % 3 === 0 ? 1 : 0), 1 + (i % 2), i % 3 === 0 ? 3 : 1, 1, c === "w" ? "s" : c); });
+    d.r(0, 9, 20, 2, "a").r(1, 9, 18, 1, "J");
+    d.e(17, 12, 3, 3, "a").e(17, 12, 1.6, 1.6, "A");
+  };
+  // ---------- Which icon each item gets ----------
+  // Exact item names (lowercase): [icon, options]. Class gear uses its role color for trim (J) and natural materials (fin) where it makes sense.
+  const IC_NAMED = {
+    // Guitar skill
+    "worn acoustic": ["acoustic", { worn: 1 }], "electric six-string": ["electric", { fin: "red" }], "custom hollowbody": ["hollow"],
+    "stage six-string": ["lespaul"], "masterwork archtop": ["archtop"], "mythic axe": ["mythaxe"],
+    // Singing, drums
+    "lucky scarf": ["scarf", { fin: "red", stripe: "p" }], "practice mic": ["mic"], "vocal coach's notes": ["sheet"], "velvet stage mic": ["mic", { body: "r", ring: 1 }],
+    "golden microphone": ["goldmic", { fin: "gold" }], "voice of legends": ["notes", { spark: 1 }],
+    "practice pad": ["pad"], "hickory sticks": ["sticks"], "snare drum": ["snare"], "brass cymbals": ["cymbal", { fin: "brass" }], "thunder drum": ["thunder"], "drums of the storm": ["stormdrum"],
+    // Language
+    "traveler's journal": ["book", { strap: 1, fin: "leather", emblem: "globe" }], "interpreter's earpiece": ["earpiece"], "polyglot's circlet": ["circlet", { gem: "C" }],
+    // Health
+    "training headband": ["headband", { tails: 1, stripe: "p" }], "sweatband": ["headband", { terry: 1 }], "trail sneakers": ["sneaker"], "featherweight racers": ["sneaker", { fast: 1 }],
+    "marathon medal": ["medal"], "wind-runner boots": ["boot", { wind: 1, laces: "p" }], "winged boots": ["boot", { wings: 1 }],
+    "lifting gloves": ["glove", { fingerless: 1 }], "chalk pouch": ["pouch", { dust: 1 }], "leather belt": ["belt"], "iron kettlebell": ["kettlebell", { fin: "iron" }],
+    "titan barbell": ["barbell"], "atlas gauntlets": ["gauntlet", { metal: "A" }],
+    "champion's cloak": ["cloak", { trim: "g" }], "iron will amulet": ["amulet", { chain: "s" }], "mantle of vigor": ["cloak", { fur: 1, pattern: "flame" }],
+    "yoga mat": ["mat"], "cork block": ["block", { fin: "natural" }], "flow wraps": ["glove", { wraps: 1 }], "balance anklet": ["anklet"], "serpent sash": ["sash", { scale: 1 }], "lotus crown": ["lotus", { band: 1 }],
+    "meditation cushion": ["cushion"], "incense burner": ["incense"], "mala beads": ["beads", { bead: "w" }], "calm robe": ["robe"], "lotus pendant": ["amulet", { shape: "lotus" }], "halo of stillness": ["halo"],
+    // Kitchen
+    "apron": ["apron"], "chef's knife": ["knife"], "cast-iron skillet": ["skillet"], "copper saucepan": ["saucepan", { fin: "copper", steam: 1 }], "chef's toque": ["toque"], "golden ladle": ["ladle", { fin: "gold" }],
+    "flour-dusted apron": ["apron", { flour: 1 }], "rolling pin": ["rollingpin", { wood: 1 }], "balloon whisk": ["whisk"], "stone oven peel": ["peel"], "pastry chef's toque": ["toque", { tall: 1 }],
+    "golden whisk": ["whisk", { metal: "g", handle: "A" }],
+    // Trade
+    "work gloves": ["glove"], "tool belt": ["belt", { tools: 1 }], "journeyman's apron": ["apron", { tools: 1 }], "master's tools": ["tools"], "forgemaster's hammer": ["hammer", { ember: 1, metal: "A" }],
+    // Art, photography, writing
+    "sketchbook": ["book", { spiral: 1, fin: "cream", emblem: "quill" }], "studio easel": ["easel"], "artisan's smock": ["smock"], "master's brush": ["brush", { paint: "r" }], "muse's quill": ["quill", { glow: 1 }],
+    "disposable camera": ["camera", { kind: "disposable" }], "starter lens": ["lens"], "prime lens": ["lens", { red: 1 }], "camera strap": ["camstrap"], "pro camera rig": ["camera", { kind: "rig" }],
+    "eye of the hawk": ["monocle", { camera: 1 }],
+    "pocket notebook": ["book", { spiral: 1, emblem: "lines" }], "fountain pen": ["pen"], "writer's satchel": ["satchel", { pens: 1 }], "editor's monocle": ["monocle"],
+    "first edition": ["book", { corners: 1, title: "g", mark: "r" }],
+    // Tech
+    "rubber duck": ["duck"], "mechanical keyboard": ["keyboard"], "tech backpack": ["backpack", { tech: 1 }], "hoodie of focus": ["hoodie"], "debugger's lens": ["magnifier", { bug: 1 }],
+    "arcane terminal": ["terminal", { body: "A" }],
+    // Study, chess, money
+    "library card": ["libcard"], "reading glasses": ["glasses", { round: 1 }], "scholar's satchel": ["satchel", { scroll: 1 }], "study lamp": ["lamp"], "sage's robe": ["robe", { trim: "g", mark: IC_EMBLEM.star }],
+    "tome of ages": ["book", { thick: 1, corners: 1, clasp: "g", emblem: "rune" }],
+    "travel chess set": ["chessboard"], "club badge": ["badge", { knight: 1 }], "tournament clock": ["chessclock"], "grandmaster's board": ["chessboard", { king: 1 }],
+    "strategist's cloak": ["cloak", { pattern: "shield" }], "king's crown": ["crown"],
+    "coin purse": ["purse"], "ledger book": ["openbook", { page: "ledger" }], "calculator watch": ["watch", { digital: 1 }], "trader's business suit": ["coat", { tie: 1, fin: "navy" }],
+    "banker's signet": ["ring", { signet: 1 }], "golden ledger": ["openbook", { page: "ledger", gold: 1 }],
+    // Science, astronomy
+    "safety goggles": ["goggles", { rim: "s", strap: "k" }], "lab notebook": ["book", { emblem: "hex", label: 1 }], "bubbling flask": ["flask"], "lab coat": ["labcoat"],
+    "brass microscope": ["microscope", { fin: "brass" }], "philosopher's stone": ["stone", { glow: 1 }],
+    "star chart": ["scroll", { kind: "stars" }], "pocket binoculars": ["binoculars"], "red flashlight": ["flashlight", { body: "k", beam: "r" }], "observer's cloak": ["cloak", { pattern: "stars" }],
+    "brass telescope": ["telescope", { fin: "brass" }], "crown of stars": ["circlet", { kind: "stars" }],
+    // Life
+    "label maker": ["labelmaker"], "weekly planner": ["openbook", { page: "calendar" }], "tidy toolkit": ["toolbox", { spray: 1 }], "steward's keyring": ["keyring"],
+    "smart blazer": ["coat", { pocket: 1 }], "golden keyring": ["keyring", { tag: "A" }],
+    // Outdoors and animals
+    "trail map": ["scroll", { kind: "map" }], "hiking boots": ["boot", { laces: "p" }], "explorer's pack": ["backpack", { roll: "e" }], "field binoculars": ["binoculars", { fin: "camo" }],
+    "wayfarer's cloak": ["cloak"], "mantle of the wilds": ["cloak", { fur: 1, pattern: "leaves" }],
+    "treat pouch": ["pouch", { mark: IC_EMBLEM.heart }], "comfy walking shoes": ["sneaker", { swoosh: "J" }], "reflective vest": ["vest", { hivis: 1, fin: "hivis" }], "trail boots": ["boot", { laces: "p" }],
+    "pack leader's cloak": ["cloak", { fur: 1 }], "collar of loyalty": ["collar", { heart: 1 }],
+    "grooming brush bag": ["petbrush"], "vet's satchel": ["medbag"], "caretaker's apron": ["apron", { heart: 1 }], "heartwarm cloak": ["cloak", { pattern: "heart" }], "amulet of the pack": ["amulet", { shape: "paw" }],
+
+    // ----- Class gear -----
+    "lute": ["lute"], "feathered cap": ["featcap"], "doublet": ["coat", { laces: 1, puff: 1 }], "travel cape": ["cloak"],
+    "paint smock": ["smock", { fin: "cream" }], "brush staff": ["staff", { head: "brush" }], "beret": ["beret"], "palette shield": ["shield", { kind: "palette" }],
+    "chain mail": ["armor", { kind: "mail", fin: "iron", belt: "J" }], "broadsword": ["sword"], "round shield": ["shield", { kind: "round" }], "iron helm": ["helm", { trim: 1 }],
+    "wind cloak": ["cloak", { pattern: "wind" }], "swift boots": ["boot", { wind: 1 }], "short sword": ["sword", { kind: "short", grip: "J" }], "runner's sash": ["sash", { stripe: "p" }],
+    "scholar's robe": ["robe", { trim: "g" }], "oak staff": ["staff", { head: "oak" }], "book satchel": ["satchel", { emblem: "lines" }], "reading lamp": ["lamp"],
+    "ink-stained robe": ["robe", { dots: [[3, 7, "k"], [14, 12, "k"], [6, 14, "k"], [12, 4, "K"], [16, 8, "k"], [5, 11, "K"]] }], "quill": ["quill"], "scroll case": ["tube", { paper: 1 }], "spectacles": ["glasses", { round: 1, frame: "g" }],
+    "cleaver": ["knife", { kind: "cleaver" }],
+    "leather apron": ["apron", { fin: "leather", tools: 1 }], "forge hammer": ["hammer", { band: "J" }], "goggles": ["goggles", { rim: "s", strap: "n", lens: "o" }], "anvil shield": ["shield", { kind: "anvil", fin: "iron" }],
+    "circuit cloak": ["cloak", { pattern: "circuit" }], "data staff": ["staff", { head: "data", wood: "k" }], "visor": ["visor"], "glowing core": ["crystalball", { color: "C" }],
+    "brass goggles": ["goggles"], "wrench": ["wrench", { grip: "J" }], "tool harness": ["belt", { tools: 1 }], "clockwork arm": ["clockarm"],
+    "gi": ["gi", { fin: "white", belt: "J" }], "prayer beads": ["beads", { bead: "w" }], "hand wraps": ["glove", { wraps: 1, fin: "white" }], "straw hat": ["strawhat", { fin: "straw" }],
+    "star veil": ["veil", { stars: 1, mesh: "k" }], "scrying crystal": ["crystalball"], "moon robe": ["robe", { mark: IC_EMBLEM.moon, trim: "y" }], "incense": ["incense"],
+    "keyring": ["keyring"], "lantern": ["lantern"], "feather duster": ["duster"], "sturdy boots": ["boot", { laces: "p" }],
+    "trader's coat": ["coat", { long: 1, buttons: 1 }], "brass scales": ["scales"], "fine hat": ["tophat"],
+    "longbow": ["bow"], "green cloak": ["cloak", { fin: "green", collar: "J" }], "quiver": ["quiver"],
+    "fur vest": ["vest", { fur: 1, fin: "leather" }], "whistle": ["whistle"], "leather bracers": ["bracer", { laces: 1, fin: "leather" }], "companion collar": ["collar"],
+    // specializations
+    "war drum": ["wardrum"], "bearskin cloak": ["cloak", { fur: 1, fin: "fur" }], "saga helm": ["helm", { wings: 1 }], "rune pendant": ["amulet", { shape: "rune" }],
+    "shell microphone": ["shellmic"], "pearl circlet": ["circlet", { kind: "pearl" }], "tide robe": ["robe", { hem: "c", trim: "c" }], "sea-glass charm": ["amulet", { shape: "glass" }],
+    "mirror cloak": ["cloak", { pattern: "mirror", fin: "silver", collar: "J" }], "trick deck": ["cards", { deck: 1 }], "painted mask": ["vmask"], "prism monocle": ["monocle", { prism: 1 }],
+    "camera-lens monocle": ["monocle", { camera: 1 }], "camera rig": ["camera", { kind: "rig" }], "reflector cape": ["cloak", { pattern: "mirror", fin: "silver", collar: "J" }], "light-meter watch": ["watch", { meter: 1 }],
+    "plate armor": ["armor", { kind: "plate", fin: "steel", belt: "J" }], "heater shield": ["shield", { emblem: "lion" }], "plumed helm": ["helm", { plume: 1, visor: 1 }], "knight's gauntlets": ["gauntlet"],
+    "wolf-pelt mantle": ["cloak", { fur: 1, fin: "grey" }], "war hammer": ["hammer", { kind: "war" }], "horned helm": ["helm", { horns: 1 }], "iron-knuckle wraps": ["glove", { wraps: 1, studs: "s" }],
+    "fencing foil": ["sword", { kind: "foil" }], "duelist's coat": ["coat", { long: 1, cuffs: "g" }], "silk cravat": ["cravat"], "light boots": ["boot", { tall: 1, cuff: "J" }],
+    "courier bag": ["satchel", { emblem: [".pppp.", "pPPPPp", "pppppp"] }], "running cap": ["cap"], "route map": ["scroll", { kind: "route" }], "swift sneakers": ["sneaker", { wings: 1 }],
+    "pointed hat": ["wizhat"], "spell tome": ["book", { thick: 1, emblem: "star", clasp: "g" }], "wizard robe": ["robe", { mark: IC_EMBLEM.star, trim: "g" }], "crystal staff": ["staff", { head: "crystal" }],
+    "rune quill": ["quill", { rune: 1 }], "glyph ring": ["ring", { gem: "C" }], "enchanter's robe": ["robe", { mark: IC_EMBLEM.rune }], "ink stone": ["stone", { color: "z", ink: 1, facets: false }],
+    "hex tome": ["book", { emblem: "hex", fin: "shadow", clasp: "J" }], "shadow cloak": ["cloak", { fin: "shadow", collar: "J" }], "sigil amulet": ["amulet", { shape: "sigil" }], "ink-black gloves": ["glove", { fin: "black" }],
+    "envoy's coat": ["coat", { long: 1, buttons: 1 }], "sealed letters": ["letters"], "envoy's signet": ["ring", { signet: 1 }], "courtly sash": ["sash", { stripe: "g" }],
+    "banquet toque": ["toque", { tall: 1, trim: 1 }], "carving knife": ["knife", { kind: "carving" }], "serving platter": ["platter"], "feast apron": ["apron", { fin: "white", tie: "J" }],
+    "grill spatula": ["spatula", { fire: 1 }], "smoke-stained apron": ["apron", { fin: "grey", stain: [[6, 6, "k"], [12, 9, "k"], [8, 15, "k"], [14, 14, "K"]] }], "spice pouch": ["pouch", { top: ["o.r.", ".Yo."] }], "fire mitts": ["mitt", { fire: 1 }],
+    "smith's hammer": ["hammer", { band: "J" }], "forge bracers": ["bracer", { rivets: 1, fin: "iron", ember: 1 }], "smith's apron": ["apron", { fin: "leather", spark: 1 }], "ember goggles": ["goggles", { lens: "o", rim: "m", glow: 1 }],
+    "spindle staff": ["staff", { head: "spindle" }], "woven shawl": ["shawl"], "thread pouch": ["pouch", { top: ["r.b.", ".e.."] }], "silk robe": ["robe", { fin: "lavender" }],
+    "hacker hoodie": ["hoodie", { fin: "black", mark: ["9.9", ".9."] }], "cipher tablet": ["tablet", { screen: "cipher" }], "night-mode glasses": ["glasses", { night: 1 }],
+    "firewall shield": ["shield", { kind: "firewall", fin: "black", rim: "J" }], "admin keyring": ["keyring", { metal: "s", tag: "J" }], "server cloak": ["cloak", { pattern: "circuit", fin: "black", collar: "J" }], "status visor": ["visor", { leds: 1 }],
+    "torque wrench": ["wrench", { torque: 1 }], "barrier vest": ["vest", { plate: 1, glow: 1, fin: "grey" }], "work boots": ["boot", { toe: "s", laces: "y" }], "blueprint satchel": ["satchel", { fin: "blue", scroll: 1 }],
+    "drone controller": ["controller"], "pilot goggles": ["goggles", { rim: "n", strap: "n" }], "flight jacket": ["coat", { fur: 1, fin: "leather" }], "spare-parts bag": ["backpack", { gear: 1, fin: "grey" }],
+    "wind sash": ["sash", { wind: 1 }], "cloud sandals": ["sandal", { cloud: 1 }], "breath beads": ["beads", { bead: "c", alt: "Z" }], "flowing robe": ["robe", { trim: "Z" }],
+    "stone gi": ["gi", { fin: "stone" }], "mountain bracers": ["bracer", { stone: 1, fin: "stone" }], "rooted sandals": ["sandal", { roots: 1 }], "boulder amulet": ["amulet", { shape: "stone" }],
+    "healer's robe": ["robe", { fin: "white", mark: IC_EMBLEM.cross }], "sun pendant": ["amulet", { shape: "sun" }], "prayer book": ["book", { emblem: "cross", fin: "white", corners: 1 }], "halo circlet": ["circlet", { kind: "halo" }],
+    "night cap": ["nightcap"], "dream journal": ["book", { emblem: "moon", fin: "night" }], "moonlit cloak": ["cloak", { pattern: "moon", fin: "night", collar: "J" }], "lavender pouch": ["pouch", { fin: "lavender", top: [".x.x", "x.x."] }],
+    "supply pack": ["backpack", { roll: "p" }], "inventory ledger": ["openbook", { page: "lines" }], "ration pouch": ["pouch", { fin: "leather", mark: IC_EMBLEM.coin }], "stout boots": ["boot", { laces: "p", buckle: 1 }],
+    "gatekeeper's keyring": ["keyring", { metal: "m", metal2: "m" }], "castle cloak": ["cloak", { pattern: "shield" }], "gate shield": ["shield", { kind: "gate" }], "iron gauntlets": ["gauntlet", { metal: "m" }],
+    "trade ledger": ["openbook", { page: "coins" }], "gold scales": ["scales"], "trade-route map": ["scroll", { kind: "map" }], "silk coat": ["coat", { long: 1, cuffs: "g" }],
+    "pocket watch": ["pocketwatch"], "hourglass": ["hourglass"], "gearwork monocle": ["monocle", { gear: 1 }], "chrono robe": ["robe", { mark: [".ggg.", "g.k.g", "g.kkg", "g...g", ".ggg."] }],
+    "recurve bow": ["bow", { kind: "recurve" }], "scope monocle": ["monocle", { cross: 1, rim: "k" }], "arrow quiver": ["quiver"], "camo cloak": ["cloak", { pattern: "camo", fin: "camo" }],
+    "herb basket": ["basket", { herbs: 1 }], "leaf circlet": ["circlet", { kind: "leaf" }], "gardening gloves": ["glove", { fin: "green" }], "herb pouch": ["pouch", { top: [".66.", "6E66"] }],
+    "wolf-fur cape": ["cloak", { fur: 1, fin: "grey" }], "pack whistle": ["whistle", { carve: 1 }], "pathfinder boots": ["boot", { laces: "J" }], "alpha collar": ["collar", { studs: "s" }],
+    "bark shield": ["shield", { kind: "bark", fin: "bark" }], "moss cloak": ["cloak", { pattern: "moss", fin: "moss" }], "paw-print amulet": ["amulet", { shape: "paw" }], "rope leash": ["leash", { fin: "straw" }],
+    // dual-discipline
+    "director's beret": ["beret", { pin: 1 }], "clapperboard": ["clapper"], "viewfinder": ["viewfinder"], "script binder": ["binder"],
+    "arena helm": ["helm", { crest: 1, metal: "A" }], "sparring gloves": ["boxing"], "champion's belt": ["belt", { title: 1 }], "trident": ["trident"],
+    "toga": ["toga"], "laurel wreath": ["wreath"], "dialogue scroll": ["scroll", { kind: "dialogue" }], "thinking stone": ["stone", { color: "z", facets: false }],
+    "iron skillet": ["skillet"], "hearth apron": ["apron", { heart: 1 }], "oven mitts": ["mitt", { quilt: 1 }], "copper kettle": ["kettle", { fin: "copper" }],
+    "circuit gauntlet": ["gauntlet", { circuit: 1, metal: "m" }], "code tablet": ["tablet"], "tech visor": ["visor", { data: 1 }], "gear backpack": ["backpack", { gear: 1 }],
+    "simple robe": ["robe", { belt: "n", trim: "a" }], "plain sandals": ["sandal"], "hermit staff": ["staff", { head: "crook" }],
+    "household ledger": ["openbook", { page: "lines" }], "butler's coat": ["coat", { tails: 1, bow: 1, fin: "black" }], "silver keyring": ["keyring", { metal: "s", metal2: "s" }], "feather broom": ["duster", { band: 1 }],
+    "saddle cloak": ["cloak", { fin: "leather", collar: "J" }], "riding boots": ["boot", { tall: 1, spur: 1, fin: "black" }], "hunting bow": ["bow"], "companion whistle": ["whistle"],
+    // two-path
+    "storyteller's cloak": ["cloak", { pattern: "stars" }], "lore lute": ["lute", { top: "J" }], "illuminated tome": ["openbook", { page: "illuminated", gold: 1 }], "quill circlet": ["circlet", { kind: "quill" }],
+    "silk sash": ["sash"], "twin sabers": ["twinsabers"], "ankle bells": ["anklet", { bells: 1 }], "dancer's wraps": ["glove", { wraps: 1 }],
+    "tonewood lute": ["lute"], "varnish kit": ["varnish"], "maker's apron": ["apron", { fin: "leather", tools: 1 }],
+    "studio headphones": ["headphones"], "keytar": ["keytar"], "led visor": ["visor", { leds: 1 }], "waveform staff": ["staff", { head: "wave", wood: "k" }],
+    "choir robe": ["robe", { fin: "white", trim: "J", cuffs: 1 }], "chant book": ["book", { emblem: "note" }], "hand bell": ["handbell", { fin: "brass" }], "candle crown": ["circlet", { kind: "candle" }],
+    "top hat": ["tophat", { card: 1, fin: "black" }], "ticket ledger": ["openbook", { page: "tickets" }], "velvet cape": ["cloak", { collar: "g" }], "golden cane": ["staff", { head: "cane" }],
+    "feather cloak": ["cloak", { pattern: "feather" }], "reed flute": ["flute", { wood: 1, reed: 1 }], "sketch satchel": ["satchel", { pens: 1 }], "songbird charm": ["amulet", { shape: "bird" }],
+    "runed blade": ["sword", { runes: 1 }], "scholar's gambeson": ["armor", { kind: "quilt", fin: "cream", belt: "J" }], "focus bracer": ["bracer", { rune: 1 }], "study band": ["headband"],
+    "vial bandolier": ["bandolier"], "stained apron": ["apron", { fin: "cream", stain: [[6, 6, "e"], [12, 9, "q"], [8, 15, "o"], [14, 14, "e"], [10, 5, "q"]] }], "mortar and pestle": ["mortar"],
+    "blueprint tube": ["tube", { fin: "blue", paper: 1 }], "spark gloves": ["glove", { spark: 1 }], "field toolkit": ["toolbox", { tools: 1 }], "gadget goggles": ["goggles", { lens: "C", glow: 1, rim: "s" }],
+    "sage robe": ["robe", { trim: "g" }], "calm staff": ["staff", { head: "calm" }],
+    "map case": ["tube", { paper: 1, fin: "leather" }], "chess pin": ["badge", { knight: 1 }], "planner": ["openbook", { page: "calendar" }], "commander's coat": ["coat", { long: 1, buttons: 1, epaulets: 1 }],
+    "leaf mantle": ["cloak", { pattern: "leaves", fin: "green" }], "seed pouch": ["pouch", { fin: "leather", mark: IC_EMBLEM.leaf }], "antler circlet": ["circlet", { kind: "antler" }],
+    "welding mask": ["weldmask"], "forged blade": ["sword", { hot: 1 }], "leather gauntlets": ["gauntlet", { metal: "n" }], "spark apron": ["apron", { fin: "leather", spark: 1 }],
+    "smart band": ["watch", { smart: 1 }], "exo greaves": ["greaves"], "tactical vest": ["vest", { tactical: 1, fin: "camo" }], "holo visor": ["visor", { lens: "C", data: 1 }],
+    "tabard": ["armor", { kind: "mail", fin: "iron", tabard: "J" }], "mace": ["mace"], "kite shield": ["shield", { kind: "kite", emblem: "cross", fin: "white" }], "halo pendant": ["amulet", { shape: "halo" }],
+    "watch cloak": ["cloak", { pattern: "eye" }], "tower shield": ["shield", { kind: "tower" }], "house key": ["key"],
+    "fur mantle": ["cloak", { fur: 1, fin: "fur" }], "greataxe": ["greataxe"], "bone charm": ["amulet", { shape: "tooth", chain: "n" }],
+    "tool roll": ["toolroll", { fin: "leather" }], "gizmo pack": ["gizmo"], "soldering pen": ["solder"], "magnifier": ["magnifier"],
+    "totem staff": ["staff", { head: "totem" }], "wood-bead necklace": ["beads", { bead: "w", alt: "v" }], "bark cloak": ["cloak", { pattern: "bark", fin: "bark" }],
+    "canning jars": ["jars"], "garden fork": ["forktool"], "quilted vest": ["vest", { quilt: 1 }],
+    "bee veil": ["veil", { fin: "white" }], "smoker": ["smoker"], "honey pot": ["honeypot"], "hive-frame shield": ["shield", { kind: "hive" }],
+    "data visor": ["visor", { data: 1 }], "star tablet": ["tablet", { screen: "stars" }], "crystal circuit": ["stone", { color: "C", circuit: 1 }], "oracle robe": ["robe", { mark: IC_EMBLEM.eye }],
+    "smart suit": ["coat", { tie: 1, fin: "navy" }], "ledger tablet": ["tablet", { screen: "chart" }], "signet ring": ["ring", { signet: 1 }], "briefcase": ["briefcase"],
+    "pocket drone": ["drone"], "gps wrist": ["watch", { smart: 1 }], "cargo vest": ["vest", { pockets: 1, fin: "camo" }], "trail cap": ["cap", { fin: "moss" }],
+    "plain robe": ["robe", { belt: false, trim: "a" }], "single bowl": ["bowl", { fin: "wood" }], "tidy satchel": ["satchel"], "sandals": ["sandal"],
+    "antler staff": ["staff", { head: "antler" }], "spirit drum": ["spiritdrum"], "woven cloak": ["cloak", { pattern: "weave" }], "moon charm": ["amulet", { shape: "moon" }],
+    "forager's basket": ["basket", { mush: 1 }], "field knife": ["knife", { kind: "field" }], "mushroom guide": ["book", { emblem: "mushroom", fin: "green" }], "rain poncho": ["poncho", { drops: 1, fin: "yellow" }]
+  };
+  // Skill gear with the skill name inside ({s} in GEAR_BY_CAT).
+  const IC_RULES = [
+    [/ phrasebook$/, "book", { emblem: "bubble" }], [/ flashcard deck$/, "cards"], [/ lexicon$/, "book", { thick: 1, label: 1, emblem: "globe" }],
+    [/ gear bag$/, "duffel", { stripe: "p" }], [/^pro .+ kit$/, "jersey"], [/ toolkit$/, "toolbox", { tools: 1 }], [/^quality .+ brushes$/, "brushes"]
+  ];
+  // Instrument skills share "Worn/Student/Tuned/Concert/Masterwork/Legendary {skill}": the look follows the skill, the finish the tier.
+  const IC_INSTR = {
+    piano: t => [t < 3 ? "upright" : "grand", { fin: ["wood", "black", "wood", "black", "white", "gold"][t] }],
+    bass: t => ["bass", { hw: t >= 4 ? "g" : "s", guard: t === 0 ? "a" : undefined }],
+    ukulele: t => ["ukulele", { fin: t < 2 ? "wood" : undefined, wood: t < 2 }],
+    violin: t => ["violin", { fin: ["leather", "wood", "copper", "copper", "cherry", "gold"][t] }],
+    saxophone: t => ["sax", { fin: ["copper", "silver", "brass", "brass", "black", "gold"][t] }],
+    tuba: t => ["tuba", { fin: ["copper", "silver", "brass", "brass", "silver", "gold"][t] }],
+    dance: t => ["danceshoes", { fin: ["leather", "black", "pink", undefined, undefined, undefined][t] }],
+    "acting-theater": t => ["masks"], acting: t => ["masks"],
+    djing: t => t < 3 ? ["headphones"] : ["turntable"],
+    guitar: t => [["acoustic", "electric", "hollow", "lespaul", "archtop", "mythaxe"][t], t === 1 ? { fin: "red" } : {}]
+  };
+  const IC_TIERWORD = /^(worn|student|tuned|concert|masterwork|legendary) (.+)$/;
+  // When no name matches, use the hero sprite's closest icon.
+  const IC_BY_SPRITE = {
+    guitar: ["acoustic"], bass: ["bass"], uke: ["ukulele"], violin: ["violin"], keytar: ["keytar"], tuba: ["tuba"], drum: ["snare"], cymbals: ["cymbal"], sax: ["sax"], mic: ["mic"], notes: ["notes"],
+    headband: ["headband"], toque: ["toque"], circlet: ["circlet"], flower: ["lotus"], crown: ["crown"], earpiece: ["earpiece"], glasses: ["glasses"], monocle: ["monocle"],
+    scarf: ["scarf"], amulet: ["amulet"], medal: ["medal"], beads: ["beads"], camstrap: ["camstrap"], apron: ["apron"], robe: ["robe"], suit: ["coat", { tie: 1 }], smock: ["smock"],
+    hoodie: ["hoodie"], sash: ["sash"], belt: ["belt"], toolbelt: ["belt", { tools: 1 }], pouch: ["pouch"], keyring: ["keyring"], purse: ["purse"], gloves: ["glove"], gauntlets: ["gauntlet"],
+    watch: ["watch"], ring: ["ring"], sneakers: ["sneaker"], boots: ["boot", { laces: "p" }], winged: ["boot", { wings: 1 }], anklet: ["anklet"], book: ["book"], cards: ["cards"], quill: ["quill"],
+    pen: ["pen"], knife: ["knife"], pan: ["skillet"], ladle: ["ladle"], whisk: ["whisk"], pin: ["rollingpin", { wood: 1 }], hammer: ["hammer"], bighammer: ["hammer"], wrench: ["wrench"],
+    brush: ["brush"], camera: ["camera"], sticks: ["sticks"], pad: ["pad"], kettlebell: ["kettlebell"], duck: ["duck"], tablet: ["tablet"], gadget: ["gizmo"], lamp: ["lamp"], board: ["chessboard"],
+    clock: ["chessclock"], incense: ["incense"], block: ["block"], goggles: ["goggles"], flask: ["flask"], labcoat: ["labcoat"], microscope: ["microscope"], stone: ["stone"],
+    binoculars: ["binoculars"], broom: ["broom"], bag: ["backpack"], mat: ["mat"], barbell: ["barbell"], paddle: ["peel"], telescope: ["telescope"], easel: ["easel"], cape: ["cloak"],
+    halo: ["halo"], staff: ["staff"], basket: ["basket"], leash: ["leash"], petbrush: ["petbrush"], mapscroll: ["scroll", { kind: "map" }], vest: ["vest"], collar: ["collar"], trowel: ["trowel"]
+  };
+  const icSlug = s => String(s || "").toLowerCase().replace(/&/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  // [icon, options] for an item, or null to fall back to the cropped hero sprite.
+  function iconFor(name, sprite, skill, tier) {
+    const n = String(name || "").toLowerCase().replace(/^radiant /, "");
+    if (Object.hasOwn(IC_NAMED, n)) return IC_NAMED[n];
+    const m = IC_TIERWORD.exec(n);
+    if (m && skill && skill.catId === "instrument") {
+      const t = ["worn", "student", "tuned", "concert", "masterwork", "legendary"].indexOf(m[1]);
+      const f = IC_INSTR[icSlug(skill.name)] || IC_INSTR[icSlug(m[2])];
+      return f ? f(t) : ["acoustic", t === 0 ? { worn: 1 } : {}];
+    }
+    const r = IC_RULES.find(([re]) => re.test(n));
+    if (r) return [r[1], r[2] || {}];
+    return IC_BY_SPRITE[sprite] || null;
+  }
+  // Rarity glow: skill gear follows its tier (Radiant relics are tier 6); class gear passes its own level.
+  const icFxLevel = tier => tier <= RELIC_TIER ? tier : 0;
+  const CG_FX = { starter: 0, two: 3, dual: 3, spec: 4 };
+  function itemIcon(canvas, sprite, tier, size = 52, name, skill, fx) {
+    const pick = name || skill ? iconFor(name, sprite, skill, tier) : IC_BY_SPRITE[sprite] || null;
+    if (!pick || !IC[pick[0]]) { icLive.delete(canvas); return itemCrop(canvas, sprite, tier, size); }
+    const lvl = fx == null || Number.isNaN(fx) ? icFxLevel(tier) : fx;
+    const key = pick[0] + "|" + JSON.stringify(pick[1] || {}) + "|" + tier + "|" + lvl;
+    let hit = icCache.get(key);
+    if (hit === undefined) {
+      try { const grid = icBuild(pick[0], Object.assign({}, pick[1]), tier); hit = grid ? { grid, fx: icFx(grid, lvl, tier) } : null; } catch (e) { hit = null; }
+      icCache.set(key, hit);
+    }
+    if (!hit) { icLive.delete(canvas); return itemCrop(canvas, sprite, tier, size); }
+    const k = Math.max(1, Math.floor(size / IC_N));
+    icPaint(canvas, hit.grid, hit.fx, k, icFrame);
+    if (lvl >= 4 && hit.fx) { icLive.set(canvas, { grid: hit.grid, fx: hit.fx, k }); icAnimate(); } else icLive.delete(canvas);
+  }
+  // Fallback: one hero sprite on its own, cropped to its pixels (items without a drawn icon).
+  function itemCrop(canvas, sprite, tier, size = 40) {
     const sp = S[sprite]; if (!sp) return;
     const g = makeGrid(), pal = Object.assign({}, FIXED, { U: SKINS[1][0], T: "#3a6fc8", t: "#284f93", P: "#3d4152", p: "#2a2d3a", K: FIXED.K, k: FIXED.k });
     const tp = TIER_PAL[tier] || TIER_PAL[0];
@@ -7091,7 +9196,7 @@ details.cg-set > summary { cursor: pointer; }
       P(12, 12, 8, 9, "#e2a521"); P(12, 12, 2, 9, "#f5cc62"); P(18, 12, 2, 9, "#9a6604"); P(5, 23, 22, 5, "#1d1a2b"); P(6, 24, 20, 3, "#3d4152"); P(6, 24, 14, 3, "#e2a521"); P(6, 24, 14, 1, "#f5cc62"); }
     document.querySelectorAll("canvas[data-frame]").forEach(c => { c.width = 56; c.height = 56; const x = c.getContext("2d"); x.imageSmoothingEnabled = false; drawBackdrop(x, appearance().bg, 28, 28, 2, 0); drawFrame(x, c.dataset.frame, 28, 28, 2); });
     document.querySelectorAll("canvas[data-bd]").forEach(c => { c.width = 40; c.height = 48; const x = c.getContext("2d"); x.imageSmoothingEnabled = false; drawBackdrop(x, c.dataset.bd, 40, 48, 1, avFrame); });
-    document.querySelectorAll("canvas[data-icon]").forEach(c => { const [sp, t] = c.dataset.icon.split(":"); itemIcon(c, sp, +t, +c.dataset.size || 40); });
+    document.querySelectorAll("canvas[data-icon]").forEach(c => { const [sp, t] = c.dataset.icon.split(":"), ds = c.dataset; itemIcon(c, sp, +t, +ds.size || 52, ds.iname, ds.iskill ? skillById(ds.iskill) : null, ds.fx != null ? +ds.fx : undefined); });
     const tc = document.getElementById("train-canvas");
     if (tc && state.timer) { const s = skillById(state.timer.skillId); if (s) paintGrid(tc, renderHero(trainingLook(s, avFrame)), { scale: 4, pad: 4, bg: trainingBackdrop(s), frame: avFrame }); }
   }
