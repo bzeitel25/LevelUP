@@ -31,6 +31,8 @@ Design rules that every feature follows:
 | v0.17 | Class system consolidated: 28 two-path classes (one per pair of paths), Siren and Envoy reworked, 89 playable classes |
 | v0.18 | Class gear sets (4 pieces for every class, full set bonus while you play it) and 5 role talent trees |
 | v0.19 | Veteran Reserve: veteran tiers (Dabbler to Lifelong) with an estimator, a per-skill reserve of bonus XP (+50/100/200%) that practice spends, reserve stretch on the XP bar, "coming back" refresher mode, Caught Up milestone and achievement. Honest sessions: "Still practicing?" check with auto-pause, trim or bank before saving, 24-hour trim window |
+| v0.20 | Hand-drawn pixel icons for every item (187 designs for 255 skill items and 336 class pieces), with rarity glow and twinkling sparkles |
+| v0.21 | Heroes wear their gear: wearable art for every item matching its icon, an off-hand slot for shields and books, clean layering, hats that sit on the head, gear shown in every hero view including battles and the map |
 
 ## Next up
 
