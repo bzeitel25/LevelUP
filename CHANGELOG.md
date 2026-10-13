@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.19.0 — 2026-10-13 (build 2026-10-13.1)
+
+Veteran Reserve and honest sessions.
+
+- **Veteran tiers:** pick how much experience you bring in, from Dabbler (10–50 h) to Lifelong (10,000+ h), each with a plain example. A tier counts its bottom by default. In a skill's settings, **Help me estimate** works it out from years, hours a week and years off, without going above the tier you picked.
+- **Veteran Reserve:** veteran hours now fill a per-skill reserve of bonus XP that real practice spends: +50% under 500 hours, +100% up to 2,000, +200% beyond. The reserve holds exactly the hours you brought in (up to 10,000), so bigger veterans climb faster, not longer. No practice, no bonus.
+  - It stacks with rested XP and elixirs, and each one is spent separately.
+  - It never counts as logged time: keys, quests, milestones, class unlocks and hour achievements still use real minutes only.
+  - Raise your hours anytime to add to the reserve. Lowering them only removes what's unspent.
+  - Existing veteran hours fill the reserve automatically.
+- **Reserve on the XP bar:** a tinted stretch after your XP shows how far the bonus carries you, like rested XP.
+- **Coming back:** "I used to do this, but it's been a while" keeps the beginner tips on as a refresher. Otherwise tips follow lifetime hours (veteran plus logged).
+- **Caught Up:** when the hours you log in a skill match your veteran hours, you get a celebration and a new achievement (150 gold and a Medium elixir).
+- **Still practicing?** After 3 hours the timer asks. With no answer in 15 minutes it pauses itself where it asked, so a forgotten timer stops counting.
+- **Save review:** timer sessions of an hour or more open a quick review. Log all of it, or keep part and drop or bank the rest to the Veteran Reserve.
+- **Edit for 24 hours:** trim any session for 24 hours after saving, and drop or bank what you trimmed. Boosts it used come back.
+
 ## v0.18.3 — 2026-10-11 (build 2026-10-11.5)
 
 - Clearer numbers: digits now come from the VT323 pixel font, so 2, 8, 5 and B no longer look alike. The digits are built into the app, so they work offline too. Applies everywhere: timers, levels, gold, stats and battle damage numbers.

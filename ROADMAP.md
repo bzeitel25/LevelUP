@@ -30,31 +30,49 @@ Design rules that every feature follows:
 | v0.16 | 32 specializations and 8 dual-discipline classes, Herbalist herb patches on the map |
 | v0.17 | Class system consolidated: 28 two-path classes (one per pair of paths), Siren and Envoy reworked, 89 playable classes |
 | v0.18 | Class gear sets (4 pieces for every class, full set bonus while you play it) and 5 role talent trees |
+| v0.19 | Veteran Reserve: veteran tiers (Dabbler to Lifelong) with an estimator, a per-skill reserve of bonus XP (+50/100/200%) that practice spends, reserve stretch on the XP bar, "coming back" refresher mode, Caught Up milestone and achievement. Honest sessions: "Still practicing?" check with auto-pause, trim or bank before saving, 24-hour trim window |
 
 ## Next up
 
-### 1. Classes
+### 1. Veteran Reserve follow-ups
+
+- More veteran-level tips per skill (tips already follow lifetime hours: veteran plus logged).
+- Per-skill length for the "Still practicing?" check (3 hours for everything today).
+- Consider a global boost ceiling (about 4x to 5x) before adding more boost sources.
+- Decide whether class unlocks should count XP (today they count real minutes, so boosts don't speed them up).
+
+### 2. Linked apps (auto-logging)
+
+- A Linked apps screen maps another app to a skill (Duolingo to Spanish, Yousician to Guitar).
+- Android: read other apps' foreground time with Usage access (granted in system settings). No background service: on app open or widget refresh, read back the last few days. Check Google Play's policy for this permission first.
+- Health Connect for workouts from Strava, Garmin, Fitbit and others. Ties into Verified practice.
+- Detected time shows as "Found 15 min in Duolingo, log it?" with one-tap approval and optional auto-approve. Approved time counts as real logged hours.
+- Duolingo has no official public API, so don't build on unofficial endpoints. iPhone: little beyond Apple Health workouts.
+- Later: import history from other trackers (CSV or app exports) as a more credible source for veteran hours.
+
+### 3. Classes
 
 - Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 28 two-path and 9 Ascended classes (98 in all). Full design in the Class Compendium doc.
 - Shipped: the class picker with neutral and starter classes and adventuring pets (v0.15), then specializations and dual-discipline classes (v0.16), then two-path classes (v0.17), then class gear sets and role talent trees (v0.18).
 - Next: Ascended classes and a Suggest a class form.
 
-### 2. Online world (MMO-style)
+### 4. Online world (MMO-style)
 
 - Start with accounts and a small backend, so heroes live online and sync across devices.
 - See other players' heroes, titles and achievements.
 - Shared "meet" maps and exploration areas where players see each other walking around.
+- Leaderboards rank by real logged hours, not XP.
 - Later: parties for group adventures and co-op bosses.
 
-### 3. Verified practice
+### 5. Verified practice
 
 - Private, on-device checks that sync with apps like Health Connect.
 - Verified time counts for a little more. The honor system stays the default.
 
-### 4. Combat follow-ups
+### 6. Combat follow-ups
 
 - More skills per path that unlock at higher path levels (pick which ones to equip, like talent skills already do).
 
-### 5. iPhone widgets
+### 7. iPhone widgets
 
 - The WidgetKit code is written, in mobile/native/ios. Building it needs a Mac.

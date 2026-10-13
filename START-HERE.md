@@ -34,7 +34,7 @@ The **Check for updates** button compares the `BUILD` stamp in the live `index.h
 
 ## Rules that must not break
 
-- **Levels come only from time logged in the app.** Veteran hours give a badge and unlock tips. Nothing else.
+- **Levels come only from time logged in the app.** Veteran hours give a badge, unlock tips and fill a Veteran Reserve of bonus XP that only real practice can spend (like rested XP). They never count as logged minutes, so keys, quests, milestones, class unlocks and hour achievements ignore them.
 - **Gold is never sold for real money**, since gold buys gear and gear is power.
 - **Gear stays smaller than skill levels.** Gear adds roughly 10–25% on top.
 - **No streaks and no lost progress.** Rested XP is the catch-up mechanic.

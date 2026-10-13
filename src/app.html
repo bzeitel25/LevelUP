@@ -316,9 +316,23 @@ dialog::backdrop { background: rgba(10, 12, 22, .55); }
 /* veteran emblem: tier colors are fixed metals and read on both themes */
 .vet { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 1px 8px 1px 6px; border-radius: 999px; border: 1.5px solid currentColor; letter-spacing: .02em; }
 .vet::before { content: ""; width: 8px; height: 8px; background: currentColor; transform: rotate(45deg); border-radius: 1px; }
-.vet.t0 { color: #b06a2c; } .vet.t1 { color: #8a94a6; } .vet.t2 { color: var(--xp); } .vet.t3 { color: #2f9e96; } .vet.t4 { color: var(--rest); }
+.vet.t0 { color: #b06a2c; } .vet.t1 { color: #8a94a6; } .vet.t2 { color: var(--xp); } .vet.t3 { color: #2f9e96; } .vet.t4 { color: var(--rest); } .vet.t5 { color: #9a58d8; } .vet.t6 { color: #d9573a; }
 .vet-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
 .vet-edit input { width: 110px; }
+.vet-form { display: grid; gap: 10px; width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.vet-form .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.vet-form select { max-width: 100%; }
+.vet-form details summary { cursor: pointer; font-weight: 600; color: var(--rest); font-size: 13px; }
+.vet-est { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; margin-top: 8px; }
+.vet-est label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+.vet-est input { width: 84px; }
+.vet-check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+/* Veteran Reserve: a tinted stretch on the XP bar showing how far the bonus carries you */
+.xp .vres { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--rest) 55%, transparent) 0 4px, color-mix(in srgb, var(--rest) 30%, transparent) 4px 8px); pointer-events: none; }
+.long-check { display: grid; gap: 8px; padding: 10px 12px; border: 2px solid var(--rest); border-radius: 10px; background: color-mix(in srgb, var(--rest) 10%, var(--panel)); font-size: 13.5px; }
+.long-check .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.sess-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; grid-column: 1 / -1; font-size: 13px; padding: 6px 0; }
+.sess-edit input[type=number] { width: 90px; }
 
 .tip-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tip-refresh { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12px; font-weight: 600; flex: none; }
@@ -850,6 +864,20 @@ details.cg-set > summary { cursor: pointer; }
   </form>
 </dialog>
 
+<dialog id="dlg-review">
+  <form class="dlg" id="form-review" method="dialog">
+    <h2>Save session</h2>
+    <p class="muted" id="rv-sub" style="margin:0"></p>
+    <div class="field"><label for="rv-min">Minutes of practice to log</label>
+      <input class="input num" id="rv-min" type="number" min="1" inputmode="numeric">
+      <div class="chips" id="rv-quick"></div></div>
+    <label class="vet-check" id="rv-bank-wrap"><input type="checkbox" id="rv-bank" checked> <span id="rv-bank-text">Bank the rest to the Veteran Reserve</span></label>
+    <div class="hint" id="rv-hint">Left the timer running? Log only what you practiced. Banked time isn't lost: it becomes veteran hours that boost future practice.</div>
+    <div class="err" id="rv-err"></div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Keep timing</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
 <dialog id="dlg-add">
   <form class="dlg" id="form-add" method="dialog">
     <h2>Add a skill</h2>
@@ -1075,11 +1103,34 @@ details.cg-set > summary { cursor: pointer; }
   const tierIdx = L => { let i = 0; TIERS.forEach((t, k) => { if (L >= t.min) i = k; }); return i; };
   const stars = m => m < 2 * MASTERY_STEP ? 0 : Math.min(9, Math.floor(m / MASTERY_STEP) - 1);
   const totalXp = s => s.earnedXp ?? s.earnedMin;   // levels come only from time logged in the app
-  // Veteran hours are past experience from before the app. They earn a badge only, never XP, levels or rewards.
-  const VET_TIERS = [{ h: 1, name: "Bronze" }, { h: 50, name: "Silver" }, { h: 250, name: "Gold" }, { h: 1000, name: "Platinum" }, { h: 5000, name: "Diamond" }];
+  // VETERAN RESERVE (v0.19): veteran hours are past experience from before the app (honor system).
+  // They never count as logged time. Instead they fill a per-skill reserve of bonus XP that real practice
+  // spends: the reserve holds exactly the declared hours, and bigger veterans spend it faster (higher rate),
+  // not for longer. Hours-based things (keys, quests, milestones, classes, achievements) use real minutes only.
+  const VET_TIERS = [
+    { h: 10, max: 50, name: "Dabbler", like: "a few months of casual tries" },
+    { h: 50, max: 150, name: "Beginner", like: "about 1 hr a week for 1 to 3 years" },
+    { h: 150, max: 500, name: "Intermediate", like: "about 1 hr a day for a year" },
+    { h: 500, max: 1500, name: "Advanced", like: "about 1 hr a day for 2 to 4 years" },
+    { h: 1500, max: 5000, name: "Expert", like: "a serious hobby kept up for many years" },
+    { h: 5000, max: 10000, name: "Master", like: "about 2 hrs a day for 7 to 14 years" },
+    { h: 10000, max: 20000, name: "Lifelong", like: "full-time, or decades of heavy practice" }
+  ];
+  const VET_CAP_MIN = 10000 * 60;        // the reserve counts at most 10,000 declared hours
+  const vetTierIdx = h => { let i = 0; VET_TIERS.forEach((t, k) => { if (h >= t.h) i = k; }); return i; };
+  // Bonus rate by declared hours: under 500 = +50%, 500 to 2,000 = +100%, 2,000+ = +200%.
+  const vetRate = s => { const h = (s.importedMin || 0) / 60; return h < 500 ? 0.5 : h < 2000 ? 1 : 2; };
+  const vetLeft = s => (s.vetReserve > 0 ? s.vetReserve : 0);
+  // Changing declared hours: raising adds the difference to the reserve; lowering only removes unspent reserve.
+  function setDeclared(s, newMin) {
+    newMin = Math.max(0, Math.round(newMin || 0));
+    const old = s.importedMin || 0, delta = Math.min(newMin, VET_CAP_MIN) - Math.min(old, VET_CAP_MIN);
+    s.vetReserve = Math.max(0, vetLeft(s) + delta);
+    s.importedMin = newMin;
+  }
   function vetBadge(min, long) {
     const h = (min || 0) / 60; if (h < 1) return "";
-    let i = 0; VET_TIERS.forEach((t, k) => { if (h >= t.h) i = k; });
+    const i = vetTierIdx(h);
     return `<span class="vet t${i}" title="${fmtH(min)} of experience from before Level UP">${VET_TIERS[i].name} Veteran${long ? " · " + fmtH(min) : ""}</span>`;
   }
   function progress(m) {
@@ -1188,6 +1239,10 @@ details.cg-set > summary { cursor: pointer; }
     state.skills.forEach(s => {
       if (!PATHS[s.cat]) s.cat = "life";
       if (s.earnedXp == null) s.earnedXp = s.earnedMin;
+      if (s.importedMin == null) s.importedMin = 0;
+      // Veteran Reserve (v0.19): existing veteran hours fill the reserve once.
+      if (s.vetReserve == null) s.vetReserve = Math.min(s.importedMin, VET_CAP_MIN);
+      if (s.caughtUp == null) s.caughtUp = s.importedMin >= 600 && s.earnedMin >= s.importedMin;
       if (!s.catId || !CATEGORIES.some(c => c.id === s.catId)) {
         const p = PRESETS.find(x => x.name.toLowerCase() === s.name.toLowerCase());
         s.catId = p ? p.catId : (PATH_HOME[s.cat] || "life");
@@ -1209,6 +1264,7 @@ details.cg-set > summary { cursor: pointer; }
       if (x.xp == null) x.xp = x.min;
       if (!x.type) x.type = "solo";
       if (x.rested == null) x.rested = 0;
+      if (x.vet == null) x.vet = 0;
     });
     if (state.sessions.some(x => x.shards == null)) {
       const byDay = {};
@@ -2493,9 +2549,11 @@ details.cg-set > summary { cursor: pointer; }
   const skillById = id => state.skills.find(s => s.id === id);
 
   // ---------- Actions ----------
-  function addSkill(name, catId, cat, tips, priorMin, disc) {
+  function addSkill(name, catId, cat, tips, priorMin, disc, rusty) {
     disc = DISCIPLINES[disc] && DISCIPLINES[disc].path === cat ? disc : discFor(name, catId, cat);
-    state.skills.push({ id: uid(), name, catId, cat, disc, tips: tips || "generic", importedMin: Math.max(0, Math.round(priorMin || 0)), earnedMin: 0, earnedXp: 0, created: dayKey() });
+    const s = { id: uid(), name, catId, cat, disc, tips: tips || "generic", importedMin: 0, vetReserve: 0, rusty: !!rusty, caughtUp: false, earnedMin: 0, earnedXp: 0, created: dayKey() };
+    setDeclared(s, priorMin);
+    state.skills.push(s);
   }
 
   function logMinutes(skillId, min, day, note, type) {
@@ -2509,25 +2567,33 @@ details.cg-set > summary { cursor: pointer; }
     const ae = activeElixir(), elixMin = ae ? Math.min(min, ae.left) : 0;
     const elixXp = ae ? elixMin * (type === "lesson" ? LESSON_MULT : 1) * ae.pct / 100 : 0;
     if (ae) { ae.left -= elixMin; if (ae.left <= 0) { state.elixir = null; setTimeout(() => toast("Your elixir has worn off."), 900); } }
-    const xp = Math.round(min * (type === "lesson" ? LESSON_MULT : 1) + rested + elixXp);
+    // Veteran Reserve: bonus on base minutes (like rested), added on top; it drains by the bonus it pays.
+    const vet = Math.min(min * vetRate(s), vetLeft(s));
+    s.vetReserve = vetLeft(s) - vet;
+    const xp = Math.round(min * (type === "lesson" ? LESSON_MULT : 1) + rested + elixXp + vet);
     state.restedPool = pool - rested;
     state.lastSessionDay = dayKey();
     s.earnedMin += min;
     s.earnedXp = (s.earnedXp ?? 0) + xp;
+    const caught = !s.caughtUp && s.importedMin >= 600 && s.earnedMin >= s.importedMin;
+    if (caught) s.caughtUp = true;
     const tfS = talentFx().shardChance, bonusShards = tfS && min >= 10 && Math.random() < tfS / 100 ? 5 : 0;
     const shards = Math.max(0, Math.min(min + bonusShards, DAILY_SHARD_CAP - shardsOnDay(day)));
     state.keyShards += shards;
-    state.sessions.unshift({ id: uid(), skillId, min, day, ts: Date.now(), xp, rested, type, shards, note: note || "", elixir: ae ? { kind: ae.kind, min: elixMin, pct: ae.pct } : undefined });
+    state.sessions.unshift({ id: uid(), skillId, min, day, ts: Date.now(), xp, rested, vet, type, shards, note: note || "", elixir: ae ? { kind: ae.kind, min: elixMin, pct: ae.pct } : undefined });
     addDay(day, skillId, min);
     if (state.sessions.length > 400) state.sessions.length = 400;
 
     const after = lvFrom(totalXp(s));
     const unlocks = unlockDiff(snap);
     if (stars(totalXp(s)) > beforeStars) toast(`Mastery star earned in ${esc(s.name)}.`);
-    if (after > before) pendingCelebrate = { skill: s.name, from: before, to: after, tier: tierIdx(after) > beforeTier ? TIERS[tierIdx(after)].name : null, unlocks };
+    const caughtInfo = caught ? { hours: s.importedMin, days: new Set(state.sessions.filter(x => x.skillId === s.id).map(x => x.day)).size } : null;
+    if (after > before) pendingCelebrate = { skill: s.name, from: before, to: after, tier: tierIdx(after) > beforeTier ? TIERS[tierIdx(after)].name : null, unlocks, caught: caughtInfo };
+    else if (caught) pendingCelebrate = { skill: s.name, from: before, to: after, tier: null, unlocks, caught: caughtInfo, title: "CAUGHT UP!" };
     else { if (unlocks.length) Sound.play("unlock"); unlocks.forEach(u => toast(`${esc(u.kind)} unlocked: <b>${esc(u.name)}</b>`, "", 5000)); Sound.play("log"); }
+    if (vet > 0 && vetLeft(s) <= 0) setTimeout(() => toast(`${esc(s.name)} Veteran Reserve used up. Every hour you brought in is now part of your level.`, "", 5000), 900);
     lastGain = { skillId: s.id, xp };
-    const parts = [type === "lesson" ? "lesson 1.5×" : "", rested ? `${fmt(rested)} rested` : "", ae ? `elixir +${ae.pct}%` : ""].filter(Boolean);
+    const parts = [type === "lesson" ? "lesson 1.5×" : "", rested ? `${fmt(rested)} rested` : "", vet ? `veteran +${Math.round(vetRate(s) * 100)}%` : "", ae ? `elixir +${ae.pct}%` : ""].filter(Boolean);
     const newKeys = keysAvail() - keysBefore;
     toast(`Logged ${fmt(min)} of ${esc(s.name)}: +${fmtXp(xp)} XP${parts.length ? " (" + parts.join(", ") + ")" : ""}, +${shards} shards${bonusShards && shards > min ? " (found 5 bonus shards!)" : ""}` + (newKeys > 0 ? `, ${newKeys} new dungeon key${newKeys > 1 ? "s" : ""}` : "") + (shards < min ? ". Daily key limit reached; XP still counts" : "") + ".");
     persist(); render();
@@ -2540,6 +2606,7 @@ details.cg-set > summary { cursor: pointer; }
     const x = state.sessions[i], s = skillById(x.skillId);
     if (s) { s.earnedMin = Math.max(0, s.earnedMin - x.min); s.earnedXp = Math.max(0, (s.earnedXp ?? 0) - (x.xp ?? x.min)); }
     if (x.rested) state.restedPool = Math.min(REST_CAP, state.restedPool + x.rested);
+    if (s && x.vet) s.vetReserve = vetLeft(s) + x.vet;
     if (x.elixir && x.elixir.min) {
       const ae = activeElixir();
       if (ae && ae.kind === x.elixir.kind) ae.left = Math.min(ae.total, ae.left + x.elixir.min);
@@ -2549,6 +2616,47 @@ details.cg-set > summary { cursor: pointer; }
     state.keyShards = Math.max(0, state.keyShards - (x.shards || 0));
     state.sessions.splice(i, 1);
     toast("Session removed.");
+    persist(); render();
+  }
+
+  // ---------- Honest sessions (v0.19) ----------
+  // Banked time is real time that wasn't practice-as-logged (like a timer left running overnight).
+  // It becomes veteran hours: it fills the Veteran Reserve instead of counting as practice.
+  function bankMinutes(s, min) {
+    min = Math.round(min); if (!s || min <= 0) return;
+    setDeclared(s, (s.importedMin || 0) + min);
+  }
+  const EDIT_WINDOW = 24 * 3600e3;          // saved sessions can be trimmed or banked for 24 hours
+  const canEditSession = x => x && x.ts && Date.now() - x.ts < EDIT_WINDOW && x.min > 1;
+  // Trim a recent session to newMin. The removed part is dropped or banked; boosts it used are refunded.
+  function trimSession(id, newMin, bank) {
+    const x = state.sessions.find(y => y.id === id); if (!x || !canEditSession(x)) return;
+    newMin = Math.round(newMin);
+    if (!(newMin >= 1 && newMin < x.min)) { toast(`Pick a length from 1 to ${x.min - 1} minutes.`); return; }
+    const s = skillById(x.skillId), cut = x.min - newMin, mult = x.type === "lesson" ? LESSON_MULT : 1;
+    const newRested = Math.min(x.rested || 0, newMin);
+    if (x.rested > newRested) state.restedPool = Math.min(REST_CAP, state.restedPool + (x.rested - newRested));
+    let newElix = 0;
+    if (x.elixir && x.elixir.min) {
+      newElix = Math.min(x.elixir.min, newMin);
+      const back = x.elixir.min - newElix;
+      if (back > 0) {
+        const ae = activeElixir();
+        if (ae && ae.kind === x.elixir.kind) ae.left = Math.min(ae.total, ae.left + back);
+        else if (!ae && ELIXIRS[x.elixir.kind]) state.elixir = { kind: x.elixir.kind, pct: x.elixir.pct, left: back, total: ELIXIRS[x.elixir.kind].min };
+      }
+      x.elixir.min = newElix;
+    }
+    const newVet = (x.vet || 0) * newMin / x.min;
+    if (s && x.vet) s.vetReserve = vetLeft(s) + (x.vet - newVet);
+    const newXp = Math.round(newMin * mult + newRested + (x.elixir ? newElix * mult * x.elixir.pct / 100 : 0) + newVet);
+    const newShards = Math.min(x.shards || 0, newMin);
+    if (s) { s.earnedMin = Math.max(0, s.earnedMin - cut); s.earnedXp = Math.max(0, (s.earnedXp ?? 0) - ((x.xp ?? x.min) - newXp)); }
+    state.keyShards = Math.max(0, state.keyShards - ((x.shards || 0) - newShards));
+    addDay(x.day, x.skillId, -cut);
+    Object.assign(x, { min: newMin, xp: newXp, rested: newRested, vet: newVet, shards: newShards });
+    if (bank && s) bankMinutes(s, cut);
+    toast(`Session trimmed to ${fmt(newMin)}${bank ? `. ${fmt(cut)} banked to your ${esc(s ? s.name : "")} Veteran Reserve` : ""}.`);
     persist(); render();
   }
 
@@ -2590,13 +2698,32 @@ details.cg-set > summary { cursor: pointer; }
     persist(); render();
   }
 
-  function startTimer(id, type) { Sound.play("start"); state.timer = { skillId: id, startedAt: Date.now(), type: type === "lesson" ? "lesson" : "solo" }; persist(); render(); }
-  function stopTimer() {
+  function startTimer(id, type) { Sound.play("start"); state.timer = { skillId: id, startedAt: Date.now(), type: type === "lesson" ? "lesson" : "solo", okUntil: LONG_CHECK, skipMin: 0 }; persist(); render(); }
+  // Long-session check: after LONG_CHECK minutes the timer asks "Still practicing?". With no answer
+  // for LONG_GRACE minutes it pauses itself at the moment it asked, so a forgotten timer stops counting.
+  const LONG_CHECK = 180, LONG_GRACE = 15, REVIEW_AT = 60;
+  function timerState(t) {
+    const raw = Math.max(0, (Date.now() - t.startedAt) / 60000 - (t.skipMin || 0));
+    const ok = t.okUntil || LONG_CHECK;
+    if (raw > ok + LONG_GRACE) return { min: ok, raw, phase: "paused" };
+    if (raw > ok) return { min: raw, raw, phase: "asking" };
+    return { min: raw, raw, phase: "ok" };
+  }
+  const timerMs = t => timerState(t).min * 60000;
+  function timerStillYes() { const t = state.timer; if (!t) return; const ts = timerState(t); t.okUntil = Math.floor(ts.raw) + LONG_CHECK; persist(); render(); }
+  function timerResume() {   // paused: pick up from where it paused, skipping the unanswered gap
+    const t = state.timer; if (!t) return; const ts = timerState(t);
+    t.skipMin = (t.skipMin || 0) + (ts.raw - ts.min); t.okUntil = Math.floor(ts.min) + LONG_CHECK;
+    toast("Resumed. The time while it was paused isn't counted."); persist(); render();
+  }
+  // review: from the app, sessions of an hour or more open a quick review to trim or bank before saving.
+  function stopTimer(review) {
     const t = state.timer; if (!t) return;
-    const secs = (Date.now() - t.startedAt) / 1000;
-    state.timer = null;
-    if (secs < 60) { toast("Under a minute, so nothing was logged."); persist(); render(); return; }
+    const secs = timerState(t).min * 60;
+    if (secs < 60) { state.timer = null; toast("Under a minute, so nothing was logged."); persist(); render(); return; }
     let min = Math.floor(secs / 60);
+    if (review && min >= REVIEW_AT && typeof openReview === "function") { openReview(t, min); return; }
+    state.timer = null;
     if (min > MAX_ENTRY) { min = MAX_ENTRY; toast("Timer capped at 12h. Fix with a manual log if needed."); }
     logMinutes(t.skillId, min, dayKey(), "", t.type);
   }
@@ -2685,8 +2812,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-11.5";
-  const APP_VERSION = "0.18.3";
+  const BUILD = "2026-10-13.1";
+  const APP_VERSION = "0.19.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -4466,7 +4593,8 @@ details.cg-set > summary { cursor: pointer; }
     ["explore50", "Explorer", "Explore half of the world map", () => exploredPct(), 50, 75],
     ["explore100", "Cartographer", "Explore the whole world map", () => exploredPct(), 100, 300, "medium"],
     ["chests", "Chest Finder", "Open every treasure chest on the map", () => Object.keys(adv().chests).length, 13, 150],   // 13 chests on the map
-    ["elixir1", "Bottoms Up", "Drink an XP elixir", () => (state.stats && state.stats.elixirs) || 0, 1, 25]
+    ["elixir1", "Bottoms Up", "Drink an XP elixir", () => (state.stats && state.stats.elixirs) || 0, 1, 25],
+    ["caughtup", "Caught Up", "Log as many hours here as your veteran hours (10+) in a skill", () => state.skills.filter(s => (s.importedMin || 0) >= 600 && s.earnedMin >= s.importedMin).length, 1, 150, "medium"]
   ].map(([id, name, desc, val, target, gold, elixir]) => ({ id, name, desc, val, target, gold, elixir }));
   const achDone = id => !!(state.ach && state.ach[id]);
 
@@ -5444,7 +5572,7 @@ details.cg-set > summary { cursor: pointer; }
       restedMinutes: restedNow(),
       todayMinutes: todayMin(),
       focusSkill: focus ? { id: focus.id, name: focus.name, level: p.L, tier: TIERS[tierIdx(p.L)].name, progress: +p.pct.toFixed(4), toNext: p.next } : null,
-      timer: t ? { skillId: t.skillId, startedAt: t.startedAt } : null,
+      timer: t ? { skillId: t.skillId, startedAt: Date.now() - timerMs(t) } : null,
       quickStartSkillId: target ? target.id : null,
       deepLinks: { chooseAndStart: "#quickstart", startSolo: "#quickstart-solo", startLesson: "#quickstart-lesson", stop: "#stop", log: "#log" }
     };
@@ -6619,9 +6747,10 @@ details.cg-set > summary { cursor: pointer; }
     host.innerHTML = `<div class="cel-back" data-act="cel-close"></div>
       <div class="cel" role="dialog" aria-modal="true" aria-labelledby="cel-title">
         <canvas id="cel-fx" class="cel-fx" aria-hidden="true"></canvas>
-        <div class="cel-title px-title" id="cel-title">LEVEL UP!</div>
+        <div class="cel-title px-title" id="cel-title">${esc(info.title || "LEVEL UP!")}</div>
         <canvas id="cel-hero" class="px cel-hero" aria-label="Your hero celebrating"></canvas>
-        <div class="cel-skill"><b>${esc(info.skill)}</b> <span class="num">Lv ${info.from} → <b>Lv ${info.to}</b></span></div>
+        ${info.to > info.from ? `<div class="cel-skill"><b>${esc(info.skill)}</b> <span class="num">Lv ${info.from} → <b>Lv ${info.to}</b></span></div>` : `<div class="cel-skill"><b>${esc(info.skill)}</b></div>`}
+        ${info.caught ? `<div class="cel-tier">Caught up with your past: <b>${fmtH(info.caught.hours)}</b> logged here, matching the experience you brought in. That took practice on ${info.caught.days.toLocaleString()} different day${info.caught.days === 1 ? "" : "s"}. Well played.</div>` : ""}
         ${info.tier ? `<div class="cel-tier">New tier: <b>${esc(info.tier)}</b> · new tips unlocked</div>` : ""}
         ${u.length ? `<ul class="cel-list">${u.slice(0, 6).map(x => `<li><span>${esc(x.kind)}</span><b>${esc(x.name)}</b></li>`).join("")}${u.length > 6 ? `<li><span>And</span><b>${u.length - 6} more</b></li>` : ""}</ul>` : ""}
         ${(() => { const tp = u.find(x => x.cat); return tp
@@ -7039,13 +7168,14 @@ details.cg-set > summary { cursor: pointer; }
   let liveLevel = null;
   function project(t) {
     const s = skillById(t.skillId);
-    const el = Math.max(0, (Date.now() - t.startedAt) / 60000);
+    const el = s ? timerState(t).min : 0;
     const pool = restedNow(), rested = Math.min(el, pool);
     const ae = activeElixir();
-    const xp = el * (t.type === "lesson" ? LESSON_MULT : 1) + rested + (ae ? Math.min(el, ae.left) * (t.type === "lesson" ? LESSON_MULT : 1) * ae.pct / 100 : 0);
+    const vet = s ? Math.min(el * vetRate(s), vetLeft(s)) : 0;
+    const xp = el * (t.type === "lesson" ? LESSON_MULT : 1) + rested + vet + (ae ? Math.min(el, ae.left) * (t.type === "lesson" ? LESSON_MULT : 1) * ae.pct / 100 : 0);
     const shards = Math.max(0, Math.min(Math.floor(el), DAILY_SHARD_CAP - shardsOnDay(dayKey())));
     const total = totalXp(s) + xp;
-    return { s, xp, rested: pool > 0 && rested < pool, p: progress(total), shards, keys: Math.max(0, Math.floor((state.keyShards + shards) / SHARDS_PER_KEY) - state.keysUsed), rem: state.keyShards + shards < state.keysUsed * SHARDS_PER_KEY ? 0 : (state.keyShards + shards) % SHARDS_PER_KEY };
+    return { s, xp, rested: pool > 0 && rested < pool, vet: s && vetLeft(s) - vet > 0, p: progress(total), shards, keys: Math.max(0, Math.floor((state.keyShards + shards) / SHARDS_PER_KEY) - state.keysUsed), rem: state.keyShards + shards < state.keysUsed * SHARDS_PER_KEY ? 0 : (state.keyShards + shards) % SHARDS_PER_KEY };
   }
 
   function renderTraining() {
@@ -7058,13 +7188,15 @@ details.cg-set > summary { cursor: pointer; }
       <div class="train-info">
         <div class="train-head"><h2><span class="live-dot"></span>Training · ${esc(pj.s.name)}</h2><span class="muted" style="font-size:12.5px">at the ${esc(BACKDROPS[trainingBackdrop(pj.s)].name)}</span>
           <span class="type-badge ${t.type === "lesson" ? "lesson" : ""}">${t.type === "lesson" ? "Lesson · 1.5× XP" : "Solo practice"}</span></div>
-        <div class="train-row"><span class="timer-clock" data-elapsed>${clock(Date.now() - t.startedAt)}</span><span class="live-xp num" data-live-xp>+${fmtXp(pj.xp)} XP</span></div>
+        <div class="train-row"><span class="timer-clock" data-elapsed>${clock(timerMs(t))}</span><span class="live-xp num" data-live-xp>+${fmtXp(pj.xp)} XP</span></div>
         <div style="display:grid;gap:6px">
           <div class="train-row"><span class="lv num" data-live-lv>Lv ${pj.p.L}</span><span class="muted num" style="font-size:13px" data-live-need>${fmtXp(pj.p.have)} / ${fmtXp(pj.p.need)} XP to ${pj.p.next}</span></div>
           <div class="xp"><i data-live-bar style="width:${(pj.p.pct * 100).toFixed(1)}%"></i></div>
         </div>
         <div class="train-row"><span><span class="muted" style="font-size:13px">Keys</span> <b class="num" data-live-keys>${pj.keys}</b></span><span data-live-pips>${pipsHTML(pj.rem)}</span></div>
         ${pj.rested ? `<div class="hint" style="margin:0;color:var(--rest)">Rested: earning double XP right now.</div>` : ""}
+        ${pj.vet ? `<div class="hint" style="margin:0;color:var(--rest)">Veteran Reserve: +${Math.round(vetRate(pj.s) * 100)}% XP right now.</div>` : ""}
+        ${longCheckHTML(t)}
         <div class="timer-actions">
           <button class="btn primary" data-act="stop-timer">Stop &amp; log</button>
           ${confirm && confirm.kind === "timer"
@@ -7075,9 +7207,21 @@ details.cg-set > summary { cursor: pointer; }
     </section>`;
   }
 
+  function longCheckHTML(t) {
+    const ts = timerState(t);
+    if (ts.phase === "asking") return `<div class="long-check" role="alert"><b>Still practicing?</b><span>You've been going for ${fmt(ts.raw)}. If there's no answer in ${LONG_GRACE} minutes, the timer pauses at ${fmt(t.okUntil || LONG_CHECK)}.</span>
+      <div class="row"><button class="btn small primary" data-act="timer-yes">Yes, keep going</button><button class="btn small" data-act="stop-timer">No, stop &amp; log</button></div></div>`;
+    if (ts.phase === "paused") return `<div class="long-check" role="alert"><b>Paused at ${fmt(ts.min)}</b><span>Nobody answered "Still practicing?", so the timer stopped counting. Resume from here, or stop and log what you did.</span>
+      <div class="row"><button class="btn small primary" data-act="timer-resume">Resume</button><button class="btn small" data-act="stop-timer">Stop &amp; log</button></div></div>`;
+    return "";
+  }
+  let livePhase = null;
   function liveTick() {
-    const t = state.timer; if (!t) return;
-    document.querySelectorAll("[data-elapsed]").forEach(el => { el.textContent = clock(Date.now() - t.startedAt); });
+    const t = state.timer; if (!t) { livePhase = null; return; }
+    const ph = timerState(t).phase;
+    if (livePhase && ph !== livePhase) { livePhase = ph; if (ph === "asking") { Sound.play("unlock"); buzz([60, 80, 60]); } render(); return; }
+    livePhase = ph;
+    document.querySelectorAll("[data-elapsed]").forEach(el => { el.textContent = clock(timerMs(t)); });
     const pj = project(t); if (!pj.s) return;
     const q = sel => document.querySelector(sel);
     if (!q("[data-live-xp]")) return;
@@ -7099,6 +7243,12 @@ details.cg-set > summary { cursor: pointer; }
     return (h ? h + ":" + pad(m) : m) + ":" + pad(s % 60);
   }
 
+  // The tinted stretch after your XP: bonus XP the Veteran Reserve still holds, within the current level.
+  function vetSeg(s, p) {
+    const left = vetLeft(s); if (left < 1 || p.pct >= 1) return "";
+    const w = Math.min(1 - p.pct, left / p.need);
+    return `<b class="vres" style="left:${(p.pct * 100).toFixed(1)}%;width:${(w * 100).toFixed(1)}%" title="Veteran Reserve: ${fmtXp(left)} bonus XP left"></b>`;
+  }
   function renderSkill(s) {
     const m = totalXp(s), p = progress(m), ti = tierIdx(p.L), st = stars(m);
     const running = state.timer && state.timer.skillId === s.id;
@@ -7116,7 +7266,7 @@ details.cg-set > summary { cursor: pointer; }
             ${st ? `<span class="badge star">${"★".repeat(st)}</span>` : ""}
             ${m >= LEGEND_MIN ? `<span class="badge star">Legend</span>` : ""}
           </div>
-          <div class="xp" role="progressbar" aria-label="${esc(s.name)} progress to ${p.next}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p.pct * 100)}"><i style="width:${(p.pct * 100).toFixed(1)}%"></i></div>
+          <div class="xp" role="progressbar" aria-label="${esc(s.name)} progress to ${p.next}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p.pct * 100)}"><i style="width:${(p.pct * 100).toFixed(1)}%"></i>${vetSeg(s, p)}</div>
           <div class="xp-text">${xpText}<span>${fmtH(s.earnedMin)} logged${s.importedMin >= 60 ? " + " + fmtH(s.importedMin) + " veteran" : ""} · ${esc(discLabel(s))}</span></div>
         </button>
         <button class="play ${running ? "on" : ""}" data-act="${running ? "stop-timer" : "start-timer"}" data-id="${s.id}" ${busy ? "disabled" : ""}
@@ -7147,11 +7297,49 @@ details.cg-set > summary { cursor: pointer; }
         : `<div class="lib-tier locked"><div class="lbl">${TIERS[i].name}</div><span class="muted">${tier.length} tip${tier.length > 1 ? "s" : ""} unlock at Lv ${TIERS[i].min}</span></div>`).join("")}
     </details>`;
   }
+  // Tips follow lifetime hours (veteran plus logged here), unless the player is coming back after a break:
+  // then tips follow the in-app level so the basics come back as a refresher.
+  const tipXpOf = s => s.rusty ? totalXp(s) : Math.max(totalXp(s), (s.importedMin || 0) + (s.earnedMin || 0));
+  function vetInfoHTML(s) {
+    if ((s.importedMin || 0) < 60) return `<span class="muted">No veteran hours</span><button class="linkbtn" style="font-size:13px" data-act="vet-edit" data-id="${s.id}">Add veteran hours</button>`;
+    const left = vetLeft(s), pct = Math.min(100, Math.round((s.earnedMin / s.importedMin) * 100));
+    return `${vetBadge(s.importedMin, true)}${s.rusty ? `<span class="badge">Coming back</span>` : ""}<button class="linkbtn" style="font-size:13px" data-act="vet-edit" data-id="${s.id}">Edit</button>
+      <div class="hint" style="margin:0;width:100%">${left >= 1
+        ? `<b style="color:var(--rest)">Veteran Reserve: ${fmtXp(left)} bonus XP left.</b> Practice here earns +${Math.round(vetRate(s) * 100)}% XP until it's spent.`
+        : `Veteran Reserve spent. Every hour you brought in is part of your level now.`}
+        ${s.importedMin >= 600 ? (s.caughtUp || s.earnedMin >= s.importedMin ? ` Caught up with your past.` : ` Catching up with your past: ${fmtH(s.earnedMin)} of ${fmtH(s.importedMin)} (${pct}%).`) : ""}</div>`;
+  }
+  function vetTierOpts(sel) {
+    return `<option value="-1" ${sel < 0 ? "selected" : ""}>None</option>` + VET_TIERS.map((v, i) => `<option value="${i}" ${i === sel ? "selected" : ""}>${v.name} · ${v.h.toLocaleString()}${i === VET_TIERS.length - 1 ? "+" : "–" + v.max.toLocaleString()} h (${v.like})</option>`).join("");
+  }
+  function vetFormHTML(s) {
+    const h = (s.importedMin || 0) / 60, ti = h >= 1 ? vetTierIdx(h) : -1, t = VET_TIERS[ti];
+    const val = t ? Math.min(t.max, Math.max(t.h, Math.round(h))) : "";
+    return `<div class="vet-form">
+      <label class="lbl" for="vet-tier">Experience before Level UP</label>
+      <select class="input" id="vet-tier" data-act-change="vet-tier">${vetTierOpts(ti)}</select>
+      <div class="row" id="vet-hours-row" ${t ? "" : "hidden"}><label for="vet-input">Hours</label>
+        <input class="input num" id="vet-input" type="number" inputmode="numeric" min="${t ? t.h : 0}" max="${t ? t.max : 0}" value="${val}">
+        <span class="hint" id="vet-range" style="margin:0">${t ? vetRangeText(t) : ""}</span></div>
+      <details><summary>Help me estimate</summary>
+        <div class="vet-est">
+          <label>Years doing it<input class="input num" id="est-years" type="number" min="0" max="80" step="0.5" inputmode="decimal"></label>
+          <label>Hours a week<input class="input num" id="est-week" type="number" min="0" max="80" step="0.5" inputmode="decimal"></label>
+          <label>Years off<input class="input num" id="est-off" type="number" min="0" max="80" step="0.5" inputmode="decimal"></label>
+          <button type="button" class="btn small" data-act="vet-est">Estimate</button>
+        </div>
+        <div class="hint" id="est-out">Counts 48 weeks a year to allow for holidays and busy weeks. Go with the low end if you're unsure.</div>
+      </details>
+      <label class="vet-check"><input type="checkbox" id="vet-rusty" ${s.rusty ? "checked" : ""}> I used to do this, but it's been a while (keeps beginner tips on as a refresher)</label>
+      <div class="hint" style="margin:0">Honor system. These hours fill a Veteran Reserve of bonus XP that your practice here spends: +50% under 500 h, +100% up to 2,000 h, +200% beyond. They never count as logged time, keys or quests. Raising them later adds to the reserve; lowering only removes what's unspent.</div>
+      <div class="row"><button class="btn small primary" data-act="vet-save" data-id="${s.id}">Save</button><button class="btn small ghost" data-act="vet-cancel">Cancel</button></div>
+    </div>`;
+  }
+  const vetRangeText = t => `${t.name}: ${t.h.toLocaleString()} to ${t.max.toLocaleString()} h`;
   function renderDetail(s, p, lvTi) {
     const set = TIPS[tipSetKey(s)];
     const sessions = state.sessions.filter(x => x.skillId === s.id).length;
-    // Veteran hours count on the same curve for tips only, so experienced players start with more tips.
-    const tipXp = Math.max(totalXp(s), s.importedMin || 0), ti = tierIdx(lvFrom(tipXp)), vetBoost = ti > lvTi;
+    const tipXp = tipXpOf(s), ti = tierIdx(lvFrom(tipXp)), vetBoost = ti > lvTi;
     // Today's tip rotates daily within your tier; refreshers come from every tier below. Refresh cycles through them.
     const cur = tipCursor[s.id] || { cur: 0, ref: 0 };
     const seed = dayNum(dayKey()) + s.name.length;
@@ -7174,10 +7362,8 @@ details.cg-set > summary { cursor: pointer; }
         <span>Lessons <b class="num">${state.sessions.filter(x => x.skillId === s.id && x.type === "lesson").length}</b></span>
         <span>Sessions <b class="num">${sessions}</b></span>
       </div>
-      <div class="vet-edit">${editVet === s.id
-        ? `<label for="vet-input">Veteran hours (before Level UP)</label><input class="input num" id="vet-input" type="number" min="0" max="20000" inputmode="numeric" value="${Math.round(s.importedMin / 60) || ""}" placeholder="0"><button class="btn small primary" data-act="vet-save" data-id="${s.id}">Save</button><button class="btn small ghost" data-act="vet-cancel">Cancel</button>`
-        : `${s.importedMin >= 60 ? vetBadge(s.importedMin, true) : `<span class="muted">No veteran hours</span>`}<button class="linkbtn" style="font-size:13px" data-act="vet-edit" data-id="${s.id}">${s.importedMin >= 60 ? "Edit" : "Add veteran hours"}</button>`}</div>
-      ${tipCard(s, `${TIERS[ti].name} tip${vetBoost ? " · unlocked by your Veteran badge" : ""}`, ti, curIdx, "cur", set[ti].length, false)}
+      <div class="vet-edit">${editVet === s.id ? vetFormHTML(s) : vetInfoHTML(s)}</div>
+      ${tipCard(s, `${TIERS[ti].name} tip${vetBoost ? " · unlocked by your veteran hours" : s.rusty && s.importedMin >= 60 ? " · refresher mode" : ""}`, ti, curIdx, "cur", set[ti].length, false)}
       ${refPick ? tipCard(s, `Refresher · ${TIERS[refPick[0]].name}`, refPick[0], refPick[1], "ref", pool.length, true) : ""}
       ${next ? `<div class="lock">Next tip unlocks at ${next.name} (Lv ${next.min}), ${fmtXp(minFor(next.min) - tipXp)} XP away${vetBoost ? " counting your veteran hours" : ""}.</div>` : ""}
       ${tipLibrary(s, ti)}
@@ -7203,11 +7389,15 @@ details.cg-set > summary { cursor: pointer; }
       const asking = confirm && confirm.kind === "session" && confirm.id === x.id;
       return `<div class="log-row">
         <span class="when">${dayLabel(x.day)}</span>
-        <span class="what"><b>${esc(s ? s.name : "Removed skill")}</b> · <span class="num">${fmt(x.min)}</span>${x.type === "lesson" ? '<span class="tag lesson">Lesson</span>' : ""}${x.rested ? '<span class="tag rest">Rested</span>' : ""}${x.elixir ? `<span class="tag elix">Elixir +${x.elixir.pct}%</span>` : ""}${x.note ? ` <em>${esc(x.note)}</em>` : ""}</span>
+        <span class="what"><b>${esc(s ? s.name : "Removed skill")}</b> · <span class="num">${fmt(x.min)}</span>${x.type === "lesson" ? '<span class="tag lesson">Lesson</span>' : ""}${x.rested ? '<span class="tag rest">Rested</span>' : ""}${x.vet >= 1 ? '<span class="tag rest">Veteran</span>' : ""}${x.elixir ? `<span class="tag elix">Elixir +${x.elixir.pct}%</span>` : ""}${x.note ? ` <em>${esc(x.note)}</em>` : ""}</span>
         <span class="gold num">+${fmtXp(x.xp ?? x.min)} XP</span>
         ${asking
           ? `<span><button class="x" style="color:var(--danger)" data-act="delete-session" data-id="${x.id}">Delete</button><button class="x" data-act="cancel-confirm">Keep</button></span>`
-          : `<button class="x" data-act="ask-session" data-id="${x.id}" aria-label="Delete session">✕</button>`}
+          : `<span>${canEditSession(x) ? `<button class="x" data-act="trim-open" data-id="${x.id}" aria-label="Trim session" title="Trim or bank (for 24 hours)">Edit</button>` : ""}<button class="x" data-act="ask-session" data-id="${x.id}" aria-label="Delete session">✕</button></span>`}
+        ${confirm && confirm.kind === "trim" && confirm.id === x.id && canEditSession(x) ? `<div class="sess-edit">
+          <label for="trim-min">Keep</label><input class="input num" id="trim-min" type="number" min="1" max="${x.min - 1}" inputmode="numeric" value="${Math.min(x.min - 1, 60)}"><span>of ${x.min} min</span>
+          <label class="vet-check"><input type="checkbox" id="trim-bank" checked> Bank the rest to ${esc(s ? s.name : "")}'s Veteran Reserve</label>
+          <button class="btn small primary" data-act="trim-save" data-id="${x.id}">Save</button><button class="btn small ghost" data-act="cancel-confirm">Cancel</button></div>` : ""}
       </div>`;
     }).join("");
   }
@@ -7223,7 +7413,8 @@ details.cg-set > summary { cursor: pointer; }
           <li>Rested XP: each day off adds 30 minutes of double XP, up to 3 hours. No streaks, and nothing earned is ever taken away.</li>
           <li>Real hours show separately from XP. Milestones count real hours logged in the app.</li>
           <li>Everyone starts at Lv 0 and levels only from time logged here.</li>
-          <li>Veteran hours (practice before Level UP) earn a badge: Bronze from 1 hour, Silver 50, Gold 250, Platinum 1,000, Diamond 5,000. They never add XP, levels, keys or gear. Editable anytime.</li>
+          <li>Veteran hours (practice before Level UP, honor system) earn a badge (Dabbler, Beginner, Intermediate, Advanced, Expert, Master, Lifelong) and fill that skill's Veteran Reserve: bonus XP your practice here spends. It pays +50% under 500 hours, +100% up to 2,000 and +200% beyond, until the reserve holds nothing more (it counts up to 10,000 hours). It never skips practice: no XP without logged time, and it never counts toward hours, keys, quests or milestones. It stacks with rested XP and elixirs.</li>
+          <li>Timers ask "Still practicing?" after 3 hours and pause themselves if nobody answers within 15 minutes. Sessions of an hour or more can be trimmed before saving, and any session can be trimmed for 24 hours after. Trimmed time can be dropped or banked to the Veteran Reserve.</li>
           <li>Each minute earns 1 key shard; 10 shards make a key (up to 15 a day). Keys open dungeon, cave and boss fights, which earn gold for gear.</li>
           <li>Past Lv 100, every 60,000 XP (1,000 solo hours) earns a mastery star. Legend is 600,000 XP.</li>
           <li>Categories organize skills; each skill levels on its own.</li>
@@ -7240,7 +7431,9 @@ details.cg-set > summary { cursor: pointer; }
   // ---------- Skill picker (shared by onboarding and Add skill) ----------
   const EG = { science: "Geology", instrument: "Harmonica", language: "Tagalog", health: "Pilates", cooking: "Sourdough", trade: "Masonry", art: "Printmaking", tech: "Data science", study: "Philosophy", life: "Meal planning", outdoors: "Rock hounding" };
   let browseCat = "instrument";
-  let addSel = null, addPrior = "";
+  let addSel = null, addPrior = "", addRusty = false;
+  // A simple tier picker for onboarding and Add skill: the value is the bottom of the tier, in hours.
+  const vetSelectOpts = cur => `<option value="">No past experience</option>` + VET_TIERS.map(t => `<option value="${t.h}" ${String(cur) === String(t.h) ? "selected" : ""}>${t.name} · ${t.h.toLocaleString()}${t.max > 10000 ? "+" : "–" + t.max.toLocaleString()} h</option>`).join("");
 
   function pickerHTML(multi) {
     const c = catById(browseCat);
@@ -7272,8 +7465,8 @@ details.cg-set > summary { cursor: pointer; }
         <div class="field"><label for="ob-name">Hero name</label><input class="input" id="ob-name" maxlength="30" placeholder="e.g. Bruno the Bold" value="${esc(state.heroName)}"></div>
         ${pickerHTML(true)}
         ${pick.size ? `<div class="field"><span class="lbl">Your skills · veteran hours before today (optional)</span>
-          <div class="picked">${[...pick.entries()].map(([n, v], i) => `<div class="picked-row"><span>${esc(n)} <small class="muted" style="font-weight:400">${esc(catById(v.catId).label)}</small></span><input class="input num" type="number" min="0" max="20000" inputmode="numeric" placeholder="0 hours" id="ob-prior-${i}" data-prior="${esc(n)}" value="${v.prior || ""}" aria-label="Veteran hours for ${esc(n)}"></div>`).join("")}</div>
-          <div class="hint">Veteran hours earn a badge for past experience, not XP. Skills start at Lv 0 and level from time logged here. Editable later.</div></div>` : ""}
+          <div class="picked">${[...pick.entries()].map(([n, v], i) => `<div class="picked-row"><span>${esc(n)} <small class="muted" style="font-weight:400">${esc(catById(v.catId).label)}</small></span><select class="input" id="ob-prior-${i}" data-prior="${esc(n)}" aria-label="Experience before today for ${esc(n)}">${vetSelectOpts(v.prior)}</select></div>`).join("")}</div>
+          <div class="hint">Honor system. Past experience fills a Veteran Reserve: bonus XP your practice here spends, so you climb faster without skipping practice. Skills start at Lv 0. Fine-tune hours or estimate them later in each skill.</div></div>` : ""}
         <div class="err" id="ob-err"></div>
         <div class="actions">
           <button class="btn primary" data-act="ob-start" ${pick.size ? "" : "disabled"}>Begin${pick.size ? ` with ${pick.size} skill${pick.size > 1 ? "s" : ""}` : ""}</button>
@@ -7285,14 +7478,15 @@ details.cg-set > summary { cursor: pointer; }
   function renderAdd() {
     const body = document.getElementById("add-body");
     body.innerHTML = pickerHTML(false) + (addSel
-      ? `<div class="field"><label for="add-prior">Veteran hours of ${esc(addSel.name)} (optional)</label>
-          <input class="input num" id="add-prior" type="number" min="0" max="20000" inputmode="numeric" placeholder="0" value="${esc(addPrior)}">
-          <div class="hint">Earns a Veteran badge, not XP. Your level starts at 0 and grows from time logged here. Editable later.</div></div>`
+      ? `<div class="field"><label for="add-prior">Experience with ${esc(addSel.name)} before today (optional)</label>
+          <select class="input" id="add-prior">${vetSelectOpts(addPrior)}</select>
+          <label class="vet-check"><input type="checkbox" id="add-rusty" ${addRusty ? "checked" : ""}> I used to do this, but it's been a while</label>
+          <div class="hint">Honor system. Past experience fills a Veteran Reserve of bonus XP that your practice here spends. Your level starts at 0. Fine-tune or estimate the hours later in the skill.</div></div>`
       : `<div class="hint">Pick a skill above, or add your own.</div>`);
   }
   function inPicker() { return dlgAdd.open ? "add" : "ob"; }
   function savePickerInputs() {
-    if (dlgAdd.open) { const el = document.getElementById("add-prior"); if (el) addPrior = el.value; }
+    if (dlgAdd.open) { const el = document.getElementById("add-prior"); if (el) addPrior = el.value; const r = document.getElementById("add-rusty"); if (r) addRusty = r.checked; }
     else { syncPriors(); keepName(); }
   }
   function rerenderPicker() { if (dlgAdd.open) renderAdd(); else renderOnboarding(); }
@@ -7343,6 +7537,46 @@ details.cg-set > summary { cursor: pointer; }
     logMinutes(document.getElementById("log-skill").value, min, daysAgo(logAgo), document.getElementById("log-note").value.trim(), logType);
   });
 
+  // ---------- Save-session review (v0.19) ----------
+  // Long timers get a quick check before saving: log all of it, or keep part and drop or bank the rest.
+  const dlgReview = document.getElementById("dlg-review");
+  let review = null;     // { skillId, type, total, startedAt }
+  function openReview(t, min) {
+    const s = skillById(t.skillId); if (!s) { state.timer = null; persist(); render(); return; }
+    review = { skillId: t.skillId, type: t.type, total: min, startedAt: t.startedAt };
+    const inp = document.getElementById("rv-min");
+    inp.max = min; inp.value = Math.min(min, MAX_ENTRY);
+    document.getElementById("rv-sub").textContent = `${s.name} · ${fmt(min)} on the timer${t.type === "lesson" ? " (lesson)" : ""}.`;
+    document.getElementById("rv-bank-text").textContent = `Bank the rest to ${s.name}'s Veteran Reserve`;
+    const opts = [[min, "All of it"], [60, "1h"], [120, "2h"], [180, "3h"]].filter(([m], i) => i === 0 || m < min);
+    document.getElementById("rv-quick").innerHTML = opts.map(([m, l]) => `<button type="button" class="chip" data-rvmin="${m}">${l}</button>`).join("");
+    document.getElementById("rv-err").textContent = "";
+    rvSync();
+    dlgReview.showModal();
+  }
+  function rvSync() {
+    if (!review) return;
+    const v = Math.round(+document.getElementById("rv-min").value || 0), cut = review.total - v;
+    document.getElementById("rv-bank-wrap").hidden = !(cut >= 1);
+    document.querySelectorAll("#rv-quick .chip").forEach(c => c.setAttribute("aria-pressed", +c.dataset.rvmin === v));
+  }
+  dlgReview.addEventListener("click", e => { const c = e.target.closest("[data-rvmin]"); if (c) { document.getElementById("rv-min").value = Math.min(+c.dataset.rvmin, MAX_ENTRY); rvSync(); } });
+  document.getElementById("rv-min").addEventListener("input", rvSync);
+  dlgReview.addEventListener("close", () => { review = null; });
+  document.getElementById("form-review").addEventListener("submit", e => {
+    e.preventDefault();
+    if (!review) { dlgReview.close(); return; }
+    const v = Math.round(+document.getElementById("rv-min").value || 0), err = document.getElementById("rv-err");
+    if (v < 1 || v > review.total) { err.textContent = `Log between 1 and ${review.total} minutes.`; return; }
+    if (v > MAX_ENTRY) { err.textContent = "One entry can be at most 12 hours (720 minutes)."; return; }
+    const r = review, cut = r.total - v, bank = cut >= 1 && document.getElementById("rv-bank").checked;
+    if (!state.timer || state.timer.startedAt !== r.startedAt) { dlgReview.close(); return; }
+    state.timer = null;
+    dlgReview.close();
+    logMinutes(r.skillId, v, dayKey(), "", r.type);
+    if (bank) { const s = skillById(r.skillId); bankMinutes(s, cut); toast(`${fmt(cut)} banked to your ${esc(s.name)} Veteran Reserve.`, "", 4000); persist(); render(); }
+  });
+
   // ---------- Tip suggestions and feedback ----------
   // Submissions go to a shared review box (the "submissions" collection) so the team can read them.
   // Without a connection they're kept with the hero so nothing is lost.
@@ -7365,7 +7599,7 @@ details.cg-set > summary { cursor: pointer; }
     document.getElementById("fb-kind-wrap").hidden = !!tipMode;
     document.getElementById("fb-tier-wrap").hidden = !tipMode;
     if (tipMode) {
-      const cur = tierIdx(lvFrom(Math.max(totalXp(fbSkill), fbSkill.importedMin || 0)));
+      const cur = tierIdx(lvFrom(tipXpOf(fbSkill)));
       document.getElementById("fb-tier").innerHTML = TIERS.map((t, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${t.name} (Lv ${t.min}+)</option>`).join("");
     }
     dlgFb.querySelectorAll("#fb-kind .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.kind === "idea"));
@@ -7401,7 +7635,7 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   function openAdd() {
-    addSel = null; addPrior = "";
+    addSel = null; addPrior = ""; addRusty = false;
     document.getElementById("add-err").textContent = "";
     dlgAdd.showModal();
     renderAdd();
@@ -7409,14 +7643,15 @@ details.cg-set > summary { cursor: pointer; }
   document.getElementById("form-add").addEventListener("submit", e => {
     e.preventDefault();
     const el = document.getElementById("add-prior"); if (el) addPrior = el.value;
+    const rb = document.getElementById("add-rusty"); if (rb) addRusty = rb.checked;
     const prior = +addPrior || 0;
     const err = document.getElementById("add-err");
     if (!addSel) { err.textContent = "Pick a skill or add your own first."; return; }
     if (state.skills.some(s => s.name.toLowerCase() === addSel.name.toLowerCase())) { err.textContent = `You already track ${addSel.name}.`; return; }
     if (prior < 0 || prior > 20000) { err.textContent = "Veteran hours must be between 0 and 20,000."; return; }
-    addSkill(addSel.name, addSel.catId, addSel.cat, addSel.tips, prior * 60, addSel.disc);
+    addSkill(addSel.name, addSel.catId, addSel.cat, addSel.tips, prior * 60, addSel.disc, addRusty);
     dlgAdd.close();
-    toast(`${esc(addSel.name)} added${prior >= 1 ? " with a Veteran badge" : ""}.`);
+    toast(`${esc(addSel.name)} added${prior >= 1 ? ` with ${fmtXp(prior * 60)} bonus XP in its Veteran Reserve` : ""}.`);
     persist(); render();
   });
   document.querySelectorAll("dialog [data-close]").forEach(b => b.addEventListener("click", () => b.closest("dialog").close()));
@@ -7425,7 +7660,7 @@ details.cg-set > summary { cursor: pointer; }
   function sampleState() {
     const s = blank();
     s.heroName = "Example hero";
-    const g = { id: "g", name: "Guitar", catId: "instrument", cat: "music", tips: "guitar", importedMin: 40 * 60, earnedMin: 0, earnedXp: 0, created: daysAgo(30) };
+    const g = { id: "g", name: "Guitar", catId: "instrument", cat: "music", tips: "guitar", importedMin: 300 * 60, vetReserve: 300 * 60 - 350, caughtUp: false, earnedMin: 0, earnedXp: 0, created: daysAgo(30) };
     const r = { id: "r", name: "Running", catId: "health", cat: "body", tips: "running", importedMin: 0, earnedMin: 0, earnedXp: 0, created: daysAgo(30) };
     const sp = { id: "sp", name: "Spanish", catId: "language", cat: "mind", tips: "language", importedMin: 0, earnedMin: 0, earnedXp: 0, created: daysAgo(20) };
     s.skills = [g, r, sp];
@@ -7452,6 +7687,7 @@ details.cg-set > summary { cursor: pointer; }
     const el = e.target;
     if (el.dataset && el.dataset.actChange === "ap-slot") { appearance().show[el.dataset.slot] = el.value; persist(); render(); }
     if (el.dataset && el.dataset.actChange === "prog-skill") { progSkill = el.value; render(); }
+    if (el.dataset && el.dataset.actChange === "vet-tier") vetTierChanged(+el.value);
     if (el.dataset && el.dataset.actChange === "skill-disc") {
       const s = skillById(el.dataset.id), d = DISCIPLINES[el.value];
       if (s && d) { s.disc = el.value; s.cat = d.path; persist(); render(); toast(`${esc(s.name)} now counts toward ${esc(PATHS[d.path].label)} · ${esc(d.label)}.`); }
@@ -7477,7 +7713,9 @@ details.cg-set > summary { cursor: pointer; }
       case "start-timer": openStart(id); break;
       case "start-now": if (!state.timer && skillById(id)) startTimer(id, b.dataset.type); break;
       case "start-go": dlgStart.close(); if (!state.timer && skillById(startFor)) startTimer(startFor, b.dataset.type); break;
-      case "stop-timer": stopTimer(); break;
+      case "stop-timer": stopTimer(true); break;
+      case "timer-yes": timerStillYes(); break;
+      case "timer-resume": timerResume(); break;
       case "ask-discard": confirm = { kind: "timer" }; render(); break;
       case "discard-timer": state.timer = null; confirm = null; toast("Session discarded."); persist(); render(); break;
       case "cancel-confirm": confirm = null; render(); break;
@@ -7487,6 +7725,14 @@ details.cg-set > summary { cursor: pointer; }
       case "ask-remove": confirm = { kind: "skill", id }; render(); break;
       case "remove-skill": confirm = null; removeSkill(id); break;
       case "ask-session": confirm = { kind: "session", id }; render(); break;
+      case "trim-open": confirm = { kind: "trim", id }; render(); { const el = document.getElementById("trim-min"); if (el) { el.focus(); el.select(); } } break;
+      case "trim-save": {
+        const el = document.getElementById("trim-min"), bk = document.getElementById("trim-bank");
+        const v = el ? Math.round(+el.value) : 0, x = state.sessions.find(y => y.id === id);
+        if (x && !(v >= 1 && v < x.min)) { toast(`Pick a length from 1 to ${x.min - 1} minutes.`); break; }
+        confirm = null;
+        trimSession(id, v, !!(bk && bk.checked)); break;
+      }
       case "delete-session": confirm = null; deleteSession(id); break;
       case "edit-name": editingName = true; render(); break;
       case "tab": tab = b.dataset.tab; if (tab !== "dungeons" && runView && runView.step >= 4) runView = null; try { localStorage.setItem("levelup.tab", tab); } catch (e) {} render(); if (window.matchMedia("(max-width: 820px)").matches) { const col = document.querySelector(".col"); if (col) col.scrollIntoView({ block: "start" }); } break;
@@ -7571,12 +7817,19 @@ details.cg-set > summary { cursor: pointer; }
       }
       case "vet-edit": editVet = id; render(); { const el = document.getElementById("vet-input"); if (el) el.focus(); } break;
       case "vet-cancel": editVet = null; render(); break;
+      case "vet-est": vetEstimate(); break;
       case "vet-save": {
-        const sk = skillById(id), el = document.getElementById("vet-input"), h = el ? +el.value || 0 : 0;
-        if (!sk) break;
-        if (h < 0 || h > 20000) { toast("Veteran hours must be between 0 and 20,000."); break; }
-        sk.importedMin = Math.round(h * 60); editVet = null;
-        toast(h >= 1 ? `${esc(sk.name)} veteran hours set to ${h.toLocaleString()}.` : `Veteran hours removed from ${esc(sk.name)}.`);
+        const sk = skillById(id); if (!sk) break;
+        const ti = +(document.getElementById("vet-tier") || {}).value, t = VET_TIERS[ti];
+        const el = document.getElementById("vet-input"), h = t ? Math.round(+el.value || 0) : 0;
+        if (t && (h < t.h || h > t.max)) { toast(`${t.name} is ${t.h.toLocaleString()} to ${t.max.toLocaleString()} hours. Pick another tier if yours is outside that.`); break; }
+        const before = vetLeft(sk);
+        setDeclared(sk, h * 60);
+        const rb = document.getElementById("vet-rusty"); sk.rusty = !!(rb && rb.checked);
+        if (sk.importedMin >= 600 && sk.earnedMin >= sk.importedMin) sk.caughtUp = true;
+        editVet = null;
+        const d = vetLeft(sk) - before;
+        toast(h >= 1 ? `${esc(sk.name)}: ${t.name} Veteran, ${h.toLocaleString()} h.${d >= 1 ? ` +${fmtXp(d)} bonus XP added to your reserve.` : d <= -1 ? ` ${fmtXp(-d)} unspent bonus XP removed.` : ""}` : `Veteran hours removed from ${esc(sk.name)}.`, "", 4500);
         persist(); render(); break;
       }
       case "sample": sample = true; state = sampleState(); setPill("Example, not saved"); render(); break;
@@ -7622,6 +7875,26 @@ details.cg-set > summary { cursor: pointer; }
   }
   let obName = "";
   function keepName() { const el = document.getElementById("ob-name"); if (el) { obName = el.value.trim(); state.heroName = obName; } }
+  function vetTierChanged(i) {
+    const t = VET_TIERS[i], row = document.getElementById("vet-hours-row"), inp = document.getElementById("vet-input"), rg = document.getElementById("vet-range");
+    if (!row || !inp) return;
+    row.hidden = !t; if (!t) return;
+    inp.min = t.h; inp.max = t.max; inp.value = t.h;            // the bottom of the tier by default
+    if (rg) rg.textContent = vetRangeText(t);
+  }
+  // Estimator: years x hours a week (48 weeks a year), minus years off. It can fill in the hours within
+  // the chosen tier, never above it. With no tier chosen it picks the tier the estimate falls in.
+  function vetEstimate() {
+    const v = id => Math.max(0, +(document.getElementById(id) || {}).value || 0);
+    const out = document.getElementById("est-out"), sel = document.getElementById("vet-tier"); if (!out || !sel) return;
+    const est = Math.round(Math.max(0, v("est-years") - v("est-off")) * 48 * v("est-week"));
+    if (est < 10) { out.textContent = `About ${est.toLocaleString()} hours. That's under the Dabbler range, so there's nothing to bring in yet.`; return; }
+    let ti = +sel.value;
+    if (!VET_TIERS[ti]) { ti = vetTierIdx(est); sel.value = ti; vetTierChanged(ti); }
+    const t = VET_TIERS[ti], use = Math.min(t.max, Math.max(t.h, est));
+    document.getElementById("vet-input").value = use;
+    out.textContent = `About ${est.toLocaleString()} hours.` + (est > t.max ? ` That's above ${t.name}, so it's capped at ${t.max.toLocaleString()}. Pick a higher tier if that's right.` : est < t.h ? ` That's below ${t.name}, so it's set to the bottom of the tier. Consider a lower tier.` : ` Filled in ${use.toLocaleString()} h.`);
+  }
   function syncPriors() { document.querySelectorAll("[data-prior]").forEach(el => { const v = pick.get(el.dataset.prior); if (v) v.prior = el.value; }); }
 
   document.addEventListener("keydown", e => {
