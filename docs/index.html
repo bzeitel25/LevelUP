@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-13.3",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-13.4",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -2841,8 +2841,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-13.3";
-  const APP_VERSION = "0.21.0";
+  const BUILD = "2026-10-13.4";
+  const APP_VERSION = "0.21.1";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -4400,7 +4400,7 @@ details.cg-set > summary { cursor: pointer; }
     const lunge = f - b.heroAtk < 3 ? [5, 9, 4][f - b.heroAtk] : 0;
     const hg = renderHero(heroLook({ frame: Math.floor(f / 2), pose: "idle" }));
     if (f - b.heroHit < 2) hg.forEach(r => r.forEach((v, x) => { if (v && v !== OUTLINE) r[x] = "#ffb0b0"; }));
-    const hx = 12 + lunge, hy = BGY - 38 + (b.phase === "fight" && f % 8 >= 4 ? -1 : 0);
+    const hx = 12 + lunge, hy = BGY - 38 - HERO_DROP + (b.phase === "fight" && f % 8 >= 4 ? -1 : 0);
     blit(c, hg, hx, hy, s);
     if (b.shield > 0) { c.strokeStyle = "#7ad0ff"; c.lineWidth = s * 2; c.globalAlpha = 0.7 + 0.3 * Math.sin(f / 2); c.beginPath(); c.ellipse((hx + 16) * s, (hy + 21) * s, 20 * s, 24 * s, 0, 0, Math.PI * 2); c.stroke(); c.globalAlpha = 1; }
     petPaintFight(c, b, f, s);
@@ -4435,7 +4435,7 @@ details.cg-set > summary { cursor: pointer; }
     const m = MONSTERS[rv.d.id] || MONSTERS.cellar, mg = monsterGrid(m, false), { mw, mh, mx, my } = monsterPos(rv.d, mg, f, 0);
     if (rv.win) {
       const hg = renderHero(heroLook({ frame: f, pose: "cheer" }));
-      blit(c, hg, 12, BGY - 38, s);
+      blit(c, hg, 12, BGY - 38 - HERO_DROP, s);
       if (p < 3) { c.fillStyle = "#e9e4d8"; [[0, 0], [6, -4], [12, 2], [4, 6], [16, -2]].forEach(([dx, dy]) => { const r = 4 + p * 3; c.fillRect((mx + 6 + dx - r / 2) * s, (my + mh / 2 + dy - r / 2) * s, r * s, r * s); }); }
       else {
         const cx = BW - 44, cy = BGY - 13;
@@ -4449,7 +4449,7 @@ details.cg-set > summary { cursor: pointer; }
     } else {
       blit(c, mg, mx, my, s, 1, 2);
       const hx = 12 - Math.min(30, p * 4), alpha = Math.max(0, 1 - p / 8);
-      blit(c, renderHero(heroLook({ frame: f, pose: "idle" })), hx, BGY - 38, s, alpha);
+      blit(c, renderHero(heroLook({ frame: f, pose: "idle" })), hx, BGY - 38 - HERO_DROP, s, alpha);
       bigText(c, "RETREAT!", 18);
     }
     petPaintOutro(c, rv, f, s);
@@ -6040,7 +6040,8 @@ details.cg-set > summary { cursor: pointer; }
       if ((k === "H" || k === "h" || k === "j") && below === "S") { if (y + 1 < 12 + by) put(g, x, y + 1, tone(recol.S, -0.1)); break; }
     }
     if (pose === "cheer") { const wave = f % 6 < 3 ? 0 : -1; [CHEER_ARM, CHEER_ARM.map(([x, y, ch]) => [31 - x, y, ch])].forEach((arm, side) => drawPart(g, recol, TIER_PAL[0], { pts: arm.map(([x, y, ch]) => [x, y + (side ? wave : -1 - wave), ch]), outline: true }, 0, by)); }
-    layer("head"); layer("face"); layer("hands"); layer("front");
+    if (!hgOf(items.head)) layer("head");                   // hero-gear hats are drawn after the headroom shift below
+    layer("face"); layer("hands"); layer("front");
     // held item (or training prop), with a little motion while training
     const held = pose === "cheer" ? null : (look.prop || items.hand);
     const heldHg = !look.prop && hgOf(held);
@@ -6081,7 +6082,12 @@ details.cg-set > summary { cursor: pointer; }
       if (act === "brew") { const k = f % 4; fx(22, 19 - k, FIXED.F); fx(24, 18 - ((k + 2) % 4), FIXED.F); if (k === 3) fx(23, 14, FIXED.W); }
       if (np && np.fx) np.fx(g, f, by, recol);
     }
-    hgAll("fx");
+    // Headroom: the hero moves down 2 rows so hats can sit on top of the hair (hats are drawn in the shifted rows).
+    // Everything above is drawn first, then hats, then the held item again so it stays in front of a wide brim.
+    for (let k = 0; k < HERO_DROP; k++) { g.pop(); g.unshift(new Array(AV_W).fill(null)); keys.pop(); keys.unshift(new Array(AV_W).fill(null)); }
+    const hatHg = hgOf(items.head);
+    if (hatHg) { hgPut(g, hatHg.layers.main, by); if (heldHg) { hgPut(g, heldHg.layers.top, by + HERO_DROP, keys); if (heldHg.grip) [[22, 27], [23, 27], [22, 28], [23, 28]].forEach(([x, y]) => put(g, x, y + by + HERO_DROP, recol.U)); } }
+    Object.keys(items).forEach(sl => { const hb = hgOf(items[sl]); if (hb) hgPut(g, hb.layers.fx, sl === "head" ? by : by + HERO_DROP); });
     // legendary sparkle
     const legend = Object.values(items).some(it => it && it.tier === 5);
     if (legend) [[3, 5], [28, 18], [4, 27]].forEach(([x, y], i) => { if ((f + i) % 3 !== 2) { put(g, x, y, FIXED.Y); put(g, x + 1, y + 1, FIXED.W); } });
@@ -8563,6 +8569,7 @@ details.cg-set > summary { cursor: pointer; }
   // Hero landmarks: head x5-26 y5-20 (hair from y3), eyes y12-15 at x9-11 and x20-22, torso x8-23 y22-29,
   // fists at x8-9 and x22-23 on y27-28, belt y29, legs y30-33, feet y34-35.
   const HG = {};
+  const HERO_DROP = 2;                                     // rows of headroom added above the hero for hats
   const HG_W = AV_W, HG_H = AV_H;
   function hgCtx() {
     const layers = {}, overs = {};
@@ -8648,110 +8655,114 @@ details.cg-set > summary { cursor: pointer; }
   const hgBlit = (g, cells, dx = 0, dy = 0) => { if (cells) cells.forEach(([x, y, c]) => put(g, x + dx, y + dy, c)); };
   // --- Hero gear: head, face, neck ---
   const hgSide = (rows) => rows.map(r => r.split("").reverse().join(""));
+  // Hats are drawn after the hero drops 2 rows for headroom, so they use shifted rows: hair top y5, hair edge widest
+  // at y10 (x4-27), forehead fringe from y10, eyes y14-17. Crowns start at y3 so a bob of 2 still keeps the outline.
   HG.headband = { slot: "head", mini: "band", draw(d, v) {
-    d.r(6, 8, 20, 2, "A").p(5, 9, "A").p(26, 9, "A");
-    if (v.stripe) d.r(7, 8, 18, 1, v.stripe);
-    if (v.terry) for (let x = 7; x < 25; x += 2) d.p(x, 9, "L");
-    if (v.tails) d.t(26, 9, ["AA.", "AAA", ".AA", "..A"]);
+    d.r(6, 10, 20, 2, "A").p(5, 11, "A").p(26, 11, "A");
+    if (v.stripe) d.r(7, 10, 18, 1, v.stripe);
+    if (v.terry) for (let x = 7; x < 25; x += 2) d.p(x, 11, "L");
+    if (v.tails) d.t(26, 11, ["AA.", "AAA", ".AA", "..A"]);
   } };
-  HG.cap = { slot: "head", mini: "hat", draw(d, v) {
-    d.t(7, 2, ["....AAAAAAAA....", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA"]);
-    d.p(15, 1, "J").p(16, 1, "J").l(11, 3, 10, 7, "a").l(20, 3, 21, 7, "a");
-    d.r(9, 8, 14, 2, "J").r(10, 9, 12, 1, "I");
+  HG.cap = { slot: "head", mini: "hat", draw(d) {
+    d.t(8, 3, ["....AAAAAAAA....", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA"]);
+    d.l(12, 4, 11, 8, "a").l(19, 4, 20, 8, "a").p(15, 3, "J").p(16, 3, "J");
+    d.r(7, 9, 18, 1, "J").r(9, 10, 14, 1, "I");
   } };
-  HG.wizhat = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
-    d.t(9, 0, ["..........AAA.", ".......AAAAA..", "......AAAAA...", ".....AAAAAA...", "....AAAAAAA...", "...AAAAAAAAA..", "..AAAAAAAAAAA.", "..JJJJJJJJJJJ."]);
-    d.e(15.5, 8.6, 13.4, 1.6, "A").r(11, 7, 11, 1, "J");
-    d.ps([[15, 3], [18, 5], [13, 6]], v.star || "g");
+  HG.wizhat = { slot: "head", mini: "tall", draw(d, v) {
+    d.t(10, 3, [".........AAA", "......AAAAA.", "....AAAAAAA.", "...AAAAAAA..", "..AAAAAAAAA.", "..JJJJJJJJJJ"]);
+    d.e(15.5, 9, 12.6, 1.2, "A").r(5, 9, 22, 1, "a");
+    d.ps([[15, 5], [18, 6], [13, 7]], v.star || "g");
   } };
-  HG.tophat = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
-    d.r(9, 0, 14, 7, "A").r(9, 5, 14, 2, "J").r(9, 0, 14, 1, "L");
-    d.e(15.5, 7.8, 11.4, 1.2, "A").r(5, 7, 22, 1, "a");
-    if (v.card) d.r(19, 2, 2, 3, "p");
+  HG.tophat = { slot: "head", mini: "tall", draw(d, v) {
+    d.r(10, 3, 12, 6, "A").r(10, 7, 12, 1, "J").r(10, 3, 12, 1, "L");
+    d.e(15.5, 9, 10.6, 0.9, "A").r(6, 9, 20, 1, "a");
+    if (v.card) d.r(18, 4, 2, 3, "p");
   } };
   HG.beret = { slot: "head", mini: "hat", draw(d, v) {
-    d.t(5, 2, ["......AAAAAAAAAA......", "...AAAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaaaaaaaa."]);
-    d.r(12, 1, 2, 1, "a");
-    if (v.pin) d.p(22, 4, "J");
+    d.t(6, 4, [".....AAAAAAAAAA.....", "..AAAAAAAAAAAAAAAA..", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaaaaaa."]).r(12, 3, 2, 1, "a");
+    if (v.pin) d.p(22, 6, "J");
   } };
   HG.strawhat = { slot: "head", mini: "wide", draw(d, v) {
-    d.e(15.5, 8.4, 15, 2.2, "A").t(9, 1, ["...AAAAAAAA...", ".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "JJJJJJJJJJJJJJ", "JJJJJJJJJJJJJJ"]);
-    for (let x = 2; x < 30; x += 3) d.p(x, 9, "a");
-    if (v.flower) d.t(20, 5, ["r.", "rr"]);
+    d.t(10, 3, ["..AAAAAAAA..", ".AAAAAAAAAA.", "AAAAAAAAAAAA", "AAAAAAAAAAAA", "JJJJJJJJJJJJ", "JJJJJJJJJJJJ"]);
+    d.e(15.5, 9.4, 14.6, 1.4, "A");
+    for (let x = 3; x < 29; x += 3) d.p(x, 9, "a");
+    for (let x = 12; x < 21; x += 3) d.p(x, 5, "a");
+    if (v.flower) d.t(19, 6, ["r.", "rr"]);
   } };
-  HG.featcap = { shift: [0, 1], slot: "head", mini: "hat", draw(d, v) {
-    d.t(7, 2, ["....AAAAAAAA....", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "JJJJJJJJJJJJJJJJ"]);
-    d.l(20, 5, 28, 1, v.feather || "p", 2).l(21, 5, 27, 2, "P");
+  HG.featcap = { slot: "head", mini: "hat", draw(d, v) {
+    d.t(8, 4, ["....AAAAAAAA....", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "JJJJJJJJJJJJJJJJ"]);
+    d.l(20, 6, 27, 3, v.feather || "p", 2).l(21, 6, 26, 4, "P");
   } };
-  HG.nightcap = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
-    d.t(7, 0, [".......AAAAA......", ".....AAAAAAAAA....", "...AAAAAAAAAAAAA..", "..AAAAAAAAAAAAAAA.", ".AAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA.A", "AAAAAAAAAAAAAAAA..", "pppppppppppppppp..", "pppppppppppppppp.."]);
-    d.l(24, 4, 26, 9, "A", 2).e(27, 11, 1.6, 1.6, "p");
-    d.ps([[11, 3], [15, 2], [19, 4], [13, 5]], v.star || "y");
+  HG.nightcap = { slot: "head", mini: "tall", draw(d, v) {
+    d.t(8, 3, [".....AAAAAA.....", "..AAAAAAAAAAAAA.", ".AAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "pppppppppppppppp", "pppppppppppppppp"]);
+    d.l(23, 4, 26, 9, "A", 2).e(26.6, 11, 1.4, 1.4, "p");
+    d.ps([[11, 5], [15, 4], [19, 6], [13, 7]], v.star || "y");
   } };
-  HG.toque = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
-    d.e(10, 3, 3.6, 3, "p").e(15.5, 2.4, 4.4, 2.8, "p").e(21, 3, 3.6, 3, "p").r(7, 3, 18, 4, "p");
-    d.l(12, 2, 12, 5, "P").l(19, 2, 19, 5, "P");
-    d.r(8, 6, 16, 3, v.band || "p").r(8, 6, 16, 1, "P");
-    if (v.trim) d.r(8, 7, 16, 1, "J");
+  HG.toque = { slot: "head", mini: "tall", draw(d, v) {
+    d.e(10.6, 5, 3, 2, "p").e(15.5, 4.6, 3.6, 1.8, "p").e(20.4, 5, 3, 2, "p").r(8, 5, 16, 3, "p");
+    d.l(12, 4, 12, 7, "P").l(19, 4, 19, 7, "P");
+    d.r(9, 8, 14, 3, v.band || "p").r(9, 8, 14, 1, "P");
+    if (v.trim) d.r(9, 9, 14, 1, "J");
   } };
   HG.helm = { slot: "head", mini: "helm", draw(d, v) {
     const M = v.metal || "s", D = M === "s" ? "S" : "a";
-    d.t(5, 2, ["......MMMMMMMMMM......", "....MMMMMMMMMMMMMM....", "...MMMMMMMMMMMMMMMM...", "..MMMMMMMMMMMMMMMMMM..", ".MMMMMMMMMMMMMMMMMMMM.", "MMMMMMMMMMMMMMMMMMMMMM",
+    d.t(5, 3, ["......MMMMMMMMMM......", "....MMMMMMMMMMMMMM....", "..MMMMMMMMMMMMMMMMMM..", ".MMMMMMMMMMMMMMMMMMMM.", "MMMMMMMMMMMMMMMMMMMMMM", "MMMMMMMMMMMMMMMMMMMMMM",
       "MMMMMMMMMMMMMMMMMMMMMM", "MMMMMMMMMMMMMMMMMMMMMM", "MMMMMMMMMMMMMMMMMMMMMM", "MMMM..............MMMM", "MMM................MMM", "MMM................MMM", "MMM................MMM", "MMM................MMM", ".MM................MM."].map(r => r.replace(/M/g, M)));
-    d.r(5, 9, 22, 1, D);
-    if (v.visor) { d.r(8, 10, 16, 7, M).r(9, 12, 6, 1, "K").r(17, 12, 6, 1, "K"); for (let x = 10; x < 22; x += 2) d.p(x, 15, "K"); d.r(15, 10, 2, 7, D); }
-    else d.r(15, 10, 2, 5, M).p(15, 14, D);
-    d.l(15, 3, 15, 8, M === "s" ? "i" : "L");
-    d.ps([[7, 6], [24, 6], [6, 12], [25, 12]], D);
-    if (v.trim) d.r(5, 8, 22, 1, "J");
-    if (v.horns) d.t(1, 1, ["p....", "pp...", ".pp..", ".ppp.", "..ppp"]).t(26, 1, ["....p", "...pp", "..pp.", ".ppp.", "ppp.."]);
-    if (v.plume) d.t(11, 1, ["..JJJJJ...", ".JJJJJJJJ.", "JJ......JJ"]);
-    if (v.wings) d.t(1, 3, ["p...", "pp..", "ppp.", ".ppp"]).t(27, 3, ["...p", "..pp", ".ppp", "ppp."]);
-    if (v.crest) d.r(14, 1, 4, 2, "J").r(10, 1, 12, 1, "J");
+    d.r(5, 11, 22, 1, D);
+    if (v.visor) { d.r(8, 12, 16, 6, M).r(9, 14, 6, 1, "K").r(17, 14, 6, 1, "K"); for (let x = 10; x < 22; x += 2) d.p(x, 16, "K"); d.r(15, 12, 2, 6, D); }
+    else d.r(15, 12, 2, 4, M).p(15, 15, D);
+    d.l(15, 4, 15, 10, M === "s" ? "i" : "L");
+    d.ps([[7, 8], [24, 8], [6, 14], [25, 14]], D);
+    if (v.trim) d.r(5, 10, 22, 1, "J");
+    if (v.horns) d.t(1, 3, ["p...", "pp..", ".pp.", ".ppp", "..pp"]).t(27, 3, ["...p", "..pp", ".pp.", "ppp.", "pp.."]);
+    if (v.plume) { d.t(10, 3, ["...JJJJJ...", ".JJJJJJJJJ.", "JJ.......JJ"]); }
+    if (v.wings) d.t(1, 5, ["p...", "pp..", "ppp.", ".ppp"]).t(27, 5, ["...p", "..pp", ".ppp", "ppp."]);
+    if (v.crest) d.r(14, 3, 4, 2, "J").r(9, 3, 14, 1, "J");
   } };
   HG.veil = { slot: "head", mini: "wide", draw(d, v) {
-    d.t(9, 1, ["..AAAAAAAAAA..", ".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA"]).e(15.5, 6, 13, 1.4, "A").r(4, 5, 24, 1, "J");
+    d.t(10, 3, ["..AAAAAAAA..", ".AAAAAAAAAA.", "AAAAAAAAAAAA", "AAAAAAAAAAAA"]).e(15.5, 7.6, 12.6, 1, "A").r(4, 7, 24, 1, "J");
     d.to("fx");
-    for (let y = 8; y < 21; y += 2) for (let x = 5 + (y % 4 ? 1 : 0); x < 27; x += 2) d.p(x, y, v.mesh === "k" ? "#2e314240" : "#ffffff55");
-    for (let y = 8; y < 21; y++) { d.p(4, y, v.mesh === "k" ? "#2e314299" : "#ffffffaa"); d.p(27, y, v.mesh === "k" ? "#2e314299" : "#ffffffaa"); }
-    d.r(4, 7, 24, 1, v.mesh === "k" ? "#2e3142cc" : "#ffffffd0");
-    if (v.stars) [[7, 12], [24, 10], [10, 18], [21, 17]].forEach(([x, y]) => d.p(x, y, "y"));
+    for (let y = 10; y < 23; y += 2) for (let x = 5 + (y % 4 ? 1 : 0); x < 27; x += 2) d.p(x, y, v.mesh === "k" ? "#2e314240" : "#ffffff55");
+    for (let y = 9; y < 23; y++) { d.p(4, y, v.mesh === "k" ? "#2e314299" : "#ffffffaa"); d.p(27, y, v.mesh === "k" ? "#2e314299" : "#ffffffaa"); }
+    d.r(4, 9, 24, 1, v.mesh === "k" ? "#2e3142cc" : "#ffffffd0");
+    if (v.stars) [[7, 14], [24, 12], [10, 20], [21, 19]].forEach(([x, y]) => d.p(x, y, "y"));
   } };
+  // Circlets rest on the hair above the forehead (y 9), with their ornaments rising above.
   HG.circlet = { slot: "head", mini: "band", draw(d, v) {
-    d.r(6, 8, 20, 1, "A").p(5, 9, "A").p(26, 9, "A");
+    d.r(7, 9, 18, 1, "A").p(6, 10, "A").p(25, 10, "A");
     const gem = v.gem || "J";
-    if (v.kind === "pearl") { for (let x = 7; x < 25; x += 3) d.p(x, 8, "Z"); d.e(15.5, 8, 1.2, 1.2, "Z"); return; }
-    if (v.kind === "leaf") [[6, 7], [9, 6], [12, 6], [19, 6], [22, 6], [25, 7]].forEach(([x, y]) => d.t(x, y, ["6", "E"]));
-    if (v.kind === "candle") [[10, 2], [15, 1], [21, 2]].forEach(([x, y]) => { d.r(x, y + 3, 2, 8 - y - 3, "p"); d.o(x, y, [".y", "yY", "yo"]); });
-    if (v.kind === "antler") d.t(2, 1, [".n.n..", "..nnn.", "...nnn", "....nn"]).t(24, 1, ["..n.n.", ".nnn..", "nnn...", "nn...."]);
-    if (v.kind === "quill") d.l(24, 8, 28, 1, "p", 2).l(25, 7, 27, 2, "P");
-    if (v.kind === "stars") [[9, 6], [15, 4], [22, 6]].forEach(([x, y]) => d.t(x - 1, y - 1, [".g.", "ggg", ".g."]));
-    if (v.kind === "halo") { d.e(15.5, 2, 6, 0.8, "g").e(15.5, 2, 4.4, 0.2, "_"); }
-    d.t(14, 7, [".GG.", "G" + gem + gem + "G", ".GG."]);
+    if (v.kind === "pearl") { for (let x = 8; x < 24; x += 3) d.p(x, 9, "Z"); d.e(15.5, 8.6, 1.2, 1.2, "Z"); return; }
+    if (v.kind === "leaf") [[7, 7], [10, 6], [13, 6], [18, 6], [21, 6], [24, 7]].forEach(([x, y]) => d.t(x, y, ["6", "E"]));
+    if (v.kind === "candle") [[10, 4], [15, 3], [21, 4]].forEach(([x, y]) => { d.r(x, y + 3, 2, 9 - y - 3, "p"); d.o(x, y, [".y", "yY", "yo"]); });
+    if (v.kind === "antler") d.t(3, 3, [".n.n..", "..nnn.", "...nnn", "....nn"]).t(23, 3, ["..n.n.", ".nnn..", "nnn...", "nn...."]);
+    if (v.kind === "quill") d.l(23, 9, 27, 3, "p", 2).l(24, 8, 26, 4, "P");
+    if (v.kind === "stars") [[10, 7], [15, 5], [21, 7]].forEach(([x, y]) => d.t(x - 1, y - 1, [".g.", "ggg", ".g."]));
+    if (v.kind === "halo") { d.e(15.5, 4, 6, 0.8, "g").e(15.5, 4, 4.4, 0.2, "_"); }
+    d.t(14, 8, [".GG.", "G" + gem + gem + "G", ".GG."]);
   } };
-  HG.crown = { shift: [0, 1], slot: "head", mini: "crown", draw(d, v) {
-    d.t(8, 0, ["g.....g......g..", "gg...ggg....gg..", "ggg.ggggg..ggg..", "ggggggggggggggg.", "ggggggggggggggg.", "GGGGGGGGGGGGGGG."].map(r => r.slice(0, 16)));
-    d.r(8, 3, 16, 3, "g").r(8, 6, 16, 1, "G");
-    d.p(8, 0, "Z").p(15, 0, "Z").p(23, 0, "Z").l(23, 0, 23, 3, "g").l(22, 1, 22, 3, "g");
-    d.t(14, 3, ["rr", "rr"]).p(10, 4, "b").p(20, 4, "e");
+  HG.crown = { slot: "head", mini: "crown", draw(d) {
+    d.t(9, 3, ["g.....gg.....g", "gg...gggg...gg", "ggg.gggggg.ggg", "gggggggggggggg", "gggggggggggggg", "gggggggggggggg", "GGGGGGGGGGGGGG"]);
+    d.p(9, 3, "Z").p(22, 3, "Z").p(15, 3, "Z").p(16, 3, "Z");
+    d.t(15, 6, ["rr", "rr"]).p(11, 7, "b").p(20, 7, "e");
   } };
-  HG.wreath = { slot: "head", mini: "band", draw(d, v) {
-    [[5, 11], [5, 8], [7, 5], [10, 3], [13, 2]].forEach(([x, y]) => d.t(x, y, ["6.", "66"]));
-    [[25, 11], [25, 8], [23, 5], [20, 3], [17, 2]].forEach(([x, y]) => d.t(x, y, [".6", "66"]));
-    d.l(6, 12, 14, 3, "E").l(26, 12, 18, 3, "E");
+  HG.wreath = { slot: "head", mini: "band", draw(d) {
+    [[5, 13], [5, 10], [7, 7], [10, 5], [13, 4]].forEach(([x, y]) => d.t(x, y, ["6.", "66"]));
+    [[25, 13], [25, 10], [23, 7], [20, 5], [17, 4]].forEach(([x, y]) => d.t(x, y, [".6", "66"]));
+    d.l(6, 14, 14, 5, "E").l(26, 14, 18, 5, "E");
   } };
-  HG.lotus = { slot: "head", mini: "crown", draw(d, v) {
-    d.r(6, 8, 20, 1, "e").p(5, 9, "e").p(26, 9, "e");
-    d.t(10, 1, ["......dd......", ".....dddd.....", "..d..dddd..d..", ".dddddddddddd.", ".dddddddddddd.", "..yyyyyyyyyy.."]);
-    d.ps([[15, 2], [16, 3], [12, 4], [19, 4]], "D");
+  HG.lotus = { slot: "head", mini: "crown", draw(d) {
+    d.r(7, 9, 18, 1, "e").p(6, 10, "e").p(25, 10, "e");
+    d.t(10, 3, ["......dd......", ".....dddd.....", "..d..dddd..d..", ".dddddddddddd.", ".dddddddddddd.", "..yyyyyyyyyy.."]);
+    d.ps([[15, 4], [16, 5], [12, 6], [19, 6]], "D");
   } };
-  HG.headphones = { slot: "head", mini: "band", draw(d, v) {
-    d.t(5, 1, ["....kkkkkkkkkkkkkk....", "..kkk............kkk..", ".kk................kk.", "kk..................kk", "k....................k", "k....................k"]);
-    d.r(9, 1, 14, 1, "A");
-    d.t(2, 9, ["kkk", "kAA", "kAA", "kAA", "kAA", "kkk"]).t(27, 9, ["kkk", "AAk", "AAk", "AAk", "AAk", "kkk"]);
+  HG.headphones = { slot: "head", mini: "band", draw(d) {
+    d.t(5, 3, ["....kkkkkkkkkkkkkk....", "..kkk............kkk..", ".kk................kk.", "kk..................kk", "k....................k", "k....................k", "k....................k", "k....................k"]);
+    d.r(9, 3, 14, 1, "A");
+    d.t(2, 11, ["kkk", "kAA", "kAA", "kAA", "kAA", "kkk"]).t(27, 11, ["kkk", "AAk", "AAk", "AAk", "AAk", "kkk"]);
   } };
+  HG.turntable = HG.headphones;
   HG.earpiece = { slot: "head", mini: "", draw(d) {
-    d.t(25, 12, ["AA", "AA", "A."]).o(28, 10, ["C.", ".C", ".C", "C."]);
+    d.t(25, 14, ["AA", "AA", "A."]).o(28, 12, ["C.", ".C", ".C", "C."]);
   } };
   // FACE (eyes are 3x4 at x 9-11 and x 20-22, rows 12-15)
   HG.goggles = { slot: "face", mini: "eyes", draw(d, v) {
@@ -9094,7 +9105,7 @@ details.cg-set > summary { cursor: pointer; }
   } };
   HG.telescope = { slot: "back", mini: "inst", draw(d) { d.to("back").l(2, 34, 28, 3, "A", 3).l(3, 34, 28, 4, "L").r(26, 1, 4, 2, "C").l(9, 26, 11, 28, "g", 2); hgStrap(d); } };
   HG.easel = { shift: [1, 0], slot: "back", mini: "pack", draw(d) {
-    d.to("back").l(2, 38, 7, 2, "w").l(10, 38, 7, 2, "w").r(0, 2, 10, 9, "p").r(1, 6, 8, 4, "6").e(3.4, 4.6, 1.6, 1.4, "c").p(7, 3, "y");
+    d.to("back").l(2, 36, 7, 2, "w").l(10, 36, 7, 2, "w").r(0, 2, 10, 9, "p").r(1, 6, 8, 4, "6").e(3.4, 4.6, 1.6, 1.4, "c").p(7, 3, "y");
   } };
   HG.mat = { slot: "back", mini: "pack", draw(d) { d.to("back").r(2, 19, 28, 4, "A").r(2, 19, 28, 1, "L").r(1, 20, 1, 2, "a").r(30, 20, 1, 2, "a").p(2, 21, "a").p(29, 21, "a"); } };
   HG.barbell = { slot: "back", mini: "pack", draw(d) { d.to("back").r(1, 19, 30, 2, "s").r(1, 13, 3, 12, "A").r(28, 13, 3, 12, "A").r(4, 15, 2, 8, "A").r(26, 15, 2, 8, "A"); } };
@@ -9156,13 +9167,13 @@ details.cg-set > summary { cursor: pointer; }
   }, { mini: "pole" });
   HG.mace = HAND((d, v) => { hgPole(d, 31, 13, "n"); d.e(28.4, 10, 1.8, 2, v.metal || "s").ps([[28, 7], [28, 13]], v.metal || "s").p(28, 10, "J"); });
   HG.greataxe = HAND(d => { hgPole(d, 34, 7, "n"); d.t(27, 4, [".sss", "ssss", "ssss", "ssss", "ssss", ".sss"]).r(28, 6, 1, 2, "J"); });
-  HG.trident = HAND(d => { hgPole(d, 36, 8, "n"); d.t(26, 1, ["g.g.g", "g.g.g", "g.g.g", "ggggg", "..g.."]).ps([[26, 0], [28, 0], [30, 0]], "h"); });
+  HG.trident = HAND(d => { hgPole(d, 35, 8, "n"); d.t(26, 1, ["g.g.g", "g.g.g", "g.g.g", "ggggg", "..g.."]).ps([[26, 0], [28, 0], [30, 0]], "h"); });
   HG.trident.shift = [0, 1];
   HG.bow = HAND((d, v) => {
-    const W = v.wood || "w", pts = [[24, 17], [26, 19], [27, 22], [28, 26], [28, 29], [27, 33], [26, 36], [24, 38]];
+    const W = v.wood || "w", pts = [[24, 15], [26, 17], [27, 20], [28, 24], [28, 27], [27, 31], [26, 33], [24, 35]];
     for (let i = 0; i < pts.length - 1; i++) d.l(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], W);
-    d.l(24, 17, 24, 37, "p").r(27, 27, 1, 3, "n");
-    if (v.kind === "recurve") d.p(23, 16, W).p(23, 37, W);
+    d.l(24, 15, 24, 35, "p").r(27, 25, 1, 3, "n");
+    if (v.kind === "recurve") d.p(23, 14, W).p(23, 36, W);
   }, { mini: "bow" });
   HG.staff = HAND((d, v) => {
     const W = v.wood || "w", h = v.head || "orb";
@@ -9300,7 +9311,6 @@ details.cg-set > summary { cursor: pointer; }
   }, { slot: "off", mini: "shield", grip: false });
 
   HG.shield.shift = [1, 0];
-  HG.turntable = HG.headphones;
   HG.briefcase = HAND(d => { d.t(23, 27, ["..kkk..", ".k...k.", "AAAAAAA", "AAgAgAA", "aaaaaaa", "AAAAAAA", "aaaaaaa"]); }, { mini: "item" });
   HG.shawl = { slot: "neck", draw(d) { d.t(8, 21, ["AAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAA.", "..AAAAJAAJAAAA..", "...AAAAAAAAAA...", ".....AAJAAA.....", "......AAAA......", ".......JJ......."]); } };
   // ---------- Which hero look each item gets ----------

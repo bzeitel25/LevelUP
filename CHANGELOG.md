@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.21.1 — 2026-10-13 (build 2026-10-13.4)
+
+- **Hats sit on top of the head:** every hat, cap, helm, crown and circlet was redrawn to rest on the hair, with the brim above the fringe instead of on the forehead. Your hero stands 2 pixels lower in the frame to make room, so tall hats keep a full outline even mid-bounce.
+- Bows, easels and the trident were trimmed to stay clear of the sprite's bottom edge.
+
 ## v0.21.0 — 2026-10-13 (build 2026-10-13.3)
 
 Your hero wears what you own.
