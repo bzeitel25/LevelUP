@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.21.2 — 2026-10-13 (build 2026-10-13.5)
+
+- **Hats sit higher:** the wizard hat, chef's toque, night cap, top hat, straw hat, cap, feathered cap and bee veil were raised so their brims rest on top of the hair, not at the fringe. Your hero has one more row of headroom in its frame.
+- **Bigger wizard hat:** the pointed hat is taller, with a tip that droops to the side and a wider brim.
+- **Hats cover the hair:** hats, caps and helms hide the hair above their brim, so nothing pokes out behind them (hair below the brim still shows). A tall hat keeps your hero from bouncing out of frame, so it always sits cleanly on the head.
+
 ## v0.21.1 — 2026-10-13 (build 2026-10-13.4)
 
 - **Hats sit on top of the head:** every hat, cap, helm, crown and circlet was redrawn to rest on the hair, with the brim above the fringe instead of on the forehead. Your hero stands 2 pixels lower in the frame to make room, so tall hats keep a full outline even mid-bounce.
