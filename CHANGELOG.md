@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.21.0 — 2026-10-13 (build 2026-10-13.3)
+
+Your hero wears what you own.
+
+- **Every item now shows on your hero as itself:** all 255 skill items and 336 class pieces have their own wearable art, matching their new icons. A broadsword, kite shield, horned helm, wizard hat, chef's toque, archtop guitar or Mythic Axe looks like that thing on your hero, not a generic stand-in.
+- **New off-hand slot:** shields, spell books, journals, lanterns and similar items go in your hero's other hand, so you can carry a sword and a shield, or a staff and a tome. Pick it under Off hand in Gear on your hero.
+- **Clean layering:** cloaks, packs and instruments sit behind your hero. Straps cross the chest. Weapons and tools are held in the hand and angled so they never cover the face. Each piece has its own full outline, and nothing gets cut off at the edge of the sprite.
+- **Everywhere you see your hero:** the Hero tab, your profile picture, training, celebrations, battles and the small map sprite (which now shows hats, helms, weapons, shields, packs and capes).
+- **Auto shows what you've equipped first,** then your current class's set, then your best item for each spot.
+- Dance, Acting & theater and DJing gear shows dance shoes, theater masks and headphones on your hero instead of a guitar.
+
 ## v0.20.0 — 2026-10-13 (build 2026-10-13.2)
 
 Every item has a real icon.

@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-13.2",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-13.3",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -2231,8 +2231,8 @@ details.cg-set > summary { cursor: pointer; }
   // Hero look: owned pieces join the wardrobe. Your current class's pieces show first on Auto; other classes' pieces you can pick by hand.
   function clsGearLooks(out) {
     CLASSES.forEach(c => { if (!cgHasSet(c)) return; c.gear.forEach((nm, i) => {
-      const sp = cgSprite(nm); if (!cgOwned(c, i) || !S[sp]) return;
-      out.push({ id: "cg:" + cgPieceId(c, i), name: `${nm} (${c.name})`, sprite: sp, slot: S[sp].slot, tier: cgTier(c), rank: curClassId() === c.id ? 99 : -1 });
+      const sp = cgSprite(nm), L = cgOwned(c, i) && heroLookFor(nm, sp, null, cgTier(c)); if (!L) return;
+      out.push(Object.assign(L, { id: "cg:" + cgPieceId(c, i), name: `${nm} (${c.name})`, tier: cgTier(c), rank: curClassId() === c.id ? 99 : -1 }));
     }); });
   }
 
@@ -2841,8 +2841,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-13.2";
-  const APP_VERSION = "0.20.0";
+  const BUILD = "2026-10-13.3";
+  const APP_VERSION = "0.21.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -6002,10 +6002,15 @@ details.cg-set > summary { cursor: pointer; }
     const np = pose === "train" ? NP_ACTS[act] : null; if (np && np.bob) by = np.bob(f);
     // recolors from body/hands/feet items
     const recol = Object.assign({}, pal);
-    ["body", "hands", "feet"].forEach(sl => { const it = items[sl]; if (it && S[it.sprite] && S[it.sprite].recolor) { const tp = TIER_PAL[it.tier] || TIER_PAL[0]; Object.entries(S[it.sprite].recolor).forEach(([k, v]) => { recol[k] = tp[v] || FIXED[v] || v; }); } });
-    const layer = (sl, front) => { const it = items[sl]; if (!it || !S[it.sprite]) return; const sp = S[it.sprite], tp = TIER_PAL[it.tier] || TIER_PAL[0]; (front ? (sp.front || []) : sp.parts).forEach(p => drawPart(g, recol, tp, p, 0, by)); };
+    ["body", "hands", "feet"].forEach(sl => { const it = items[sl], hb = hgOf(it); if (hb) Object.assign(recol, hb.recolor); else if (it && S[it.sprite] && S[it.sprite].recolor) { const tp = TIER_PAL[it.tier] || TIER_PAL[0]; Object.entries(S[it.sprite].recolor).forEach(([k, v]) => { recol[k] = tp[v] || FIXED[v] || v; }); } });
+    // hero gear (v0.21): each item draws its own layers; old sprites still work for training props
+    let faceKeys = null;                                    // set once the face is drawn
+    const hgLayer = (sl, name) => { const hb = hgOf(items[sl]); if (hb) hgPut(g, hb.layers[name], by, sl === "head" || sl === "face" ? null : faceKeys); return hb; };
+    const hgAll = name => Object.keys(items).forEach(sl => hgLayer(sl, name));
+    const layer = (sl, front) => { const it = items[sl]; if (!it) return; if (hgOf(it)) { if (!front) hgLayer(sl, "main"); return; } if (!S[it.sprite]) return; const sp = S[it.sprite], tp = TIER_PAL[it.tier] || TIER_PAL[0]; (front ? (sp.front || []) : sp.parts).forEach(p => drawPart(g, recol, tp, p, 0, by)); };
     // aura and back first
     if (np && np.back) np.back(g, f, by, recol);
+    hgAll("back");
     layer("aura"); layer("back");
     if (items.back && S[items.back.sprite] && S[items.back.sprite].straps) { /* straps drawn later */ }
     // body
@@ -6017,8 +6022,10 @@ details.cg-set > summary { cursor: pointer; }
     drawLit(g, recol, rows, 0, by, keys);
     // face
     drawFace(g, recol, ap, by, f, pose, keys);
-    layer("body"); layer("feet"); layer("belt"); layer("neck");
-    const back = items.back && S[items.back.sprite];
+    faceKeys = keys;
+    layer("feet"); layer("body"); layer("belt"); layer("neck");
+    hgAll("over");
+    const back = items.back && !hgOf(items.back) && S[items.back.sprite];
     if (back && back.strap) drawPart(g, recol, TIER_PAL[items.back.tier] || TIER_PAL[0], { pts: line(10, 22, 21, 29, "a"), outline: false }, 0, by);
     if (back && back.straps) drawPart(g, recol, TIER_PAL[items.back.tier] || TIER_PAL[0], { pts: line(11, 22, 11, 28, "a").concat(line(20, 22, 20, 28, "a")), outline: false }, 0, by);
     if (back && back.front) layer("back", true);
@@ -6036,7 +6043,15 @@ details.cg-set > summary { cursor: pointer; }
     layer("head"); layer("face"); layer("hands"); layer("front");
     // held item (or training prop), with a little motion while training
     const held = pose === "cheer" ? null : (look.prop || items.hand);
-    if (held && S[held.sprite]) {
+    const heldHg = !look.prop && hgOf(held);
+    if (heldHg) {
+      hgPut(g, heldHg.layers.top, by, keys);
+      if (heldHg.grip) [[22, 27], [23, 27], [22, 28], [23, 28]].forEach(([x, y]) => put(g, x, y + by, recol.U));
+      hgPut(g, heldHg.layers.off, by, keys);
+    }
+    // off hand: shields and books (hidden while cheering or training, or when the main hand needs both)
+    if (pose !== "cheer" && pose !== "train" && !(heldHg && heldHg.hideOff)) { const ob = hgOf(items.off); if (ob) { hgPut(g, ob.layers.top, by, keys); if (ob.grip && ob.left) [[8, 27], [9, 27], [8, 28], [9, 28]].forEach(([x, y]) => put(g, x, y + by, recol.U)); } }
+    if (!heldHg && held && S[held.sprite]) {
       const sp = S[held.sprite], tp = TIER_PAL[held.tier] || TIER_PAL[0];
       let hx = 0, hy = by;
       if (pose === "train") {
@@ -6066,6 +6081,7 @@ details.cg-set > summary { cursor: pointer; }
       if (act === "brew") { const k = f % 4; fx(22, 19 - k, FIXED.F); fx(24, 18 - ((k + 2) % 4), FIXED.F); if (k === 3) fx(23, 14, FIXED.W); }
       if (np && np.fx) np.fx(g, f, by, recol);
     }
+    hgAll("fx");
     // legendary sparkle
     const legend = Object.values(items).some(it => it && it.tier === 5);
     if (legend) [[3, 5], [28, 18], [4, 27]].forEach(([x, y], i) => { if ((f + i) % 3 !== 2) { put(g, x, y, FIXED.Y); put(g, x + 1, y + 1, FIXED.W); } });
@@ -8538,6 +8554,777 @@ details.cg-set > summary { cursor: pointer; }
     icPaint(canvas, hit.grid, hit.fx, k, icFrame);
     if (lvl >= 4 && hit.fx) { icLive.set(canvas, { grid: hit.grid, fx: hit.fx, k }); icAnimate(); } else icLive.delete(canvas);
   }
+  // ===== HERO GEAR (v0.21) =====
+  // The hero wears the same items the icons show. Each icon key has a hero drawer (HG) with a slot and a draw
+  // function on the 32x40 hero grid. A drawer can paint on several layers that renderHero composites in order:
+  //   back   behind the body (cloaks, instruments, packs)   main   its slot's normal place
+  //   over   after the body, before hair (straps, clasps)   top    after everything (held items, shields)
+  // Each layer gets the icon shader (light from the top left) and its own outline, so pieces read cleanly.
+  // Hero landmarks: head x5-26 y5-20 (hair from y3), eyes y12-15 at x9-11 and x20-22, torso x8-23 y22-29,
+  // fists at x8-9 and x22-23 on y27-28, belt y29, legs y30-33, feet y34-35.
+  const HG = {};
+  const HG_W = AV_W, HG_H = AV_H;
+  function hgCtx() {
+    const layers = {}, overs = {};
+    let cur = "main";
+    const grid = () => layers[cur] || (layers[cur] = Array.from({ length: HG_H }, () => new Array(HG_W).fill(null)));
+    const set = (x, y, ch, ov) => {
+      x = Math.round(x); y = Math.round(y);
+      if (x < 0 || y < 0 || x >= HG_W || y >= HG_H || ch === "." || ch === " ") return;
+      if (ov) { (overs[cur] = overs[cur] || []).push([x, y, ch]); return; }
+      grid()[y][x] = ch === "_" ? null : ch;
+    };
+    const d = {
+      layers, overs,
+      to(name) { cur = name; return d; },
+      p(x, y, ch) { set(x, y, ch); return d; },
+      ps(list, ch) { list.forEach(([x, y]) => set(x, y, ch)); return d; },
+      r(x, y, w, h, ch) { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) set(x + xx, y + yy, ch); return d; },
+      l(x0, y0, x1, y1, ch, w = 1) {
+        const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+        let err = dx - dy, x = x0, y = y0;
+        for (let n = 0; n < 200; n++) { for (let k = 0; k < w; k++) set(dx >= dy ? x : x + k, dx >= dy ? y + k : y, ch); if (x === x1 && y === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+        return d;
+      },
+      e(cx, cy, rx, ry, ch) {
+        for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
+          if (((x - cx) / (rx + 0.35)) ** 2 + ((y - cy) / (ry + 0.35)) ** 2 <= 1) set(x, y, ch);
+        return d;
+      },
+      t(x, y, rows) { rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) set(x + rx, y + ry, row[rx]); }); return d; },
+      o(x, y, rows) { rows.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) set(x + rx, y + ry, row[rx], true); }); return d; },
+      // mirror columns x < 16 onto the right half (the hero is symmetric around x 15.5)
+      sym() { const g = grid(); g.forEach(row => { for (let x = 0; x < 16; x++) if (row[x]) row[31 - x] = row[x]; }); return d; }
+    };
+    return d;
+  }
+  // Shade, outline and color one layer into a sparse list of [x, y, color].
+  function hgShade(g, over, col, outline) {
+    const cells = [], at = (x, y) => (g && g[y] && g[y][x]) || null;
+    const fam = {}; Object.entries(IC_RAMP).forEach(([m, [lt, dk]]) => { fam[m] = new Set([m, lt, dk].filter(Boolean)); });
+    if (g) for (let y = 0; y < HG_H; y++) for (let x = 0; x < HG_W; x++) {
+      const ch = g[y][x];
+      if (ch) {
+        let c = ch;
+        if (IC_RAMP[ch]) { const F = fam[ch], lit = !F.has(at(x - 1, y)) || !F.has(at(x, y - 1)), dark = !F.has(at(x + 1, y)) || !F.has(at(x, y + 1));
+          if (lit && !dark && IC_RAMP[ch][0]) c = IC_RAMP[ch][0]; else if (dark && !lit) c = IC_RAMP[ch][1]; }
+        const hex = col(c); if (hex) cells.push([x, y, hex]);
+      } else if (outline) {
+        const nb = [[x, y + 1], [x + 1, y], [x - 1, y], [x, y - 1]].map(([a, b]) => at(a, b)).find(Boolean);
+        if (nb) cells.unshift([x, y, deepen(col(nb) || OUTLINE), 1]);
+      }
+    }
+    (over || []).forEach(([x, y, ch]) => { const hex = col(ch); if (hex) cells.push([x, y, hex]); });
+    return cells;
+  }
+  const hgCache = new Map();
+  // Build a worn item: { slot, layers: { back, main, over, top }, recolor, ... } for one look.
+  function hgBuild(key, v, tier) {
+    const id = key + "|" + JSON.stringify(v || {}) + "|" + tier;
+    if (hgCache.has(id)) return hgCache.get(id);
+    const H = HG[key]; let out = null;
+    if (H) {
+      try {
+        v = Object.assign({}, v);
+        const d = hgCtx(); if (H.draw) H.draw(d, v, tier);
+        const fin = icFinish(tier, v.fin), col = ch => fin[ch] || IC_COL[ch] || (ch && ch[0] === "#" ? ch : null);
+        // nudge a drawer that would touch the grid edge, so every piece keeps its full outline
+        const sh = typeof H.shift === "function" ? H.shift(v) : H.shift;
+        if (sh) { const [sx, sy] = sh;
+          Object.keys(d.layers).forEach(n => { const gr = d.layers[n], ng = Array.from({ length: HG_H }, () => new Array(HG_W).fill(null)); gr.forEach((row, y) => row.forEach((c, x) => { if (c && x + sx >= 0 && x + sx < HG_W && y + sy >= 0 && y + sy < HG_H) ng[y + sy][x + sx] = c; })); d.layers[n] = ng; });
+          Object.values(d.overs).forEach(list => list.forEach(c => { c[0] += sx; c[1] += sy; })); }
+        // off-hand objects are drawn in the right hand and mirrored to the left (shields are drawn on the left already)
+        if (H.left) { Object.values(d.layers).forEach(gr => gr.forEach(row => row.reverse())); Object.values(d.overs).forEach(list => list.forEach(c => { c[0] = HG_W - 1 - c[0]; })); }
+        const layers = {};
+        new Set([...Object.keys(d.layers), ...Object.keys(d.overs)]).forEach(n => { layers[n] = hgShade(d.layers[n], d.overs[n], col, n !== "fx"); });
+        const recolor = {};
+        if (H.recolor) Object.entries(H.recolor(v, fin)).forEach(([k, c]) => { const hex = col(c); if (hex) recolor[k] = hex; });
+        out = { key, slot: H.slot, layers, recolor, grip: !!H.grip, left: !!H.left, inst: !!H.inst, hideOff: !!H.hideOff, fin };
+      } catch (e) { out = null; }
+    }
+    hgCache.set(id, out);
+    return out;
+  }
+  const hgBlit = (g, cells, dx = 0, dy = 0) => { if (cells) cells.forEach(([x, y, c]) => put(g, x + dx, y + dy, c)); };
+  // --- Hero gear: head, face, neck ---
+  const hgSide = (rows) => rows.map(r => r.split("").reverse().join(""));
+  HG.headband = { slot: "head", mini: "band", draw(d, v) {
+    d.r(6, 8, 20, 2, "A").p(5, 9, "A").p(26, 9, "A");
+    if (v.stripe) d.r(7, 8, 18, 1, v.stripe);
+    if (v.terry) for (let x = 7; x < 25; x += 2) d.p(x, 9, "L");
+    if (v.tails) d.t(26, 9, ["AA.", "AAA", ".AA", "..A"]);
+  } };
+  HG.cap = { slot: "head", mini: "hat", draw(d, v) {
+    d.t(7, 2, ["....AAAAAAAA....", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA"]);
+    d.p(15, 1, "J").p(16, 1, "J").l(11, 3, 10, 7, "a").l(20, 3, 21, 7, "a");
+    d.r(9, 8, 14, 2, "J").r(10, 9, 12, 1, "I");
+  } };
+  HG.wizhat = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
+    d.t(9, 0, ["..........AAA.", ".......AAAAA..", "......AAAAA...", ".....AAAAAA...", "....AAAAAAA...", "...AAAAAAAAA..", "..AAAAAAAAAAA.", "..JJJJJJJJJJJ."]);
+    d.e(15.5, 8.6, 13.4, 1.6, "A").r(11, 7, 11, 1, "J");
+    d.ps([[15, 3], [18, 5], [13, 6]], v.star || "g");
+  } };
+  HG.tophat = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
+    d.r(9, 0, 14, 7, "A").r(9, 5, 14, 2, "J").r(9, 0, 14, 1, "L");
+    d.e(15.5, 7.8, 11.4, 1.2, "A").r(5, 7, 22, 1, "a");
+    if (v.card) d.r(19, 2, 2, 3, "p");
+  } };
+  HG.beret = { slot: "head", mini: "hat", draw(d, v) {
+    d.t(5, 2, ["......AAAAAAAAAA......", "...AAAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAAAA", ".aaaaaaaaaaaaaaaaaaaa."]);
+    d.r(12, 1, 2, 1, "a");
+    if (v.pin) d.p(22, 4, "J");
+  } };
+  HG.strawhat = { slot: "head", mini: "wide", draw(d, v) {
+    d.e(15.5, 8.4, 15, 2.2, "A").t(9, 1, ["...AAAAAAAA...", ".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "JJJJJJJJJJJJJJ", "JJJJJJJJJJJJJJ"]);
+    for (let x = 2; x < 30; x += 3) d.p(x, 9, "a");
+    if (v.flower) d.t(20, 5, ["r.", "rr"]);
+  } };
+  HG.featcap = { shift: [0, 1], slot: "head", mini: "hat", draw(d, v) {
+    d.t(7, 2, ["....AAAAAAAA....", "..AAAAAAAAAAAA..", ".AAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA", "JJJJJJJJJJJJJJJJ"]);
+    d.l(20, 5, 28, 1, v.feather || "p", 2).l(21, 5, 27, 2, "P");
+  } };
+  HG.nightcap = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
+    d.t(7, 0, [".......AAAAA......", ".....AAAAAAAAA....", "...AAAAAAAAAAAAA..", "..AAAAAAAAAAAAAAA.", ".AAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAA.A", "AAAAAAAAAAAAAAAA..", "pppppppppppppppp..", "pppppppppppppppp.."]);
+    d.l(24, 4, 26, 9, "A", 2).e(27, 11, 1.6, 1.6, "p");
+    d.ps([[11, 3], [15, 2], [19, 4], [13, 5]], v.star || "y");
+  } };
+  HG.toque = { shift: [0, 1], slot: "head", mini: "tall", draw(d, v) {
+    d.e(10, 3, 3.6, 3, "p").e(15.5, 2.4, 4.4, 2.8, "p").e(21, 3, 3.6, 3, "p").r(7, 3, 18, 4, "p");
+    d.l(12, 2, 12, 5, "P").l(19, 2, 19, 5, "P");
+    d.r(8, 6, 16, 3, v.band || "p").r(8, 6, 16, 1, "P");
+    if (v.trim) d.r(8, 7, 16, 1, "J");
+  } };
+  HG.helm = { slot: "head", mini: "helm", draw(d, v) {
+    const M = v.metal || "s", D = M === "s" ? "S" : "a";
+    d.t(5, 2, ["......MMMMMMMMMM......", "....MMMMMMMMMMMMMM....", "...MMMMMMMMMMMMMMMM...", "..MMMMMMMMMMMMMMMMMM..", ".MMMMMMMMMMMMMMMMMMMM.", "MMMMMMMMMMMMMMMMMMMMMM",
+      "MMMMMMMMMMMMMMMMMMMMMM", "MMMMMMMMMMMMMMMMMMMMMM", "MMMMMMMMMMMMMMMMMMMMMM", "MMMM..............MMMM", "MMM................MMM", "MMM................MMM", "MMM................MMM", "MMM................MMM", ".MM................MM."].map(r => r.replace(/M/g, M)));
+    d.r(5, 9, 22, 1, D);
+    if (v.visor) { d.r(8, 10, 16, 7, M).r(9, 12, 6, 1, "K").r(17, 12, 6, 1, "K"); for (let x = 10; x < 22; x += 2) d.p(x, 15, "K"); d.r(15, 10, 2, 7, D); }
+    else d.r(15, 10, 2, 5, M).p(15, 14, D);
+    d.l(15, 3, 15, 8, M === "s" ? "i" : "L");
+    d.ps([[7, 6], [24, 6], [6, 12], [25, 12]], D);
+    if (v.trim) d.r(5, 8, 22, 1, "J");
+    if (v.horns) d.t(1, 1, ["p....", "pp...", ".pp..", ".ppp.", "..ppp"]).t(26, 1, ["....p", "...pp", "..pp.", ".ppp.", "ppp.."]);
+    if (v.plume) d.t(11, 1, ["..JJJJJ...", ".JJJJJJJJ.", "JJ......JJ"]);
+    if (v.wings) d.t(1, 3, ["p...", "pp..", "ppp.", ".ppp"]).t(27, 3, ["...p", "..pp", ".ppp", "ppp."]);
+    if (v.crest) d.r(14, 1, 4, 2, "J").r(10, 1, 12, 1, "J");
+  } };
+  HG.veil = { slot: "head", mini: "wide", draw(d, v) {
+    d.t(9, 1, ["..AAAAAAAAAA..", ".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA"]).e(15.5, 6, 13, 1.4, "A").r(4, 5, 24, 1, "J");
+    d.to("fx");
+    for (let y = 8; y < 21; y += 2) for (let x = 5 + (y % 4 ? 1 : 0); x < 27; x += 2) d.p(x, y, v.mesh === "k" ? "#2e314240" : "#ffffff55");
+    for (let y = 8; y < 21; y++) { d.p(4, y, v.mesh === "k" ? "#2e314299" : "#ffffffaa"); d.p(27, y, v.mesh === "k" ? "#2e314299" : "#ffffffaa"); }
+    d.r(4, 7, 24, 1, v.mesh === "k" ? "#2e3142cc" : "#ffffffd0");
+    if (v.stars) [[7, 12], [24, 10], [10, 18], [21, 17]].forEach(([x, y]) => d.p(x, y, "y"));
+  } };
+  HG.circlet = { slot: "head", mini: "band", draw(d, v) {
+    d.r(6, 8, 20, 1, "A").p(5, 9, "A").p(26, 9, "A");
+    const gem = v.gem || "J";
+    if (v.kind === "pearl") { for (let x = 7; x < 25; x += 3) d.p(x, 8, "Z"); d.e(15.5, 8, 1.2, 1.2, "Z"); return; }
+    if (v.kind === "leaf") [[6, 7], [9, 6], [12, 6], [19, 6], [22, 6], [25, 7]].forEach(([x, y]) => d.t(x, y, ["6", "E"]));
+    if (v.kind === "candle") [[10, 2], [15, 1], [21, 2]].forEach(([x, y]) => { d.r(x, y + 3, 2, 8 - y - 3, "p"); d.o(x, y, [".y", "yY", "yo"]); });
+    if (v.kind === "antler") d.t(2, 1, [".n.n..", "..nnn.", "...nnn", "....nn"]).t(24, 1, ["..n.n.", ".nnn..", "nnn...", "nn...."]);
+    if (v.kind === "quill") d.l(24, 8, 28, 1, "p", 2).l(25, 7, 27, 2, "P");
+    if (v.kind === "stars") [[9, 6], [15, 4], [22, 6]].forEach(([x, y]) => d.t(x - 1, y - 1, [".g.", "ggg", ".g."]));
+    if (v.kind === "halo") { d.e(15.5, 2, 6, 0.8, "g").e(15.5, 2, 4.4, 0.2, "_"); }
+    d.t(14, 7, [".GG.", "G" + gem + gem + "G", ".GG."]);
+  } };
+  HG.crown = { shift: [0, 1], slot: "head", mini: "crown", draw(d, v) {
+    d.t(8, 0, ["g.....g......g..", "gg...ggg....gg..", "ggg.ggggg..ggg..", "ggggggggggggggg.", "ggggggggggggggg.", "GGGGGGGGGGGGGGG."].map(r => r.slice(0, 16)));
+    d.r(8, 3, 16, 3, "g").r(8, 6, 16, 1, "G");
+    d.p(8, 0, "Z").p(15, 0, "Z").p(23, 0, "Z").l(23, 0, 23, 3, "g").l(22, 1, 22, 3, "g");
+    d.t(14, 3, ["rr", "rr"]).p(10, 4, "b").p(20, 4, "e");
+  } };
+  HG.wreath = { slot: "head", mini: "band", draw(d, v) {
+    [[5, 11], [5, 8], [7, 5], [10, 3], [13, 2]].forEach(([x, y]) => d.t(x, y, ["6.", "66"]));
+    [[25, 11], [25, 8], [23, 5], [20, 3], [17, 2]].forEach(([x, y]) => d.t(x, y, [".6", "66"]));
+    d.l(6, 12, 14, 3, "E").l(26, 12, 18, 3, "E");
+  } };
+  HG.lotus = { slot: "head", mini: "crown", draw(d, v) {
+    d.r(6, 8, 20, 1, "e").p(5, 9, "e").p(26, 9, "e");
+    d.t(10, 1, ["......dd......", ".....dddd.....", "..d..dddd..d..", ".dddddddddddd.", ".dddddddddddd.", "..yyyyyyyyyy.."]);
+    d.ps([[15, 2], [16, 3], [12, 4], [19, 4]], "D");
+  } };
+  HG.headphones = { slot: "head", mini: "band", draw(d, v) {
+    d.t(5, 1, ["....kkkkkkkkkkkkkk....", "..kkk............kkk..", ".kk................kk.", "kk..................kk", "k....................k", "k....................k"]);
+    d.r(9, 1, 14, 1, "A");
+    d.t(2, 9, ["kkk", "kAA", "kAA", "kAA", "kAA", "kkk"]).t(27, 9, ["kkk", "AAk", "AAk", "AAk", "AAk", "kkk"]);
+  } };
+  HG.earpiece = { slot: "head", mini: "", draw(d) {
+    d.t(25, 12, ["AA", "AA", "A."]).o(28, 10, ["C.", ".C", ".C", "C."]);
+  } };
+  // FACE (eyes are 3x4 at x 9-11 and x 20-22, rows 12-15)
+  HG.goggles = { slot: "face", mini: "eyes", draw(d, v) {
+    const R = v.rim || "g";
+    d.r(5, 12, 3, 2, v.strap || "k").r(24, 12, 3, 2, v.strap || "k");
+    [8, 19].forEach(x => { d.r(x, 11, 5, 1, R).r(x, 16, 5, 1, R).r(x, 12, 1, 4, R).r(x + 4, 12, 1, 4, R); });
+    d.r(13, 12, 6, 1, R);
+    d.to("fx").ps([[9, 12], [20, 12]], "#ffffffb0");
+    if (v.lens && v.lens !== "H") [[9, 12], [20, 12]].forEach(([x, y]) => d.r(x, y, 3, 4, (IC_COL[v.lens] || "#e8743a") + "66"));
+    if (v.glow) d.ps([[8, 10], [23, 10]], "y");
+  } };
+  HG.visor = { slot: "face", mini: "eyes", draw(d, v) {
+    d.t(5, 10, [".JJJJJJJJJJJJJJJJJJJJ.", "JJJJJJJJJJJJJJJJJJJJJJ", "JJJJJJJJJJJJJJJJJJJJJJ", "JJJJJJJJJJJJJJJJJJJJJJ", ".IIIIIIIIIIIIIIIIIIII."]);
+    d.r(7, 11, 18, 2, v.lens || "C").r(8, 11, 3, 1, "Z");
+    if (v.leds) for (let x = 7; x < 25; x += 2) d.p(x, 12, ["7", "8", "9"][x % 3]);
+    if (v.data) d.ps([[13, 12], [16, 11], [19, 12], [22, 11]], "K");
+  } };
+  HG.glasses = { slot: "face", mini: "eyes", draw(d, v) {
+    const F = v.frame || "k";
+    [8, 19].forEach(x => { if (v.round) d.t(x, 11, [".FFF.", "F...F", "F...F", "F...F", "F...F", ".FFF."].map(r => r.replace(/F/g, F))); else d.r(x, 11, 5, 1, F).r(x, 16, 5, 1, F).r(x, 12, 1, 4, F).r(x + 4, 12, 1, 4, F); });
+    d.r(13, 12, 6, 1, F).r(5, 12, 3, 1, F).r(24, 12, 3, 1, F);
+    d.to("fx").ps([[9, 12], [20, 12]], "#ffffffa0");
+    if (v.night) [[9, 14], [20, 14]].forEach(([x, y]) => d.r(x, y, 3, 2, "#e8743a88"));
+  } };
+  HG.monocle = { slot: "face", mini: "eyes", draw(d, v) {
+    const R = v.rim || "g";
+    d.t(18, 10, [".RRRRR.", "R.....R", "R.....R", "R.....R", "R.....R", "R.....R", ".RRRRR."].map(r => r.replace(/R/g, R)));
+    if (v.gear) d.ps([[21, 9], [25, 13], [17, 13], [21, 17]], R);
+    d.p(24, 17, R).p(25, 18, R).p(25, 19, R).p(24, 20, R);
+    d.to("fx");
+    if (v.camera) d.r(19, 11, 5, 5, "#2c5a9e70"); else if (v.prism) { d.p(19, 11, "#ff5a8aa0").p(20, 12, "#ffe58aa0").p(21, 13, "#3fd0ffa0"); } else d.p(19, 11, "#ffffffb0");
+    if (v.cross) d.r(21, 11, 1, 5, "#d94a3ac0").r(19, 13, 5, 1, "#d94a3ac0");
+  } };
+  HG.vmask = { slot: "face", mini: "eyes", draw(d) {
+    d.t(6, 10, ["..AAAAAA......AAAAAA..", ".AAAAAAAAA..AAAAAAAAA.", "AAA.....AAAAAA.....AAA", "AA......AAAAAA......AA", "AAA.....AA..AA.....AAA", ".AAAAAAAA....AAAAAAAA."]);
+    d.ps([[6, 12], [25, 12], [15, 10], [16, 10]], "g");
+    d.l(27, 14, 30, 24, "n");
+  } };
+  HG.weldmask = { slot: "face", mini: "helm", draw(d) {
+    d.t(5, 3, ["....AAAAAAAAAAAAAA....", "..AAAAAAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAAAA",
+      "AAAAAAAAAAAAAAAAAAAAAA", "AAAAKKKKKKKKKKKKKKAAAA", "AAAAKllllllllllllKAAAA", "AAAAKKKKKKKKKKKKKKAAAA", "AAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAAAAAAAA.", "..AAAAAAAAAAAAAAAAAA..", "....AAAAAAAAAAAAAA...."]);
+    d.r(9, 12, 3, 1, "E");
+  } };
+  // NECK (collar y 21-23, pendant to y 26)
+  const hgChain = (d, ch = "g") => d.l(10, 22, 14, 24, ch).l(21, 22, 17, 24, ch);
+  HG.amulet = { slot: "neck", draw(d, v) {
+    hgChain(d, v.chain || "g");
+    const s = v.shape || "gem", P = {
+      gem: [".G.", "GJG", ".G."], sun: ["g.g", ".y.", "g.g"], moon: [".s", "s.", ".s"], rune: ["zz", "Cz", "zz"], paw: ["J.J", ".J.", "JJJ"], bone: ["p..", ".p.", "..p"],
+      shell: ["ddd", "dDd", ".d."], bird: ["JJ.", "JJk", "J.."], lotus: ["d.d", "ddd", ".e."], halo: [".g.", "g.g", ".g."], stone: ["zzz", "zzz"], sigil: [".q.", "qQq", ".q."],
+      tooth: ["pp", "pp", ".p"], heart: ["r.r", "rrr", ".r."], glass: [".3.", "333", ".3."]
+    }[s] || [".G.", "GJG", ".G."];
+    d.t(15 - (P[0].length > 2 ? 0 : 0), 24, P);
+  } };
+  HG.whistle = { slot: "neck", draw(d, v) { hgChain(d, v.cord || "J"); d.t(13, 24, [".AAAAA", "AAAAAA", "AA...."]).p(17, 24, "k"); } };
+  HG.beads = { slot: "neck", draw(d, v) {
+    [[10, 22], [11, 23], [12, 24], [13, 25], [15, 25], [16, 25], [18, 25], [19, 24], [20, 23], [21, 22]].forEach(([x, y], i) => d.p(x, y, i % 3 ? (v.bead || "A") : (v.alt || "J")));
+    d.p(15, 26, v.big || "g").p(16, 26, v.big || "g").r(15, 27, 2, 2, v.tassel || "J");
+  } };
+  HG.collar = { slot: "neck", draw(d, v) {
+    d.r(10, 21, 12, 2, "A").ps([[11, 21], [14, 21], [17, 21], [20, 21]], v.studs || "A");
+    d.r(15, 23, 2, 2, v.tag || "g");
+    if (v.heart) d.p(15, 23, "r").p(16, 23, "r");
+  } };
+  HG.medal = { slot: "neck", draw(d, v) {
+    d.l(11, 21, 14, 24, v.rib || "J", 2).l(20, 21, 17, 24, v.rib || "J", 2);
+    d.e(15.5, 26, 2, 2, "g").p(15, 26, "h");
+  } };
+  HG.badge = { slot: "neck", draw(d, v) { d.e(11, 24.4, 1.6, 1.6, v.rim || "g").p(11, 24, "p").p(11, 25, "A"); } };
+  HG.cravat = { slot: "neck", draw(d) { d.t(12, 21, ["pp..pp", "pppppp", ".pppp.", "..pp..", ".pppp."]).p(15, 22, "J").p(16, 22, "J"); } };
+  HG.scarf = { slot: "neck", mini: "neck", draw(d, v) {
+    d.t(9, 21, [".AAAAAAAAAAAA.", "AAAAAAAAAAAAAA"]);
+    d.t(18, 23, ["AAA", "PPP", "AAA", "AAA", "PPP", "A.A"].map(r => r.replace(/P/g, v.stripe || "J")));
+    d.r(10, 22, 12, 1, v.stripe || "J");
+  } };
+  HG.camstrap = { slot: "neck", draw(d) { d.l(10, 21, 13, 24, "k").l(21, 21, 18, 24, "k"); d.r(12, 24, 8, 4, "k").e(15.5, 25.6, 1.6, 1.6, "m").p(15, 25, "B").r(13, 23, 2, 1, "k").p(18, 25, "r"); } };
+  HG.binoculars = { slot: "neck", draw(d) { d.l(10, 21, 12, 24, "k").l(21, 21, 19, 24, "k"); d.r(11, 24, 4, 4, "A").r(17, 24, 4, 4, "A").r(15, 25, 2, 2, "a").r(11, 27, 4, 1, "K").r(17, 27, 4, 1, "K"); } };
+  // --- Hero gear: outfits, belts, hands, feet ---
+  // Outfits recolor the shirt (T/t) and sometimes the pants (P/p), then add their details on top.
+  const hgShirt = (v, fin) => ({ T: "A", t: "a" });
+  HG.robe = { slot: "body", mini: "robe", recolor: () => ({ T: "A", t: "a", P: "A", p: "a" }), draw(d, v) {
+    d.t(9, 29, ["AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "AAAAAAAAAAAAAA", "aaaaaaaaaaaaaa"]);
+    const T = v.trim || "J";
+    d.l(13, 22, 15, 25, T).l(18, 22, 16, 25, T).l(15, 25, 15, 33, T);
+    if (v.belt !== false) d.r(10, 28, 12, 1, v.belt || "J");
+    if (v.cuffs) d.ps([[8, 26], [9, 26], [22, 26], [23, 26]], T);
+    if (v.hem) d.r(9, 32, 14, 1, v.hem);
+    if (v.mark) d.t(18, 24, [".M.", "MMM", ".M."].map(r => r.replace(/M/g, (v.mark.join("").match(/[^.]/) || ["g"])[0])));
+    if (v.dots) [[11, 24, "k"], [19, 27, "k"], [12, 31, "K"], [20, 32, "k"]].forEach(([x, y, c]) => d.p(x, y, c));
+  } };
+  HG.gi = { slot: "body", mini: "shirt", recolor: () => ({ T: "A", t: "a" }), draw(d, v) {
+    d.l(12, 22, 16, 27, "a").l(19, 22, 16, 25, "a");
+    d.r(9, 28, 14, 2, v.belt || "k").t(17, 29, ["k.", "kk", ".k"].map(r => r.replace(/k/g, v.belt || "k")));
+  } };
+  HG.armor = { slot: "body", mini: "shirt", recolor: () => ({ T: "A", t: "a" }), draw(d, v) {
+    if (v.kind === "mail") for (let y = 23; y < 29; y++) for (let x = 9 + (y % 2); x < 23; x += 2) d.p(x, y, "a");
+    if (v.kind === "plate") { d.t(6, 21, ["AAAA..................AAAA".slice(0, 20)]).r(6, 21, 4, 3, "A").r(22, 21, 4, 3, "A").l(15, 23, 15, 28, "L").l(16, 23, 16, 28, "a"); d.r(10, 26, 12, 1, "a"); d.ps([[7, 22], [24, 22]], "g"); }
+    if (v.kind === "quilt") { for (let y = 24; y < 29; y += 2) d.r(9, y, 14, 1, "a"); for (let x = 11; x < 22; x += 4) d.r(x, 23, 1, 6, "a"); }
+    if (v.kind === "stone") { d.ps([[11, 24], [12, 24], [19, 26], [20, 26], [14, 27]], "a"); d.r(9, 28, 14, 1, "J"); }
+    if (v.tabard) { d.r(12, 22, 8, 10, v.tabard).r(15, 23, 2, 6, "p").r(13, 25, 6, 1, "p"); }
+    if (v.belt) d.r(9, 28, 14, 1, v.belt);
+  } };
+  HG.toga = { slot: "body", mini: "shirt", recolor: () => ({ T: "p", t: "P" }), draw(d) { d.l(9, 22, 21, 29, "J", 2).l(10, 22, 21, 28, "0"); d.p(10, 22, "g"); } };
+  HG.coat = { slot: "body", mini: "shirt", recolor: () => ({ T: "A", t: "a" }), draw(d, v) {
+    d.t(13, 22, ["pppppp", ".pppp.", "..pp.."].map(r => r.replace(/p/g, v.shirt || "p")));
+    d.l(12, 22, 15, 26, "a").l(19, 22, 16, 26, "a");
+    if (v.tie) d.r(15, 23, 2, 4, "J").p(15, 27, "J");
+    if (v.bow) d.t(14, 22, ["J..J", "JJJJ"]);
+    (v.buttons ? [[14, 25], [17, 25], [14, 27], [17, 27]] : [[16, 27]]).forEach(([x, y]) => d.p(x, y, v.btn || "g"));
+    if (v.long) d.to("back").r(8, 29, 16, 4, "A").r(8, 32, 16, 1, "a");
+    if (v.tails) d.to("back").t(9, 29, ["AAA........AAA", "AAA........AAA", "AAA........AAA", "aa..........aa"]);
+    d.to("main");
+    if (v.fur) d.t(9, 21, ["UUU......UUU".padStart(13, "U").slice(0, 14), "U4UU....UU4U".padEnd(14, ".")]).r(9, 21, 4, 2, "U").r(19, 21, 4, 2, "U");
+    if (v.epaulets) d.r(7, 22, 3, 1, "g").r(22, 22, 3, 1, "g");
+    if (v.laces) d.ps([[15, 24], [16, 25], [15, 26], [16, 27]], "p");
+    if (v.puff) d.r(7, 22, 2, 3, "J").r(23, 22, 2, 3, "J");
+    if (v.pocket) d.r(19, 25, 2, 1, "a");
+    if (v.cuffs) d.ps([[8, 26], [9, 26], [22, 26], [23, 26]], v.cuffs);
+  } };
+  HG.vest = { slot: "body", mini: "shirt", draw(d, v) {
+    d.t(9, 22, ["AAAA......AAAA", "AAAAA....AAAAA", "AAAAAA..AAAAAA", "AAAAAA..AAAAAA", "AAAAAA..AAAAAA", "AAAAAA..AAAAAA", "aaaaaa..aaaaaa"]);
+    if (v.fur) d.t(9, 21, ["UUUU......UUUU", "U4UU......UU4U"]);
+    if (v.hivis) d.r(9, 25, 14, 1, "s").ps([[15, 25], [16, 25]], "_").r(9, 27, 6, 1, "s").r(17, 27, 6, 1, "s");
+    if (v.pockets) d.r(10, 26, 3, 2, "a").r(19, 26, 3, 2, "a");
+    if (v.tactical) [10, 13, 18, 21].forEach(x => d.r(x, 25, 2, 3, "a"));
+    if (v.quilt) for (let y = 23; y < 28; y += 2) { d.r(9, y, 6, 1, "a").r(17, y, 6, 1, "a"); }
+    if (v.plate) d.r(10, 23, 4, 4, "J").r(18, 23, 4, 4, "J");
+    if (v.glow) d.r(15, 23, 2, 5, "C");
+    if (!v.fur && !v.tactical) d.ps([[14, 26], [14, 28]], v.btn || "g");
+  } };
+  HG.hoodie = { slot: "body", mini: "shirt", recolor: () => ({ T: "A", t: "a" }), draw(d, v) {
+    d.to("back").t(7, 17, ["..AAAAAAAAAAAAAA..", ".AAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAA"]);
+    d.to("main").l(14, 22, 14, 25, "p").l(17, 22, 17, 25, "p").r(12, 26, 8, 2, "a");
+    if (v.mark) d.p(15, 24, "9").p(16, 24, "9");
+  } };
+  HG.apron = { slot: "body", mini: "apron", draw(d, v) {
+    d.t(11, 21, ["A........A", ".A......A.", ".AAAAAAAA.", "AAAAAAAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "AAAAAAAAAA", "aaaaaaaaaa"].map(r => r.replace(/^A(\.+)A$/, m => m)));
+    d.r(11, 26, 10, 1, v.tie || "a").r(13, 28, 6, 2, "a");
+    if (v.tools) d.p(14, 27, "s").p(17, 27, "n").p(17, 26, "s");
+    if (v.flour) [[12, 24], [18, 25], [14, 30], [19, 31]].forEach(([x, y]) => d.p(x, y, "Z"));
+    if (v.stain) [[13, 24], [18, 27], [12, 31], [19, 30]].forEach(([x, y], i) => d.p(x, y, (v.stain[i] || ["", "", "k"])[2] || "k"));
+    if (v.heart || v.cross) d.t(15, 23, v.cross ? [".r.", "rrr", ".r."].map(r => r.slice(0, 3)) : ["r.r", ".r."]);
+    if (v.spark) d.o(19, 29, ["y"]).o(12, 31, ["o"]);
+  } };
+  HG.labcoat = { slot: "body", mini: "shirt", recolor: () => ({ T: "p", t: "P" }), draw(d) {
+    d.to("back").r(8, 29, 16, 4, "p").r(8, 32, 16, 1, "P");
+    d.to("main").r(14, 22, 4, 2, "b").l(12, 22, 15, 26, "P").l(19, 22, 16, 26, "P").l(15, 26, 15, 29, "P");
+    d.r(18, 24, 3, 1, "P").p(19, 23, "b").p(20, 23, "r");
+  } };
+  HG.smock = { slot: "body", mini: "shirt", recolor: () => ({ T: "A", t: "a" }), draw(d) {
+    [[10, 24, "r"], [19, 23, "b"], [14, 26, "y"], [20, 27, "e"], [12, 28, "q"]].forEach(([x, y, c]) => d.p(x, y, c));
+  } };
+  HG.poncho = { slot: "body", mini: "robe", draw(d, v) {
+    d.t(6, 21, [".....AAAAAAAAAA.....", "...AAAAAAAAAAAAAA...", ".AAAAAAAAAAAAAAAAAA.", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAAAAAA.", "..aaaaaaaaaaaaaaaa.."]);
+    d.l(15, 22, 15, 27, "a").r(14, 21, 4, 1, "a");
+    if (v.drops) d.o(3, 18, ["C", "", "C"]).o(28, 22, ["C"]);
+  } };
+  HG.jersey = { slot: "body", mini: "shirt", recolor: () => ({ T: "A", t: "a" }), draw(d) {
+    d.r(13, 22, 6, 1, "J").ps([[8, 24], [8, 25], [23, 24], [23, 25]], "J");
+    d.t(14, 24, ["pp.p", ".p.p", "pp.p"]);
+  } };
+  // BELT (y 29) and hip gear
+  HG.belt = { slot: "belt", draw(d, v) {
+    d.r(10, 29, 12, 1, "A");
+    if (v.title) { d.r(13, 28, 6, 3, "g").r(14, 29, 4, 1, "G").p(15, 29, "h"); return; }
+    d.r(14, 28, 4, 3, v.buckle || "s").r(15, 29, 2, 1, "A");
+    if (v.tools) { d.r(9, 30, 3, 3, "n").p(10, 29, "s"); d.r(20, 30, 3, 2, "n").l(21, 28, 21, 29, "w"); }
+  } };
+  HG.sash = { slot: "belt", draw(d, v) {
+    d.r(9, 28, 14, 2, "A");
+    if (v.stripe || v.reflect) d.r(9, 29, 14, 1, v.reflect ? "s" : v.stripe);
+    if (v.scale) d.ps([[11, 28], [14, 28], [17, 28]], "J");
+    d.t(19, 27, [".AA.", "AJJA", ".AA."]).l(20, 30, 19, 34, "A").l(21, 30, 22, 33, "A");
+    if (v.wind) d.o(25, 31, ["ZZ", "..", ".ZZ"]);
+  } };
+  HG.pouch = { slot: "belt", draw(d, v) {
+    d.r(10, 29, 12, 1, "n");
+    d.t(8, 29, [".JJJ.", "AAAAA", "AAAAA", "AAAAA", ".aaa."]);
+    if (v.top) d.t(9, 28, [v.top[0].slice(0, 3)]);
+    if (v.dust) d.o(7, 27, ["Z.Z"]);
+  } };
+  HG.purse = { slot: "belt", draw(d) { d.r(10, 29, 12, 1, "n"); d.t(8, 28, ["g...g", ".AAA.", "AAAAA", "AAAAA", ".aaa."]).p(10, 29, "g"); } };
+  HG.bandolier = { slot: "belt", draw(d) { d.l(9, 22, 21, 29, "n", 2); [[11, 23, "e"], [14, 25, "r"], [17, 27, "C"], [20, 29, "q"]].forEach(([x, y, c]) => d.r(x, y - 1, 1, 2, c)); } };
+  HG.keyring = { slot: "belt", draw(d, v) { d.r(10, 29, 12, 1, "n"); const M = v.metal || "g"; d.t(19, 29, [".M.", "M.M", ".M.", ".MM", ".M.", ".MM"].map(r => r.replace(/M/g, M))).t(21, 31, ["M", "MM", "M"].map(r => r.replace(/M/g, v.metal2 || "s"))); } };
+  HG.key = { slot: "belt", draw(d, v) { d.r(10, 29, 12, 1, "n"); const M = v.metal || "g"; d.t(19, 29, [".M.", "M.M", ".M.", ".M.", ".MM", ".M.", ".MM"].map(r => r.replace(/M/g, M))); } };
+  HG.toolroll = { slot: "belt", draw(d) { d.r(10, 29, 12, 1, "n"); d.r(7, 29, 6, 4, "A").r(7, 30, 6, 1, "J").ps([[8, 28], [10, 27], [12, 28]], "s").p(10, 28, "w"); } };
+  HG.pocketwatch = { slot: "belt", draw(d) { d.r(10, 29, 12, 1, "n"); d.l(13, 29, 18, 30, "g"); d.e(20, 31, 1.6, 1.6, "g").p(20, 31, "p"); } };
+  // HANDS: fists are U at x 8-9 and 22-23, rows 27-28; forearms are t at x 8-9 / 22-23, rows 24-26.
+  const hgFists = (d, ch) => d.r(8, 27, 2, 2, ch).r(22, 27, 2, 2, ch);
+  HG.glove = { slot: "hands", mini: "hands", recolor: () => ({ U: "A" }), draw(d, v) {
+    if (v.fingerless) { d.p(8, 27, "F").p(23, 27, "F"); }
+    if (v.wraps) { d.r(8, 26, 2, 1, "p").r(22, 26, 2, 1, "p"); }
+    if (v.studs) { d.p(8, 27, v.studs).p(23, 27, v.studs); }
+    if (v.spark) d.o(25, 25, ["y"]).o(6, 26, ["y"]);
+  } };
+  HG.boxing = { slot: "hands", mini: "hands", draw(d) {
+    d.t(6, 25, [".AAA.", "AAAAA", "AAAAA", "AAAAA", ".JJJ."]).t(21, 25, [".AAA.", "AAAAA", "AAAAA", "AAAAA", ".JJJ."]);
+    d.p(7, 26, "L").p(22, 26, "L");
+  } };
+  HG.mitt = { slot: "hands", mini: "hands", draw(d, v) {
+    d.t(7, 26, ["AAA", "AAA", "AAA", "ppp"]).t(21, 26, ["AAA", "AAA", "AAA", "ppp"]);
+    if (v.fire) d.o(25, 24, ["o"]).o(5, 25, ["y"]);
+  } };
+  HG.gauntlet = { slot: "hands", mini: "hands", recolor: v => ({ U: v.metal || "s" }), draw(d, v) {
+    const M = v.metal || "s";
+    d.r(7, 25, 4, 2, M).r(21, 25, 4, 2, M);
+    d.r(7, 26, 4, 1, v.cuff || "J").r(21, 26, 4, 1, v.cuff || "J");
+    if (v.circuit) d.p(8, 27, "C").p(23, 27, "C");
+    if (v.gears) d.p(9, 25, "g").p(22, 25, "g");
+  } };
+  HG.bracer = { slot: "hands", mini: "hands", draw(d, v) {
+    d.r(7, 24, 4, 3, "A").r(21, 24, 4, 3, "A");
+    d.r(7, 24, 4, 1, v.band || "J").r(21, 24, 4, 1, v.band || "J");
+    if (v.rivets) d.ps([[8, 25], [23, 25]], "g");
+    if (v.laces) d.ps([[8, 26], [9, 25], [22, 25], [23, 26]], "p");
+    if (v.ember) d.o(23, 25, ["o"]);
+    if (v.rune) d.ps([[8, 25], [23, 25]], "C");
+    if (v.stone) d.ps([[9, 26], [22, 25]], "a");
+  } };
+  HG.clockarm = { slot: "hands", mini: "hands", draw(d) {
+    d.r(21, 22, 4, 6, "m").r(22, 27, 3, 2, "g").e(22.6, 24.6, 1.2, 1.2, "g").p(22, 24, "G").p(23, 26, "G");
+  } };
+  HG.ring = { slot: "hands", draw(d, v) { d.p(23, 28, v.band || "g").o(23, 27, [v.signet ? "h" : (v.gem || "J")]); } };
+  HG.watch = { slot: "hands", draw(d, v) { d.r(7, 26, 4, 1, v.strap || "k").r(8, 25, 2, 2, v.digital ? "m" : v.smart ? "k" : (v.case || "s")).p(8, 25, v.digital ? "l" : v.smart ? "8" : "p"); } };
+  // FEET: shoes are K/k at rows 34-35 (x 10-13 and 18-21); legs are P at x 11-13 and 18-20, rows 30-33.
+  HG.boot = { slot: "feet", mini: "feet", recolor: () => ({ K: "A", k: "a" }), draw(d, v) {
+    const top = v.tall ? 30 : 32;
+    d.r(10, top, 4, 34 - top, "A").r(18, top, 4, 34 - top, "A");
+    d.r(10, top, 4, 1, v.cuff || "a").r(18, top, 4, 1, v.cuff || "a");
+    if (v.laces) d.ps([[12, top + 1], [19, top + 1]], v.laces);
+    if (v.toe) d.r(12, 34, 2, 1, v.toe).r(20, 34, 2, 1, v.toe);
+    if (v.buckle) d.p(12, top, "g").p(19, top, "g");
+    if (v.spur) d.p(9, 35, "s").p(22, 35, "s");
+    if (v.wings) d.t(6, 30, ["p..", "pp.", ".pp", "..p"]).t(23, 30, ["..p", ".pp", "pp.", "p.."]);
+    if (v.wind) d.o(23, 31, ["ZZZ", "....", ".ZZ"]).o(5, 32, ["ZZ"]);
+  } };
+  HG.sneaker = { slot: "feet", mini: "feet", recolor: () => ({ K: "A", k: "p" }), draw(d, v) {
+    d.p(11, 34, v.swoosh || "p").p(19, 34, v.swoosh || "p");
+    if (v.fast) d.o(5, 33, ["ZZ", ".ZZ"]).o(25, 33, ["ZZ", "ZZ."]);
+    if (v.wings) d.t(7, 32, ["pp.", ".pp"]).t(23, 32, [".pp", "pp."]);
+  } };
+  HG.sandal = { slot: "feet", mini: "feet", recolor: () => ({ K: "F", k: "A" }), draw(d, v) {
+    d.r(10, 34, 4, 1, v.strap || "n").r(18, 34, 4, 1, v.strap || "n").p(12, 33, v.strap || "n").p(19, 33, v.strap || "n");
+    if (v.roots) d.o(9, 36, ["N.N", ".N"]).o(19, 36, ["N.N", "..N"]);
+    if (v.cloud) d.o(8, 35, [".ZZZZ.", "ZZZZZZ"]).o(17, 35, [".ZZZZ.", "ZZZZZZ"]);
+  } };
+  HG.greaves = { slot: "feet", mini: "feet", recolor: () => ({ K: "A", k: "a" }), draw(d) {
+    d.r(10, 30, 4, 4, "A").r(18, 30, 4, 4, "A").p(12, 31, "C").p(19, 31, "C").r(10, 32, 4, 1, "a").r(18, 32, 4, 1, "a");
+  } };
+  HG.anklet = { slot: "feet", draw(d, v) {
+    d.r(10, 33, 4, 1, "g").r(18, 33, 4, 1, "g");
+    if (v.bells) d.o(10, 34, ["g..g"]).o(18, 34, ["g..g"]);
+  } };
+  HG.danceshoes = { slot: "feet", mini: "feet", recolor: () => ({ K: "A", k: "a" }), draw(d) {
+    d.l(11, 33, 13, 31, "L").l(13, 33, 11, 31, "L").l(18, 33, 20, 31, "L").l(20, 33, 18, 31, "L");
+  } };
+  // --- Hero gear: back, front, aura, right hand and off hand ---
+  // Back items are drawn behind the body: only what peeks out past the head and arms shows.
+  const hgStrap = (d, ch = "k") => d.to("over").l(10, 22, 21, 29, ch).to("main");
+  const hgStrapL = (d, ch = "N") => d.to("over").l(21, 22, 10, 29, ch).to("main");
+  // Guitar family: lower bout at the lower left, neck behind the head, headstock above the right shoulder.
+  const hgGuitar = (d, v, k) => {
+    d.to("back");
+    const body = k === "uke" ? [[5, 31, 3, 3], [7.4, 28.4, 2.2, 2.2]] : k === "violin" ? [[5, 30, 3, 3.6], [7.6, 26.6, 2.4, 2.6]] : [[4.6, 31, 4, 4], [7.8, 27, 3, 3]];
+    body.forEach(([x, y, rx, ry]) => d.e(x, y, rx, ry, "A"));
+    if (k === "electric") d.e(6, 30, 2, 2, v.guard || "p");
+    if (k === "hollow" || k === "archtop") d.e(5, 30.4, 2, 2, "L");
+    if (k === "lespaul") d.e(5, 30.6, 2.6, 2.6, "L");
+    if (k === "acoustic" || k === "uke" || k === "lute") d.e(6, 29, 1, 1, "K");
+    if (k === "violin") d.ps([[4, 29], [7, 31]], "K");
+    if (k === "mythaxe") { d.r(0, 0, 32, 40, "_"); d.l(9, 27, 1, 30, "A", 3).l(9, 27, 6, 35, "A", 3).e(8, 28, 2.2, 2.2, "A").ps([[4, 30], [6, 32]], "C"); }
+    const neck = k === "violin" ? "k" : k === "electric" ? "u" : "n";
+    const top = k === "uke" ? [22, 10] : k === "bass" ? [27, 4] : [26, 5];
+    d.l(9, 25, top[0], top[1], neck, 2);
+    d.t(top[0], top[1] - 3, k === "violin" ? [".nn", "nNn", "nn."] : ["..nn", ".nnn", "nnn.", "nn.."].map(r => r.replace(/n/g, k === "lespaul" || k === "archtop" ? "k" : k === "mythaxe" ? "g" : "n")));
+    if (k !== "violin") d.ps([[top[0] + 1, top[1] - 3], [top[0] + 3, top[1] - 2]], k === "mythaxe" || k === "archtop" ? "g" : "s");
+    hgStrap(d, k === "violin" ? "_" : "k");
+  };
+  [["acoustic", "acoustic"], ["electric", "electric"], ["lespaul", "lespaul"], ["hollow", "hollow"], ["archtop", "archtop"], ["mythaxe", "mythaxe"], ["bass", "bass"], ["ukulele", "uke"], ["violin", "violin"], ["lute", "lute"]]
+    .forEach(([key, k]) => { HG[key] = { slot: "back", mini: "inst", inst: true, draw(d, v) { hgGuitar(d, v, k); if (key === "lute") d.to("back").l(26, 3, 28, 5, "N", 2); } }; });
+  HG.keytar = { slot: "back", mini: "inst", inst: true, draw(d) {
+    d.to("back").l(1, 33, 27, 3, "A", 4).l(2, 34, 27, 5, "Z", 2);
+    for (let i = 0; i < 8; i++) { const t = i / 7; d.p(Math.round(3 + 22 * t), Math.round(33 - 28 * t), "k"); }
+    hgStrap(d);
+  } };
+  HG.upright = HG.grand = HG.keytar;
+  HG.tuba = { slot: "back", mini: "inst", inst: true, draw(d) {
+    d.to("back").e(25, 4, 4.6, 2.4, "A").e(25, 3.6, 3, 1.2, "1").l(22, 7, 22, 12, "A", 2);
+    d.e(4, 27, 3.6, 5, "A").e(4, 27, 1.6, 3, "a").l(4, 22, 20, 12, "A", 2);
+    hgStrap(d);
+  } };
+  HG.cloak = { slot: "back", mini: "cape", draw(d, v) {
+    d.to("back");
+    for (let y = 19; y < 37; y++) { const w = Math.min(13, 10 + Math.floor((y - 19) / 4)); d.r(16 - w, y, w * 2, 1, "A"); }
+    for (let x = 3; x < 29; x += 3) d.p(x, 36, "a");
+    d.l(4, 26, 3, 35, "a").l(27, 26, 28, 35, "a");
+    const P = v.pattern, dots = {
+      stars: [[4, 24, "y"], [26, 28, "y"], [5, 32, "Z"], [27, 23, "Z"], [15, 35, "y"]], circuit: [[4, 24, "C"], [4, 25, "C"], [5, 25, "C"], [27, 27, "C"], [26, 27, "C"], [26, 28, "C"]],
+      leaves: [[4, 25, "6"], [27, 29, "6"], [5, 33, "6"], [26, 34, "6"]], camo: [[4, 24, "a"], [5, 25, "a"], [27, 27, "k"], [4, 31, "L"], [26, 33, "a"]],
+      feather: [[4, 24, "L"], [5, 28, "L"], [26, 26, "L"], [27, 30, "L"], [4, 33, "L"]], mirror: [[4, 25, "Z"], [26, 23, "Z"], [27, 24, "i"]], moss: [[4, 34, "6"], [6, 35, "6"], [25, 35, "6"], [27, 34, "6"]],
+      moon: [[26, 24, "y"], [27, 25, "y"], [26, 26, "y"]], flame: [[4, 34, "o"], [5, 33, "y"], [26, 34, "o"], [27, 33, "y"]], bark: [[4, 25, "a"], [4, 26, "a"], [27, 28, "a"], [27, 29, "a"]],
+      weave: [[4, 24, "J"], [5, 27, "J"], [26, 25, "J"], [27, 28, "J"], [4, 31, "J"]], heart: [[26, 25, "r"], [27, 25, "r"], [26, 26, "r"]], wind: [[3, 26, "Z"], [4, 26, "Z"], [27, 30, "Z"], [28, 30, "Z"]],
+      eye: [[26, 26, "Z"], [27, 26, "k"], [28, 26, "Z"]], shield: [[26, 25, "J"], [27, 25, "J"], [26, 26, "J"], [27, 26, "J"]], gear: [[26, 26, "g"], [27, 27, "g"]]
+    }[P];
+    if (dots) dots.forEach(([x, y, c]) => d.p(x, y, c));
+    if (v.trim) d.r(3, 36, 26, 1, v.trim);
+    d.to("over");
+    if (v.fur) d.t(7, 20, [".UUUU4UUUUUU4UUUU.", "UU4UUUUUUUUUUUU4UU"]);
+    else if (v.collar) d.r(8, 21, 16, 1, v.collar);
+    d.t(14, 21, [v.clasp || "gggg"]);
+  } };
+  HG.backpack = { slot: "back", mini: "pack", draw(d, v) {
+    d.to("back").r(4, 18, 24, 14, "A").r(4, 18, 24, 1, "L").r(4, 31, 24, 1, "a");
+    d.r(4, 24, 3, 4, "a").r(25, 24, 3, 4, "a");
+    if (v.roll) d.r(3, 31, 26, 3, v.roll).r(3, 31, 26, 1, "Z");
+    if (v.tech) d.p(26, 22, "C").p(5, 22, "8");
+    if (v.gear) d.t(25, 20, [".g.", "ggg", ".g."]);
+    d.to("over").l(11, 22, 11, 28, "a").l(20, 22, 20, 28, "a").p(11, 26, v.buckle || "s").p(20, 26, v.buckle || "s");
+  } };
+  HG.gizmo = { slot: "back", mini: "pack", draw(d) {
+    d.to("back").r(4, 18, 24, 13, "A").r(4, 18, 24, 1, "L").t(25, 21, [".g.", "gGg", ".g."]).p(5, 23, "9").p(5, 25, "7");
+    d.l(27, 17, 29, 10, "k").o(29, 9, ["r"]);
+    d.to("over").l(11, 22, 11, 28, "a").l(20, 22, 20, 28, "a");
+  } };
+  HG.duffel = { slot: "back", mini: "pack", draw(d, v) {
+    d.to("back").e(4, 25, 3, 4, "A").e(27, 25, 3, 4, "A").r(4, 21, 24, 8, "A").e(4, 25, 1.6, 2.4, "a").e(27, 25, 1.6, 2.4, "a");
+    if (v.stripe) d.r(1, 25, 30, 1, v.stripe);
+    hgStrapL(d);
+  } };
+  HG.quiver = { shift: [1, 0], slot: "back", mini: "pack", draw(d, v) {
+    d.to("back").l(1, 26, 4, 6, v.fin ? "A" : "n", 4).l(1, 26, 4, 6, v.fin ? "A" : "n", 4);
+    d.r(1, 9, 5, 1, "J").r(0, 20, 5, 1, "J");
+    [[3, 3, "p"], [5, 2, "r"], [1, 3, "p"]].forEach(([x, y, c]) => d.t(x, y, [c + "." + c, "." + c + ".", ".w."]));
+    hgStrapL(d);
+  } };
+  HG.tube = { slot: "back", mini: "pack", draw(d, v) {
+    d.to("back").l(1, 26, 4, 6, v.body || "A", 4).l(2, 5, 6, 5, v.cap || "k").r(2, 3, 5, 3, v.cap || "k").r(1, 26, 5, 2, v.cap || "k");
+    if (v.paper) d.t(3, 1, ["pp", "bp"]);
+    hgStrapL(d);
+  } };
+  HG.telescope = { slot: "back", mini: "inst", draw(d) { d.to("back").l(2, 34, 28, 3, "A", 3).l(3, 34, 28, 4, "L").r(26, 1, 4, 2, "C").l(9, 26, 11, 28, "g", 2); hgStrap(d); } };
+  HG.easel = { shift: [1, 0], slot: "back", mini: "pack", draw(d) {
+    d.to("back").l(2, 38, 7, 2, "w").l(10, 38, 7, 2, "w").r(0, 2, 10, 9, "p").r(1, 6, 8, 4, "6").e(3.4, 4.6, 1.6, 1.4, "c").p(7, 3, "y");
+  } };
+  HG.mat = { slot: "back", mini: "pack", draw(d) { d.to("back").r(2, 19, 28, 4, "A").r(2, 19, 28, 1, "L").r(1, 20, 1, 2, "a").r(30, 20, 1, 2, "a").p(2, 21, "a").p(29, 21, "a"); } };
+  HG.barbell = { slot: "back", mini: "pack", draw(d) { d.to("back").r(1, 19, 30, 2, "s").r(1, 13, 3, 12, "A").r(28, 13, 3, 12, "A").r(4, 15, 2, 8, "A").r(26, 15, 2, 8, "A"); } };
+  HG.satchel = { slot: "back", mini: "pack", draw(d, v) {
+    d.to("over").l(21, 21, 8, 28, "N");
+    d.to("top").t(1, 27, ["AAAAAAA", "LLLLLLL", "LLLLLLL", "LLLgLLL", "AAAAAAA", "AAAAAAA", "aaaaaaa"]);
+    if (v.scroll) d.t(5, 25, ["pp", "pp"]);
+    if (v.pens) d.ps([[2, 26], [3, 25]], "k");
+  } };
+  // FRONT: worn across the body on a strap
+  const hgDrum = (d, top, shell, extra) => {
+    d.e(15.5, 29, 8, 1.8, top).r(7, 29, 18, 5, shell).e(15.5, 34, 8, 1.6, shell).e(15.5, 29, 8, 1.8, top).e(15.5, 29, 6.6, 1, "p");
+    if (extra) extra();
+    d.to("over").l(10, 21, 13, 28, "k").l(21, 21, 18, 28, "k").to("main");
+  };
+  HG.snare = { slot: "front", mini: "", draw(d) { hgDrum(d, "Z", "A", () => { d.r(7, 30, 18, 1, "s").r(7, 33, 18, 1, "s"); [8, 12, 16, 20, 23].forEach(x => d.r(x, 31, 1, 2, "s")); }); } };
+  HG.thunder = { slot: "front", mini: "", draw(d) { hgDrum(d, "Z", "A", () => { d.r(7, 30, 18, 1, "g").r(7, 33, 18, 1, "g"); d.t(14, 30, [".y", "yy", "y."]); }); } };
+  HG.stormdrum = { slot: "front", mini: "", draw(d) { hgDrum(d, "Z", "A", () => { d.r(7, 30, 18, 1, "g").r(7, 33, 18, 1, "g"); d.t(14, 30, [".y", "yy", "y."]); d.o(3, 18, ["y", ".y", "y"]).o(28, 16, [".y", "y", ".y"]); }); } };
+  HG.wardrum = { slot: "front", mini: "", draw(d) { hgDrum(d, "F", "n", () => { for (let x = 8; x < 24; x += 3) d.l(x, 30, x + 2, 33, "A"); }); } };
+  HG.sax = { slot: "front", mini: "", draw(d) {
+    d.t(13, 21, ["kk......", ".AA.....", "..AA....", "..AA....", "..AAA...", "..AAA...", "..AAA..A", "..AAAAAA", "...AAAAA", "....AAA."]);
+    d.ps([[15, 25], [15, 27], [16, 28]], "p").r(19, 27, 2, 1, "1");
+  } };
+  // AURA
+  HG.notes = { shift: [1, 0], slot: "aura", mini: "", draw(d) { d.to("back").t(0, 6, ["..AA", "..A.", "AAA.", "AA.."]).t(27, 1, ["AAA", "A.A", "A.A", "AA."]); } };
+  HG.halo = { slot: "aura", mini: "", draw(d) { d.to("fx").e(15.5, 1.2, 7, 1.2, "g").e(15.5, 1.2, 5.4, 0.3, "_").o(15, 0, ["h"]); } };
+  HG.drone = { slot: "aura", mini: "", draw(d) { d.to("top").t(24, 1, ["s.....s", ".k...k.", "..kkk..", ".kmBmk.", "..kkk.."]).p(28, 3, "r"); } };
+  // RIGHT HAND: the fist is at x 22-23, rows 27-28. Long items follow the line (21,35)-(29,9), which clears the head.
+  const hgPole = (d, y0, y1, ch, w = 1) => { const x = y => Math.round(21 + (35 - y) * 8 / 26); d.l(x(y0), y0, x(y1), y1, ch, w); };
+  const HAND = (draw, extra) => Object.assign({ slot: "hand", grip: true, mini: "pole", draw(d, v, t) { d.to("top"); draw(d, v, t); } }, extra || {});
+  HG.sword = HAND((d, v) => {
+    const M = v.metal || "s", k = v.kind || "broad";
+    if (k === "foil") { hgPole(d, 25, 8, M); d.e(23.6, 26.4, 1.4, 1.4, "g"); hgPole(d, 30, 27, "k"); return; }
+    if (k === "saber") { d.l(24, 25, 27, 19, M, 2).l(27, 19, 29, 13, M).l(28, 19, 30, 12, M); d.t(21, 24, ["gg.", "g.."]).l(21, 25, 21, 29, "g"); hgPole(d, 30, 27, v.grip || "n"); return; }
+    const top = k === "short" ? 16 : 10;
+    hgPole(d, 25, top, M, 2); hgPole(d, 24, top + 1, M === "s" ? "i" : "L");
+    d.l(20, 26, 26, 24, v.guard || "g");
+    hgPole(d, 31, 27, v.grip || "n"); hgPole(d, 32, 32, v.guard || "g");
+    if (v.runes) [[25, 21], [26, 18], [27, 15]].forEach(([x, y]) => d.p(x, y, "C"));
+    if (v.hot) { hgPole(d, 15, top, "o", 2); d.o(28, top - 1, ["y"]); }
+  });
+  HG.twinsabers = HAND(d => {
+    d.l(24, 26, 28, 18, "s", 1).l(28, 18, 30, 13, "s").l(21, 26, 25, 25, "g");
+    d.to("off").l(8, 26, 4, 18, "s", 1).l(4, 18, 2, 13, "s").l(11, 26, 7, 25, "g");
+  }, { hideOff: true });
+  HG.knife = HAND((d, v) => {
+    const k = v.kind || "chef";
+    if (k === "cleaver") { d.t(24, 18, ["sssss", "sssss", "sssss", "ssss.", "SS..."]).l(23, 27, 24, 23, "k"); d.p(27, 19, "_"); return; }
+    d.l(24, 25, k === "carving" ? 28 : 27, k === "carving" ? 16 : 18, "s", k === "chef" ? 2 : 1).l(25, 25, 28, 19, "i");
+    d.l(22, 29, 23, 26, k === "field" ? "n" : "k");
+  });
+  HG.hammer = HAND((d, v) => {
+    const k = v.kind || "smith", H = v.metal || "m";
+    hgPole(d, 31, 14, "w", 1);
+    if (k === "war") d.t(26, 9, [".HHH.", "HHHHH", "HHHHH", "HHHHH", ".HHH."].map(r => r.replace(/H/g, H))).p(30, 11, "s");
+    else d.t(26, 10, ["HHHHH", "HHHHH", "HHHHH", "....H"].map(r => r.replace(/H/g, H)));
+    if (v.band) d.p(25, 17, v.band);
+    if (v.ember) d.o(30, 8, ["o", "y"]);
+  }, { mini: "pole" });
+  HG.mace = HAND((d, v) => { hgPole(d, 31, 13, "n"); d.e(28.4, 10, 1.8, 2, v.metal || "s").ps([[28, 7], [28, 13]], v.metal || "s").p(28, 10, "J"); });
+  HG.greataxe = HAND(d => { hgPole(d, 34, 7, "n"); d.t(27, 4, [".sss", "ssss", "ssss", "ssss", "ssss", ".sss"]).r(28, 6, 1, 2, "J"); });
+  HG.trident = HAND(d => { hgPole(d, 36, 8, "n"); d.t(26, 1, ["g.g.g", "g.g.g", "g.g.g", "ggggg", "..g.."]).ps([[26, 0], [28, 0], [30, 0]], "h"); });
+  HG.trident.shift = [0, 1];
+  HG.bow = HAND((d, v) => {
+    const W = v.wood || "w", pts = [[24, 17], [26, 19], [27, 22], [28, 26], [28, 29], [27, 33], [26, 36], [24, 38]];
+    for (let i = 0; i < pts.length - 1; i++) d.l(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], W);
+    d.l(24, 17, 24, 37, "p").r(27, 27, 1, 3, "n");
+    if (v.kind === "recurve") d.p(23, 16, W).p(23, 37, W);
+  }, { mini: "bow" });
+  HG.staff = HAND((d, v) => {
+    const W = v.wood || "w", h = v.head || "orb";
+    hgPole(d, 36, 9, W);
+    if (h === "orb" || h === "crystal") { d.t(27, 7, ["g.g", ".g."]); if (h === "crystal") d.t(27, 2, [".C.", "CCC", "CHC", ".C."]); else d.e(28, 4, 2, 2, v.orb || "C"); d.o(28, 3, ["W"]); }
+    else if (h === "oak") d.t(26, 3, [".WWW.", "WW.WW", "W...W", ".W6W.", "..W.."].map(r => r.replace(/W/g, W))).t(29, 1, ["66", "6."]);
+    else if (h === "data") d.t(26, 3, [".CCC.", "C...C", "CCCCC", ".C.C."]).r(27, 4, 3, 1, "8");
+    else if (h === "brush") d.t(27, 2, [".JJ", "JJJ", "JJ.", "s.."]);
+    else if (h === "totem") d.t(26, 2, ["WWWWW", "WkWkW", "WWWWW", ".JJJ."].map(r => r.replace(/W/g, W)));
+    else if (h === "antler") d.t(25, 1, ["p...p.", ".p.p.p", "..ppp.", "...p.."]);
+    else if (h === "spindle") d.e(28.4, 8, 1.4, 1.4, "J").l(27, 5, 30, 5, "p").l(27, 6, 30, 6, "p");
+    else if (h === "wave") d.t(25, 3, ["C...C.", ".C.C.C", "..C..."]).o(28, 2, ["W"]);
+    else if (h === "crook") d.t(26, 3, [".WWW.", "W...W", "....W", "....Y"].map(r => r.replace(/W/g, W)));
+    else if (h === "calm") d.e(29, 7, 1.4, 1.4, "J").l(30, 10, 30, 14, "l");
+    else if (h === "cane") { d.r(0, 0, 32, 40, "_"); hgPole(d, 36, 12, "k"); d.e(28.4, 10, 1.6, 1.6, "g"); }
+    else if (h === "paint") d.t(27, 4, [".JJ", "JJJ", "JJ."]);
+  }, { mini: "pole" });
+  const hgTool = (d, ch, head) => { d.l(22, 30, 26, 20, ch); d.t(head[0], head[1], head[2]); };
+  HG.wrench = HAND((d, v) => { hgTool(d, v.metal || "s", [25, 15, ["M.M", "MMM", ".M."].map(r => r.replace(/M/g, v.metal || "s"))]); if (v.torque) d.l(22, 30, 23, 28, "r"); });
+  HG.tools = HG.wrench;
+  HG.brush = HAND((d, v) => { d.l(22, 30, 26, 20, v.handle || "A"); d.t(26, 15, [".n", "nn", "nn", "s."]).p(27, 15, v.paint || "n"); });
+  HG.brushes = HAND(d => { d.t(24, 22, ["r.b.e", "w.w.w", "AAAAA", "AAAAA", "AAAAA", "AAAAA"]); }, { mini: "item" });
+  HG.quill = HAND((d, v) => { d.l(23, 28, 25, 24, "k"); d.t(24, 15, ["....P", "...PP", "..PP.", ".PP..", "PP...", "P...."].map(r => r.replace(/P/g, v.feather || "p"))).l(25, 23, 29, 15, "P"); if (v.glow) d.o(29, 14, ["W"]); if (v.rune) d.p(27, 18, "C"); });
+  HG.pen = HAND((d, v) => { d.l(23, 27, 28, 18, v.body || "k", 1).l(24, 27, 29, 18, v.body || "k", 1).p(29, 17, v.cap || "g").p(23, 28, "g"); });
+  HG.solder = HAND(d => { d.l(23, 27, 28, 18, "k", 2).l(28, 18, 30, 15, "s").o(30, 14, ["o"]); });
+  HG.ladle = HAND(d => { d.l(23, 28, 27, 18, "A").t(26, 15, [".AAA", "AAAA", ".aa."]); });
+  HG.whisk = HAND((d, v) => { d.l(23, 28, 25, 24, v.handle || "A"); d.t(24, 16, [".MMM.", "M.M.M", "M.M.M", "M.M.M", ".MMM.", "..M.."].map(r => r.replace(/M/g, v.metal || "s")))
+    ; });
+  HG.rollingpin = HAND(d => { d.l(21, 31, 27, 19, "w", 2).l(20, 33, 21, 31, "n").l(27, 18, 28, 16, "n"); });
+  HG.peel = HAND(d => { d.l(22, 31, 26, 21, "w"); d.e(28.6, 17.4, 1.8, 2.6, "w").e(28.6, 17.4, 1, 1.6, "o").p(28, 17, "r"); });
+  HG.spatula = HAND((d, v) => { d.l(22, 30, 26, 21, "k").t(25, 15, ["ssss", "ssss", "ssss", ".ss."]); if (v.fire) d.o(30, 13, ["o", "y"]); });
+  HG.skillet = HAND((d, v) => { const M = v.metal || "m"; d.l(23, 28, 25, 23, M).e(27.6, 18.4, 3.4, 3.4, M).e(27.6, 18.4, 2.2, 2.2, M === "A" ? "a" : "M"); });
+  HG.skillet.shift = [-1, 0];
+  HG.saucepan = HAND(d => { d.l(23, 28, 25, 25, "k").r(25, 19, 6, 6, "A").e(28, 19, 3, 1, "a"); });
+  HG.saucepan.shift = [-1, 0];
+  HG.platter = HAND(d => { d.e(27, 25, 4, 1, "s").e(27, 22.4, 3.4, 2.6, "s").r(24, 23, 7, 2, "s").p(27, 19, "g").p(26, 21, "i"); }, { mini: "item" });
+  HG.platter.shift = [-1, 0];
+  HG.bowl = HAND(d => { d.t(24, 23, ["AAAAAAA", ".AAAAA.", "..aaa.."]).e(27, 23, 3, 0.6, "a"); }, { mini: "item" });
+  HG.kettle = HAND(d => { d.e(27.4, 25, 3, 2.6, "A").r(26, 21, 3, 2, "A").l(30, 24, 31, 22, "A").t(25, 19, [".kkk.", "k...k"]); }, { mini: "item" });
+  HG.kettle.shift = [-1, 0];
+  HG.mortar = HAND(d => { d.t(24, 24, ["zzzzzzz", ".zzzzz.", "..zzz.."]).l(27, 24, 30, 19, "z", 2); }, { mini: "item" });
+  HG.mortar.shift = [-1, 0];
+  HG.jars = HAND(d => { d.r(24, 22, 3, 5, "H").r(24, 23, 3, 4, "r").r(24, 21, 3, 1, "s").r(28, 23, 3, 4, "H").r(28, 24, 3, 3, "6").r(28, 22, 3, 1, "s"); }, { mini: "item" });
+  HG.honeypot = HAND(d => { d.e(27.4, 25, 3.2, 3, "g").r(25, 21, 5, 2, "Y").r(25, 24, 5, 2, "p").l(28, 21, 30, 17, "w"); }, { mini: "item" });
+  HG.forktool = HAND(d => { hgPole(d, 33, 13, "w"); d.t(26, 8, ["s.s.s", "s.s.s", "sssss", "..s.."]); });
+  HG.trowel = HAND(d => { d.l(22, 30, 25, 23, "w").t(24, 17, [".ss.", "ssss", "ssss", ".ss."]); });
+  HG.broom = HAND(d => { hgPole(d, 33, 8, "w"); d.t(17, 33, ["..yyyy", ".yyyyy", "yyyyy."]); });
+  HG.duster = HAND((d, v) => { d.l(22, 30, 26, 21, "n"); d.e(28.4, 17.4, 2.2, 2.6, "p").ps([[29, 15], [30, 18]], "P"); });
+  HG.leash = HAND(d => { d.t(24, 26, [".AA", "A.A", ".AA"]).l(25, 29, 27, 33, "A").l(27, 33, 30, 35, "A").p(31, 36, "s"); });
+  HG.leash.shift = [-1, 0];
+  HG.petbrush = HAND(d => { d.l(22, 30, 25, 24, "A").t(24, 18, [".AAAA", "AAAAA", "zzzzz"]); });
+  // Books, papers and objects held at the side
+  const hgObj = (d, x, y, rows) => d.t(x, y, rows);
+  HG.book = HAND((d, v) => {
+    hgObj(d, 24, 21, ["aAAAAA", "aAAAAA", "aAAAAA", "aAAAAA", "aAAAAA", "aAAAAA", "aAAAAA", "pppppp"]);
+    if (v.corners) d.ps([[29, 21], [29, 27]], "g");
+    if (v.clasp) d.p(29, 24, v.clasp);
+    if (v.emblem || v.label) d.p(27, 23, "g").p(27, 24, v.emblem === "rune" ? "C" : "g");
+    if (v.spiral) d.ps([[24, 21], [24, 23], [24, 25], [24, 27]], "s");
+    if (v.strap) d.r(24, 24, 6, 1, "N");
+  }, { slot: "off", left: true, mini: "book" });
+  HG.openbook = HAND((d, v) => { hgObj(d, 23, 22, ["AppppppA", "ApPpPpPA", "ApppppPA", "ApPpPppA", "AAAAAAAA"]); if (v.gold) d.r(23, 26, 8, 1, "g"); }, { slot: "off", left: true, mini: "book" });
+  HG.binder = HAND(d => { hgObj(d, 24, 21, ["sAAAAA", "AAAAAA", "sAppAA", "AAAAAA", "sAAAAA", "AAAAAA", "aaaaaa"]); }, { slot: "off", left: true, mini: "book" });
+  HG.clapper = HAND(d => { hgObj(d, 23, 21, ["kpkpkpk", "kkkkkkk", "kpkpkpk", "kkkkkkk", "kjjjjjk", "kkkkkkk", "kkkkkkk"]); }, { slot: "off", left: true, mini: "book" });
+  HG.cards = HAND(d => { hgObj(d, 24, 21, [".pppp.", "ppppAp", "pAppAp", "pppppp", "ppppp."]); }, { mini: "item" });
+  HG.libcard = HAND(d => { hgObj(d, 24, 22, ["AAAAAA", "pcpPPp", "pcpPPp", "pppppp"]); }, { mini: "item" });
+  HG.scroll = HAND((d, v) => { hgObj(d, 24, 19, ["nPPPPn", ".pppp.", ".pPPp.", ".pppp.", ".pPPp.", ".pppp.", "nPPPPn"]); if (v.kind === "map") d.ps([[26, 21], [27, 22], [28, 24]], "r"); if (v.kind === "stars") d.r(25, 20, 4, 5, "k").ps([[26, 21], [28, 23]], "y"); if (v.seal) d.p(28, 24, v.seal); }, { mini: "item" });
+  HG.letters = HAND(d => { hgObj(d, 23, 22, ["ppppppp", "pPpppPp", "ppPpPpp", "pppPppp", "ppppppp"]).p(26, 25, "r"); }, { mini: "item" });
+  HG.camera = HAND((d, v) => {
+    if (v.kind === "disposable") { hgObj(d, 23, 22, ["eeeeeee", "yyyyyyy", "yykkkyy", "yykBkyy", "eeeeeee"]); return; }
+    hgObj(d, 23, 21, ["..kk....", "kkkkkkk.", "kmmmkkr.", "kmBmkkk.", "kmmmkkk.", "kkkkkkk."]);
+    if (v.kind === "rig") d.r(30, 22, 2, 3, "m").p(31, 23, "B").r(25, 19, 4, 1, "m");
+  }, { mini: "item" });
+  HG.camera.shift = [-1, 0];
+  HG.lens = HAND(d => { d.e(27, 23.4, 3, 3, "k").e(27, 23.4, 2, 2, "m").e(27, 23.4, 1, 1, "B"); }, { mini: "item" });
+  HG.microscope = HAND(d => { hgObj(d, 24, 18, [".kk...", "..kA..", "..AA..", "AAAA..", "..A...", "AAAAA."]).p(26, 22, "c"); }, { mini: "item" });
+  HG.flask = HAND((d, v) => { hgObj(d, 25, 19, [".ww.", ".HH.", ".HH.", "HHHH", "HLLH", "LLLL", "LLLL"].map(r => r.replace(/L/g, v.liquid || "e"))); d.o(27, 17, ["W"]); }, { mini: "item" });
+  HG.stone = HAND((d, v) => { const c = v.color || "r"; hgObj(d, 24, 21, [".ccc.", "cZccc", "ccccc", ".ccc."].map(r => r.replace(/c/g, c))); if (v.glow) d.o(29, 20, ["W"]); }, { mini: "item" });
+  HG.crystalball = HAND((d, v) => { d.e(27, 22, 2.6, 2.6, v.color || "x").p(26, 21, "Z"); d.t(25, 25, [".ggg.", "GGGGG"]); }, { slot: "off", left: true, mini: "item" });
+  HG.lamp = HAND(d => { d.t(24, 28, ["..k..", ".kkk.", "kyyyk", "kyWyk", "kyyyk", ".kkk."]); d.o(23, 30, ["y"]).o(29, 31, ["y"]); }, { slot: "off", left: true, mini: "lamp" });
+  HG.lantern = HAND((d, v) => { const M = v.metal || "m"; d.t(24, 28, ["..M..", ".MMM.", "MyyyM", "MyWyM", "MyyyM", ".MMM."].map(r => r.replace(/M/g, M))); d.o(23, 30, ["y"]).o(29, 31, ["y"]); }, { slot: "off", left: true, mini: "lamp" });
+  HG.flashlight = HAND((d, v) => { d.l(23, 28, 26, 23, v.body || "k", 2).t(26, 20, ["ss", "ss"]).o(28, 18, [".y", "y."].map(r => r.replace(/y/g, v.beam === "r" ? "r" : "y"))); });
+  HG.scales = HAND(d => { d.r(27, 18, 1, 9, "g").r(24, 19, 7, 1, "g").e(24.4, 23, 1.6, 0.6, "g").e(30, 23, 1.6, 0.6, "g").l(24, 20, 24, 22, "k").l(30, 20, 30, 22, "k"); }, { mini: "item" });
+  HG.scales.shift = [-1, 0];
+  HG.hourglass = HAND(d => { hgObj(d, 24, 20, ["wwwww", ".yyy.", "..y..", ".HyH.", "yyyyy", "wwwww"]); }, { slot: "off", left: true, mini: "item" });
+  HG.tablet = HAND((d, v) => { hgObj(d, 24, 19, ["kkkkkk", "k9KKKk", "kK8KKk", "kKK9Kk", "kKKKKk", "kkkkkk"]); if (v.screen === "stars") d.ps([[26, 20], [28, 22]], "y"); }, { mini: "item" });
+  HG.terminal = HAND((d, v) => { hgObj(d, 23, 20, ["AAAAAAA", "AKKKKKA", "AK9KCKA", "AKKKKKA", "AAAAAAA", ".kkkkk."]); }, { mini: "item" });
+  HG.keyboard = HAND(d => { hgObj(d, 22, 26, ["kkkkkkkkk", "kpkpkpkpk", "kkkkkkkkk"]); }, { mini: "item" });
+  HG.duck = HAND(d => { hgObj(d, 24, 21, ["..yy.", ".yyky", "y.yyY", "yyyyy", ".yyy."]); }, { mini: "item" });
+  HG.labelmaker = HAND(d => { hgObj(d, 24, 21, ["AAAAA.", "AllAAp", "AkkkA.", "AkkkA.", "aaaaa."]); }, { mini: "item" });
+  HG.controller = HAND(d => { hgObj(d, 23, 23, ["kkkkkkk", "kmk8kmk", "kkkkkkk"]).l(24, 23, 24, 20, "k").o(24, 19, ["r"]); }, { mini: "item" });
+  HG.varnish = HAND(d => { hgObj(d, 24, 21, ["sssss", "ooooo", "ppppp", "ooooo", "ooooo"]); }, { mini: "item" });
+  HG.chessboard = HAND(d => { hgObj(d, 23, 22, ["nnnnnnn", "npkpkpn", "nkpkpkn", "npkpkpn", "nnnnnnn"]).t(26, 19, [".g.", "AAA", ".A."]); }, { slot: "off", left: true, mini: "book" });
+  HG.chessclock = HAND(d => { hgObj(d, 23, 21, [".s...s.", "nnnnnnn", "npppnpp", "npkpnkp", "nnnnnnn"]); }, { mini: "item" });
+  HG.kettlebell = HAND(d => { d.t(23, 26, [".AAA.", "A...A"]).e(25, 30.4, 3, 2.6, "A"); }, { mini: "item" });
+  HG.incense = HAND(d => { hgObj(d, 24, 23, ["..n...", "..n.n.", "AAAAAA", ".aaaa."]).o(26, 21, ["5", ".5"]); }, { mini: "item" });
+  HG.smoker = HAND(d => { hgObj(d, 25, 20, [".sss.", "sssss", "sssss", "sssss", "sssss", "sssss"]).r(30, 22, 2, 3, "n").o(26, 18, ["5.5"]); }, { mini: "item" });
+  HG.smoker.shift = [-1, 0];
+  HG.medbag = HAND(d => { hgObj(d, 23, 27, ["..kkk..", "AAAAAAA", "AAApAAA", "AAprpAA", "AAApAAA", "aaaaaaa"]); }, { mini: "item" });
+  HG.toolbox = HAND(d => { hgObj(d, 23, 27, ["..kkk..", ".k...k.", "AAAAAAA", "aaaaaaa", "AAAsAAA", "AAAAAAA", "aaaaaaa"]); }, { mini: "item" });
+  HG.basket = HAND((d, v) => { hgObj(d, 23, 25, ["..www..", ".w...w.", "w66r66w", "wwwwwww", "wvwvwvw", ".wwwww."]); if (v.mush) d.p(25, 27, "r").p(28, 27, "Z"); }, { mini: "item" });
+  HG.magnifier = HAND((d, v) => { d.l(23, 28, 25, 25, "n").e(27, 22, 2.6, 2.6, v.rim || "A").e(27, 22, 1.6, 1.6, "H"); if (v.bug) d.p(27, 22, "r"); });
+  HG.viewfinder = HAND(d => { d.l(23, 28, 27, 22, "k", 2).e(28, 20, 2, 2, "k").p(28, 20, "B"); });
+  HG.mic = HAND((d, v) => { d.l(23, 28, 25, 24, v.body || "k", 1).l(24, 28, 26, 24, v.body || "k", 1); d.e(27, 21.6, 2, 2, v.head || "s").p(26, 21, "i"); if (v.ring) d.p(25, 25, "g"); });
+  HG.goldmic = HAND(d => { d.l(23, 28, 25, 25, "a"); d.t(25, 18, [".AAA.", "AaAaA", "AAAAA", "AaAaA", ".AAA."]); });
+  HG.shellmic = HAND(d => { d.l(23, 28, 25, 25, "p", 2); d.t(25, 19, [".ddd.", "dDdDd", "ddddd", ".DdD."]); });
+  HG.sheet = HAND(d => { hgObj(d, 24, 20, ["pppppP", "PPPPPp", "pkpppp", "PPkPPp", "pppppp", "PPPPkp", "pppppp"]); }, { mini: "item" });
+  HG.flute = HAND((d, v) => { d.l(22, 30, 29, 16, v.wood ? "w" : "A", 1).l(23, 30, 30, 16, v.wood ? "w" : "A", 1).ps([[25, 25], [26, 23], [27, 21]], "N"); if (v.reed) d.t(29, 13, [".e", "ee"]); });
+  HG.handbell = HAND(d => { d.r(23, 25, 1, 3, "n"); d.t(23, 28, [".AAA.", ".AAA.", "AAAAA", "aaaaa"]).p(25, 32, "k"); }, { mini: "item" });
+  HG.sticks = HAND(d => { d.l(22, 30, 28, 17, "u").l(23, 30, 29, 18, "u").p(28, 16, "w").p(29, 17, "w"); });
+  HG.masks = HAND(d => { d.l(23, 28, 25, 23, "n"); d.t(23, 15, ["..AAAA.", ".AAAAAA", "AAkAAkA", "AAAAAAA", "AAkkkAA", ".AAAAA.", "..AAA.."]); });
+  HG.block = HAND(d => { hgObj(d, 24, 22, ["LLLLL", "AAAAA", "AAAAA", "aaaaa"]); }, { mini: "item" });
+  HG.pad = HAND(d => { d.e(4.6, 27, 3.8, 2, "k").e(4.6, 26.6, 2.6, 1, "m"); }, { slot: "off", mini: "shield" });
+  HG.cymbal = HAND(d => { d.e(4.6, 26, 4.4, 1.6, "A").e(4.6, 25.6, 2.6, 0.6, "L").p(4, 25, "a"); }, { slot: "off", mini: "shield" });
+  HG.cymbal.shift = [1, 0];
+  HG.spiritdrum = HAND(d => { d.e(4.6, 26.6, 4.2, 4.2, "n").e(4.6, 26.6, 3.2, 3.2, "F").t(3, 25, [".A.", "AAA", ".A."]); }, { slot: "off", mini: "shield" });
+  HG.cushion = HAND(d => { d.e(5, 28, 4.6, 2.4, "A").e(5, 27.4, 3.4, 1.2, "L"); }, { slot: "off", left: true, mini: "item" });
+  // OFF HAND: shields cover the left arm (fist at x 8-9).
+  HG.shield = HAND((d, v) => {
+    const k = v.kind || "heater", R = v.rim || (k === "bark" ? "N" : "s");
+    if (k === "round") { d.e(4.6, 26.6, 4.6, 4.6, R).e(4.6, 26.6, 3.6, 3.6, "A").l(2, 23, 2, 30, "a").l(7, 23, 7, 30, "a").e(4.6, 26.6, 1, 1, R); return; }
+    if (k === "tower") { d.r(0, 19, 10, 15, R).r(1, 20, 8, 13, "A").r(4, 20, 2, 13, "J").r(1, 25, 8, 2, "J"); return; }
+    if (k === "gate") { d.r(0, 20, 10, 13, "z").r(2, 22, 6, 10, "K"); for (let x = 2; x < 8; x += 2) d.r(x, 22, 1, 11, "m"); d.r(2, 25, 6, 1, "m").r(2, 29, 6, 1, "m"); return; }
+    if (k === "palette") { d.e(4.6, 27, 4.6, 3.6, "w").ps([[2, 25], [5, 24], [7, 26], [6, 29], [3, 29]], "_").ps([[2, 25], [5, 24], [7, 26], [6, 29]], ["r", "y", "b", "e"][0]); d.p(5, 24, "y").p(7, 26, "b").p(6, 29, "e"); d.p(3, 28, "Z"); return; }
+    if (k === "anvil") { d.t(0, 22, ["AAAAAAAAAA", ".AAAAAAAA.", "...AAAA...", "...AAAA...", "..AAAAAA..", ".AAAAAAAA.", ".aaaaaaaa."]).r(0, 22, 10, 1, "L"); return; }
+    if (k === "hive") { d.r(0, 20, 10, 12, "w").r(1, 21, 8, 10, "G"); for (let y = 21; y < 31; y += 2) for (let x = 1 + (y % 4 === 1 ? 1 : 0); x < 9; x += 2) d.p(x, y, "g"); d.r(1, 27, 8, 4, "Y"); return; }
+    const rows = k === "kite" ? ["RRRRRRRRR", "RAAAAAAAR", "RAAAAAAAR", "RAAAAAAAR", ".RAAAAAR.", ".RAAAAAR.", "..RAAAR..", "..RAAAR..", "...RAR...", "...RAR...", "....R...."]
+      : ["RRRRRRRRRR", "RAAAAAAAAR", "RAAAAAAAAR", "RAAAAAAAAR", "RAAAAAAAAR", ".RAAAAAAR.", ".RAAAAAAR.", "..RAAAAR..", "...RAAR...", "....RR...."];
+    d.t(0, 20, rows.map(r => r.replace(/R/g, R)));
+    if (v.emblem === "cross") d.r(4, 21, 2, 7, "J").r(2, 23, 6, 2, "J");
+    else if (v.emblem === "lion") d.t(2, 22, [".gg.", "gggg", "gkgg", ".gg."].map(r => r));
+    else if (k === "bark") d.ps([[3, 22], [3, 23], [6, 24], [6, 25], [4, 27]], "a").t(4, 22, ["66", "6."]);
+    else if (k === "firewall") d.r(1, 23, 8, 1, "a").r(1, 26, 8, 1, "a").t(3, 24, [".o.", "oyo", ".o."].map(r => r));
+    else d.t(3, 22, ["JJJ", "JJJ", ".J."]);
+  }, { slot: "off", mini: "shield", grip: false });
+
+  HG.shield.shift = [1, 0];
+  HG.turntable = HG.headphones;
+  HG.briefcase = HAND(d => { d.t(23, 27, ["..kkk..", ".k...k.", "AAAAAAA", "AAgAgAA", "aaaaaaa", "AAAAAAA", "aaaaaaa"]); }, { mini: "item" });
+  HG.shawl = { slot: "neck", draw(d) { d.t(8, 21, ["AAAAAAAAAAAAAAAA", ".AAAAAAAAAAAAAA.", "..AAAAJAAJAAAA..", "...AAAAAAAAAA...", ".....AAJAAA.....", "......AAAA......", ".......JJ......."]); } };
+  // ---------- Which hero look each item gets ----------
+  // Same name rules as the icons; items without a hero drawer fall back to the old sprite.
+  function heroLookFor(name, sprite, skill, tier) {
+    const pick = iconFor(name, sprite, skill, tier);
+    if (pick && HG[pick[0]]) return { key: pick[0], v: pick[1] || {}, slot: HG[pick[0]].slot, sprite, tier };
+    return S[sprite] ? { sprite, slot: S[sprite].slot, tier } : null;
+  }
+  // Blend a color with alpha (#rrggbbaa) over what is already there.
+  function hgMix(under, over) {
+    if (!over || over.length !== 9) return over;
+    const a = parseInt(over.slice(7), 16) / 255, o = hex2rgb(over.slice(0, 7));
+    if (!under || under[0] !== "#" || under.length !== 7) return a > 0.5 ? over.slice(0, 7) : under;
+    const u = hex2rgb(under); return rgb2hex(u.map((v, i) => v + (o[i] - v) * a));
+  }
+  // keys (optional) protects the face: gear outside the head and face slots never paints over skin, face or head outline,
+  // so a staff or collar reads as passing behind the head instead of cutting into the cheek.
+  // Outlines also stay off the hair, so a weapon head next to the hair never leaves a dark notch in it.
+  const HG_FACE = new Set(["S", "s", "F", "O", "U"]), HG_HAIR = new Set(["H", "h", "j"]);
+  const hgPut = (g, cells, dy, keys) => { if (cells) cells.forEach(([x, y, c, edge]) => { const yy = y + dy; if (x >= 0 && x < AV_W && yy >= 0 && yy < AV_H) {
+    if (keys && yy <= 20 + dy && keys[yy] && (HG_FACE.has(keys[yy][x]) || (edge && HG_HAIR.has(keys[yy][x])))) return;
+    const m = hgMix(g[yy][x], c); if (m) g[yy][x] = m; } }); };
+  const hgOf = it => it && it.key && HG[it.key] ? hgBuild(it.key, it.v, it.tier) : null;
   // Fallback: one hero sprite on its own, cropped to its pixels (items without a drawn icon).
   function itemCrop(canvas, sprite, tier, size = 40) {
     const sp = S[sprite]; if (!sp) return;
@@ -8563,11 +9350,12 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Hero look from appearance + owned gear ----------
-  const SLOT_NAMES = { head: "Head", face: "Face", neck: "Neck", body: "Outfit", belt: "Belt", back: "Back", front: "Front", hand: "Hand", hands: "Gloves & wrist", feet: "Feet", aura: "Aura" };
+  const SLOT_NAMES = { head: "Head", face: "Face", neck: "Neck", body: "Outfit", belt: "Belt", back: "Back", front: "Front", hand: "Main hand", off: "Off hand", hands: "Gloves & wrist", feet: "Feet", aura: "Aura" };
   function appearance() { if (!state.appearance) state.appearance = defaultAppearance(); if (!state.appearance.show) state.appearance.show = {}; if (!BACKDROPS[state.appearance.bg] || !bdUnlocked(state.appearance.bg)) state.appearance.bg = "meadow"; classLookCheck(state.appearance); return state.appearance; }
   function ownedLooks() {
     const out = [];
-    state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const sp = lookFor(it); if (S[sp]) out.push({ id: it.id, name: (showsRelic(it.id) ? "Radiant " : "") + it.name, sprite: sp, slot: S[sp].slot, tier: shownTier(it), rank: it.tier + (showsRelic(it.id) ? 0.5 : 0), skill: s }); } }));
+    // Auto order: items you have equipped first, then your current class's set, then the highest tier.
+    state.skills.forEach(s => gearFor(s).forEach(it => { if (state.owned[it.id]) { const L = heroLookFor(it.name, lookFor(it), s, shownTier(it)); if (L) out.push(Object.assign(L, { id: it.id, name: (showsRelic(it.id) ? "Radiant " : "") + it.name, tier: shownTier(it), rank: it.tier + (showsRelic(it.id) ? 0.5 : 0) + (state.equipped[s.id] === it.id ? 100 : 0), skill: s })); } }));
     clsGearLooks(out);                                // class gear pieces (v0.15)
     return out;
   }
@@ -8579,7 +9367,7 @@ details.cg-set > summary { cursor: pointer; }
       const list = bySlot[sl] || [], pick = ap.show[sl];
       if (pick === "none") return;
       const chosen = pick && pick !== "auto" ? list.find(o => o.id === pick) : list.slice().sort((a, b) => (b.rank ?? b.tier) - (a.rank ?? a.tier))[0];
-      if (chosen) items[sl] = { sprite: chosen.sprite, tier: chosen.tier, id: chosen.id };
+      if (chosen) items[sl] = { sprite: chosen.sprite, tier: chosen.tier, id: chosen.id, key: chosen.key, v: chosen.v };
     });
     return items;
   }
@@ -8809,7 +9597,7 @@ details.cg-set > summary { cursor: pointer; }
     }
     const items = heroItems();
     if (prop) delete items.hand;
-    if (act === "music" && items.back && S[items.back.sprite].strap) delete items.back;
+    if (act === "music" && items.back && ((hgOf(items.back) || {}).inst || (S[items.back.sprite] || {}).strap)) delete items.back;
     return { ap: appearance(), items, pose: "train", act, frame, prop };
   }
   // ================= FEEL: sound, haptics, celebrations =================
@@ -8946,13 +9734,15 @@ details.cg-set > summary { cursor: pointer; }
   function miniHero(look, frame, opts = {}) {
     const ap = look.ap || defaultAppearance(), pal = heroPalette(ap), items = look.items || {};
     const recol = Object.assign({}, pal);
-    ["body", "hands", "feet"].forEach(sl => { const it = items[sl]; if (it && S[it.sprite] && S[it.sprite].recolor) { const tp = TIER_PAL[it.tier] || TIER_PAL[0]; Object.entries(S[it.sprite].recolor).forEach(([k, v]) => { recol[k] = tp[v] || FIXED[v] || v; }); } });
+    ["body", "hands", "feet"].forEach(sl => { const it = items[sl], hb = hgOf(it); if (hb) Object.assign(recol, hb.recolor); else if (it && S[it.sprite] && S[it.sprite].recolor) { const tp = TIER_PAL[it.tier] || TIER_PAL[0]; Object.entries(S[it.sprite].recolor).forEach(([k, v]) => { recol[k] = tp[v] || FIXED[v] || v; }); } });
     const rows = MINI.slice(); if (opts.walk && frame % 2) rows.splice(13, 3, ...MINI_WALK);
     const g = Array.from({ length: 18 }, () => new Array(18).fill(null));
     const set = (x, y, c) => { if (x >= 0 && x < 18 && y >= 0 && y < 18 && c) g[y][x] = c; };
-    const tier = sl => TIER_PAL[(items[sl] || {}).tier || 0];
+    const tier = sl => { const hb = hgOf(items[sl]); return hb ? { A: hb.fin.A, a: hb.fin.a, L: hb.fin.L } : TIER_PAL[(items[sl] || {}).tier || 0]; };
+    const mini = sl => { const it = items[sl]; return it && it.key && HG[it.key] ? (HG[it.key].mini || "") : null; };
     // behind: cape and back gear
-    if (items.back && items.back.sprite === "cape") for (let y = 9; y < 15; y++) { set(2, y, tier("back").a); set(14, y, tier("back").a); }
+    if (mini("back") === "pack") { const t = tier("back"); for (let y = 9; y < 13; y++) { set(1, y, OUTLINE); set(2, y, t.A); set(15, y, t.A); set(16, y, OUTLINE); } }
+    else if (mini("back") === "cape" || (items.back && items.back.sprite === "cape")) for (let y = 9; y < 15; y++) { set(2, y, tier("back").a); set(14, y, tier("back").a); }
     else if (items.back) { const t = tier("back"); [[13, 2], [14, 1], [13, 3], [12, 4]].forEach(([x, y]) => set(x + 1, y, OUTLINE)); [[13, 3], [14, 2]].forEach(([x, y]) => set(x + 1, y, FIXED.N)); set(2, 12, t.A); set(2, 13, t.a); set(1, 12, OUTLINE); set(1, 13, OUTLINE); }
     rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) { const ch = row[x]; if (ch !== ".") set(x + 1, y + 1, recol[ch] || FIXED[ch]); } });
     // hair styles
@@ -8964,14 +9754,20 @@ details.cg-set > summary { cursor: pointer; }
     if (hs === "Puffy") { [[1, 3], [16, 3], [1, 4], [16, 4], [1, 5], [16, 5]].forEach(([x, y]) => set(x, y, recol.H)); [[0, 3], [17, 3], [0, 4], [17, 4], [0, 5], [17, 5]].forEach(([x, y]) => set(x, y, OUTLINE)); }
     if (hs === "Buzz") { for (let x = 3; x < 15; x++) set(x, 5, recol.S); set(2, 5, recol.H); set(15, 5, recol.H); }
     // head gear
-    const head = items.head && items.head.sprite, ht = tier("head");
+    const hm = mini("head"), head = hm != null ? { hat: "headband", wide: "headband", tall: "toque", helm: "helm", crown: "crown", band: "circlet" }[hm] || "" : items.head && items.head.sprite, ht = tier("head");
+    if (hm === "hat" || hm === "wide" || hm === "tall") { for (let x = hm === "wide" ? 2 : 4; x < (hm === "wide" ? 16 : 14); x++) set(x, 2, ht.a); for (let x = 5; x < 13; x++) { set(x, 1, ht.A); if (hm === "tall") set(x, 0, ht.A); } }
+    if (hm === "helm") { for (let x = 3; x < 15; x++) { set(x, 1, ht.A); set(x, 2, ht.A); } set(2, 3, ht.A); set(15, 3, ht.A); set(2, 4, ht.a); set(15, 4, ht.a); }
     if (head === "crown") { [5, 6, 7, 8, 9, 10, 11, 12].forEach(x => set(x, 1, ht.A)); [5, 8, 9, 12].forEach(x => set(x, 0, ht.A)); set(8, 1, FIXED.R); }
     else if (head === "toque") { for (let x = 5; x < 13; x++) { set(x, 0, FIXED.Z); set(x, 1, FIXED.Z); } set(4, 1, OUTLINE); set(13, 1, OUTLINE); for (let x = 5; x < 13; x++) set(x, 2, ht.A); }
     else if (head === "headband" || head === "circlet" || head === "flower") { for (let x = 3; x < 15; x++) set(x, 5, head === "flower" ? FIXED.B : ht.A); if (head === "circlet") { set(8, 5, FIXED.C); set(9, 5, FIXED.C); } }
     if (items.face && items.face.sprite === "glasses" || (items.face && items.face.sprite === "goggles")) { [5, 6, 10, 11].forEach(x => set(x + 1, 7, items.face.sprite === "goggles" ? tier("face").A : FIXED.X)); }
     if (items.neck) { set(8, 10, tier("neck").A); set(9, 10, tier("neck").A); }
     // held item: a small tinted blip in the right hand
-    if (items.hand && opts.weapon !== false) { const t = tier("hand"); set(14, 10, OUTLINE); set(14, 11, t.A); set(15, 10, t.L); set(15, 11, OUTLINE); }
+    const hdm = mini("hand");
+    if (items.hand && opts.weapon !== false && (hdm === "pole" || hdm === "bow")) { const t = tier("hand"); for (let y = 3; y < 13; y++) { set(16, y, y < 6 ? t.L : t.A); set(17, y, OUTLINE); } set(15, 3, OUTLINE); set(16, 2, OUTLINE); }
+    else if (items.hand && opts.weapon !== false) { const t = tier("hand"); set(14, 10, OUTLINE); set(14, 11, t.A); set(15, 10, t.L); set(15, 11, OUTLINE); }
+    const om = mini("off");
+    if (om && opts.weapon !== false) { const t = tier("off"); if (om === "shield") { for (let y = 9; y < 14; y++) { set(0, y, OUTLINE); set(1, y, t.A); set(2, y, y === 13 ? OUTLINE : t.A); } set(1, 14, OUTLINE); set(1, 8, OUTLINE); set(2, 8, OUTLINE); } else { set(1, 10, OUTLINE); set(2, 10, t.A); set(2, 11, t.a); set(1, 11, OUTLINE); } }
     if (Object.values(items).some(it => it && it.tier === 5) && frame % 3 !== 2) { set(1, 1, FIXED.Y); set(16, 2, FIXED.W); }
     return g;
   }
