@@ -762,6 +762,20 @@ details.cg-set > summary { cursor: pointer; }
 .pet-item span { display: grid; min-width: 0; flex: 1; font-size: 13px; }
 .pet-item small { color: var(--muted); font-size: 11.5px; }
 .pet-care span { white-space: nowrap; }
+.comp-now { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; align-items: center; border: 2px solid var(--xp-fill); border-radius: 8px; padding: 8px 10px; }
+.comp-now canvas { width: 78px; height: 60px; background: var(--panel-2); border-radius: 6px; }
+.comp-stats { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; color: var(--muted); }
+.comp-stats b { color: var(--ink); font-weight: 700; }
+.comp-bonus { color: var(--good, #2f8a4e); font-weight: 700; }
+.comp-skill { display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; line-height: 1.35; }
+.comp-skill .bt-ic { width: 16px; height: 16px; flex: none; margin-top: 1px; color: var(--ink); }
+.comp-skill .bt-ic svg { width: 100%; height: 100%; display: block; }
+.fam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.fam-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 8px; min-width: 0; }
+.fam-item.on { border-color: var(--xp-fill); box-shadow: inset 0 0 0 1px var(--xp-fill); }
+.fam-item canvas { width: 66px; height: 54px; background: var(--panel-2); border-radius: 6px; }
+.fam-item.locked canvas { filter: grayscale(1) brightness(.75); opacity: .55; }
+.fam-item.locked b { opacity: .75; }
 @media (max-width: 640px) {
   .pet-editor { grid-template-columns: minmax(0, 1fr); }
   .pet-preview { position: static; }
@@ -1311,6 +1325,7 @@ details.cg-set > summary { cursor: pointer; }
     Object.keys(STATS).forEach(k => { base[k] = 0; gear[k] = 0; });
     state.skills.forEach(s => { base[s.cat] += lvFrom(totalXp(s)); const it = equippedItem(s); if (it) gear[s.cat] += it.bonus; });
     Object.keys(gear).forEach(k => { gear[k] = Math.round(gear[k] * gp); });
+    { const cb = compBonusNow(); if (cb && cb.stat in gear) gear[cb.stat] += cb.bonus; }   // PETS (v0.22): your pet's stat bonus
     const total = {}; Object.keys(STATS).forEach(k => total[k] = base[k] + gear[k] + (tal[k] || 0));
     return { base, gear, tal, total, power: Object.values(total).reduce((a, b) => a + b, 0) };
   }
@@ -2765,7 +2780,7 @@ details.cg-set > summary { cursor: pointer; }
           ${(() => { const st = heroStats(); return `<div>
             <div class="power"><strong>Hero power</strong><b class="num">${st.power}</b></div>
             <div class="statgrid">${Object.entries(STATS).map(([k, v]) => `<div title="${esc(v.desc)}"><span>${v.name}</span><b>${st.total[k]}${st.gear[k] ? ` <i>+${st.gear[k]}</i>` : ""}</b></div>`).join("")}</div>
-            <div class="hint">Stats come from your skill levels per path. Green is gear bonus.</div>
+            <div class="hint">Stats come from your skill levels per path. Green is gear and pet bonus.</div>
           </div>`; })()}
           <div>
             <div class="meter-label"><strong>Rested XP</strong><span class="num">${rested ? "next " + fmt(rested) + " earns 2× XP" : "Not rested"}</span></div>
@@ -2812,8 +2827,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-13.5";
-  const APP_VERSION = "0.21.2";
+  const BUILD = "2026-10-14.1";
+  const APP_VERSION = "0.22.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -3208,19 +3223,11 @@ details.cg-set > summary { cursor: pointer; }
     </section>`;
   }
   // ===== FEATURE: pets (v0.15) =====
-  // Adventuring pets: a pixel companion that looks like your real pet. Each pet is linked to one skill in the
-  // Animals discipline; it joins your hero at that skill's Lv 3 and its level is the skill's level.
+  // Designed beasts: a pixel pet you design to look like an animal in your life. Each pet is linked to one skill in the
+  // Animals discipline; it unlocks at that skill's Lv 3 and goes in the hero's Pet slot (see PETS, v0.22).
   // No guilt, ever: pets never get hungry, sad or sick, nothing decays, and pets never add XP. Care presets
   // simply log normal practice time on the linked skill. Pet gear is cosmetic only.
   const PET_UNLOCK = 3;
-  const PET_TRICKS = [
-    { lv: 3, name: "Follow", desc: "Joins you on the map and in battle" },
-    { lv: 5, name: "Fetch", desc: "+3% gold after a won battle" },
-    { lv: 10, name: "Sniff", desc: "+5% gold from map chests" },
-    { lv: 15, name: "Guard", desc: "Blocks one hit per fight" },
-    { lv: 25, name: "Cheer", desc: "Heals you 5% once when your HP drops below a third" },
-    { lv: 40, name: "Pounce", desc: "Its attacks have a 15% chance to stun for 1 second" }
-  ];
   const PET_CARE = [["Feed", 5], ["Play", 15], ["Training", 15], ["Walk", 20], ["Wash or groom", 30]];
   const FUR = [
     ["Black", "#34303a", "#221f27"], ["Chocolate", "#7a4a2c", "#5a341d"], ["Red", "#c0632f", "#93461d"], ["Golden", "#e0ad55", "#b8843a"],
@@ -3539,13 +3546,16 @@ details.cg-set > summary { cursor: pointer; }
   const animalSkills = () => state.skills.filter(s => discOf(s) === "animals");
   const petSkill = p => p && skillById(p.skillId);
   const petLv = p => { const s = petSkill(p); return s && discOf(s) === "animals" ? earnedLv(s) : 0; };
-  const petUnlocked = p => !!petSkill(p) && discOf(petSkill(p)) === "animals" && petLv(p) >= PET_UNLOCK;
-  const petHas = (p, trick) => { const t = PET_TRICKS.find(k => k.name === trick); return !!p && !!t && petLv(p) >= t.lv; };
-  // The pet that comes along: your pick, else your first pet that has learned Follow.
+  const petUnlocked = p => p && p.fam ? famOwned(p.fam) : !!petSkill(p) && discOf(petSkill(p)) === "animals" && petLv(p) >= PET_UNLOCK;
+  const petHas = (p, trick) => !!p && petUnlocked(p) && petPas(p) === trick;   // PETS (v0.22): the old tricks are now each pet kind's passive
+  // The pet in your Pet slot: your pick, else your first beast you designed, else the first pet you found.
   function petActive() {
+    if (state.activePet === "none") return null;      // the Pet slot is empty
     const list = pets(), pick = list.find(p => p.id === state.activePet);
     if (pick && petUnlocked(pick)) return pick;
-    return list.find(petUnlocked) || null;
+    const fk = famKey(state.activePet); if (fk && famOwned(fk)) return famPet(fk);
+    const real = list.find(petUnlocked); if (real) return real;
+    const f = famOwnedIds()[0]; return f ? famPet(f) : null;
   }
   const petFull = () => !!(typeof classPetFull === "function" && classPetFull());
   function petMigrate() {
@@ -3568,6 +3578,934 @@ details.cg-set > summary { cursor: pointer; }
   const petChestGold = () => Math.min(TAL_CAP.chestGold, talentFx().chestGold + (petHas(petActive(), "Sniff") ? 5 : 0));
   const petBattleGold = tf => Math.min(TAL_CAP.gold, tf.gold + 3);
 
+  // ===== PETS (v0.22) =====
+  // Every pet works the same way. One pet goes in your hero's Pet slot like a piece of gear, and gives a fixed bonus to one
+  // hero stat, one always-on passive and one battle skill you tap like your own. Pets don't level: their hits and skills
+  // grow with your hero's stats, so training yourself is what makes them stronger. Nothing here adds XP.
+  // Pets come in categories (PET_CATS). Beasts you design yourself (state.pets, the v0.15 pet editor) unlock when their
+  // linked Animals skill reaches Lv 3; every other pet (PET_ROSTER, kept in FAMILIARS for older saves) comes from a path
+  // level, a class, a dungeon drop or the shop. Internally these are still called "fam" so saved data keeps working.
+  // Skill text: {d:1.4} is damage and {h:12} is healing; both grow with your hero power.
+  const PET_AFF = { dog: "body", cat: "spirit", rabbit: "life", bird: "music", reptile: "nature" };
+  const PET_BONUS = 4;                          // beasts you design: +4 to their stat (they unlock with time on an Animals skill)
+  const PET_CATS = ["Beast", "Arcane", "Construct", "Spirit", "Elemental", "Oddity"];
+  const PET_PAS = { dog: "Guard", cat: "Pounce", rabbit: "Sniff", bird: "Fetch", reptile: "Cheer" };
+  // Passives. The designed beasts keep the old v0.15 tricks as passives; the rest are applied when a fight starts (petPassiveStart).
+  const PASSIVES = {
+    Guard:   { text: "Blocks one hit per fight" },
+    Pounce:  { text: "Its attacks have a 15% chance to stun for 1 second" },
+    Sniff:   { text: "+5% gold from map chests" },
+    Fetch:   { text: "+3% gold after a won battle" },
+    Cheer:   { text: "Heals you 5% once when your HP drops below a third" },
+    Footnotes: { text: "Your skills deal +5% damage", on: b => { b.skillMult *= 1.05; } },
+    "Night Vision": { text: "+5% critical hit chance", on: b => { b.critCh += 0.05; } },
+    Inspired: { text: "Your buffs last 10% longer", on: b => { b.tfx.buffDur = (b.tfx.buffDur || 0) + 10; } },
+    Clockwork: { text: "Your skill cooldowns are 5% shorter", on: b => { b.cdX *= 0.95; } },
+    Scouting: { text: "Your first hit each fight deals +25%", on: b => { b.tfx.firstStrike = (b.tfx.firstStrike || 0) + 25; } },
+    Sturdy:  { text: "You take 5% less damage", on: b => { b.monDmg *= 0.95; } },
+    "Warm Up": { text: "Your auto-attacks deal +5% damage", on: b => { b.heroDmg *= 1.05; } },
+    Ooze:    { text: "Heals 1% of your HP every 5 seconds", on: b => { b.tfx.regen = (b.tfx.regen || 0) + 1; } },
+    "Dragon Scales": { text: "+8% max HP", on: b => { b.heroMax = Math.round(b.heroMax * 1.08); b.heroHp = b.heroMax; } },
+    Calm:    { text: "Your heals are 10% stronger", on: b => { b.tfx.healPow = (b.tfx.healPow || 0) + 10; } },
+    "Light as Paper": { text: "+5% chance to dodge an attack", on: b => { b.tfx.dodge = (b.tfx.dodge || 0) + 5; } },
+    Lucky:   { text: "+5% gold after a won battle" },
+    "Treasure Sense": { text: "Radiant relics are 10% more likely", on: b => { b.tfx.relicFind = (b.tfx.relicFind || 0) + 10; } },
+    "Thick Moss": { text: "The monster attacks 5% slower", on: b => { b.monEvery *= 1.05; } },
+    "Fire Heart": { text: "Your skills deal +8% damage", on: b => { b.skillMult *= 1.08; } },
+    "Cool Head": { text: "Your skill cooldowns are 8% shorter", on: b => { b.cdX *= 0.92; } },
+    Static:  { text: "+8% critical hit chance", on: b => { b.critCh += 0.08; } },
+    "Jade Scales": { text: "+12% max HP", on: b => { b.heroMax = Math.round(b.heroMax * 1.12); b.heroHp = b.heroMax; } },
+    "Lucky Star": { text: "Radiant relics are 15% more likely, and +5% trophy chance", on: b => { b.tfx.relicFind = (b.tfx.relicFind || 0) + 15; b.tfx.trophy = (b.tfx.trophy || 0) + 5; } }
+  };
+  const PET_SPD = { dog: 11, cat: 12, rabbit: 13, bird: 12, reptile: 9 };
+  const PET_SKILLS = {
+    dog:     { name: "Tackle", cd: 10, text: "A {d:1.4}× tackle that stuns for 1 second", hit: 1.4, stun: 1 },
+    cat:     { name: "Swipe", cd: 9, text: "Three quick scratches, {d:0.6}× each", multi: [0.6, 3] },
+    rabbit:  { name: "Zigzag", cd: 14, text: "You dodge the next 2 attacks", dodge: 2 },
+    bird:    { name: "Dive", cd: 11, text: "A {d:1.2}× dive, and your next 2 hits deal +40%", hit: 1.2, mark: 2 },
+    reptile: { name: "Sun Bask", cd: 14, text: "Heals {h:12}% of your HP over 4 seconds", hot: [0.12, 4] }
+  };
+  // from: { path, lv } combined path level · { cls: [...] } any of these classes unlocked · { drop } dungeon · { gold } shop
+  const FAMILIARS = {
+    tome:  { name: "Flying Tome", cat: "Arcane", aff: "mind", spd: 10, bonus: 4, pas: "Footnotes", from: { path: "mind", lv: 15 }, blurb: "A spellbook that reads itself aloud",
+      sk: { name: "Page Storm", cd: 10, text: "Four paper cuts, {d:0.45}× each", multi: [0.45, 4] } },
+    owl:   { name: "Arcane Owl", cat: "Arcane", aff: "mind", spd: 11, bonus: 4, pas: "Night Vision", from: { drop: "library" }, blurb: "Hoots softly when a rune is near",
+      sk: { name: "Insight", cd: 16, text: "Your other skills recharge 3 seconds sooner", cdr: 3 } },
+    paint: { name: "Paint Sprite", cat: "Spirit", aff: "music", spd: 13, bonus: 4, pas: "Inspired", from: { cls: ["bard", "illustrator"] }, blurb: "A drop of living color",
+      sk: { name: "Color Splash", cd: 12, text: "The monster deals 25% less damage for 5 seconds", weak: [25, 5] } },
+    clock: { name: "Clockwork Critter", cat: "Construct", aff: "tech", spd: 9, bonus: 4, pas: "Clockwork", from: { cls: ["artificer", "technomancer"] }, blurb: "Wind it up and let it go",
+      sk: { name: "Wind-Up", cd: 14, text: "A tiny turret hits for {d:0.35}× every second for 5 seconds", turret: [0.35, 5] } },
+    drone: { name: "Scout Drone", cat: "Construct", aff: "tech", spd: 12, bonus: 4, pas: "Scouting", from: { path: "tech", lv: 15 }, blurb: "Maps every room before you walk in",
+      sk: { name: "Target Lock", cd: 12, text: "Your next 3 hits deal +40%", mark: 3 } },
+    golem: { name: "Pebble Golem", cat: "Construct", aff: "craft", spd: 7, bonus: 4, pas: "Sturdy", from: { gold: 600 }, blurb: "Small, mossy and very sturdy",
+      sk: { name: "Stone Wall", cd: 15, text: "Blocks the next 2 hits", shield: 2 } },
+    newt:  { name: "Ember Newt", cat: "Elemental", aff: "craft", spd: 12, bonus: 7, pas: "Warm Up", from: { drop: "forge" }, blurb: "Warm to hold, warmer when cross",
+      sk: { name: "Fire Spit", cd: 11, text: "Burns the monster for {d:0.4}× every second for 5 seconds", burn: [0.4, 5] } },
+    slime: { name: "Pocket Slime", cat: "Oddity", aff: "body", spd: 9, bonus: 2, pas: "Ooze", from: { gold: 250 }, blurb: "Bouncy, loyal and slightly sticky",
+      sk: { name: "Bounce", cd: 12, text: "Blocks the next hit and heals {h:5}% of your HP", shield: 1, heal: 0.05 } },
+    whelp: { name: "Dragon Whelp", cat: "Beast", aff: "body", spd: 11, bonus: 7, pas: "Dragon Scales", from: { drop: "citadel" }, blurb: "Hatched among the clouds",
+      sk: { name: "Dragon Breath", cd: 14, text: "A {d:1.6}× blast that burns for {d:0.3}× every second for 4 seconds", hit: 1.6, burn: [0.3, 4] } },
+    wisp:  { name: "Spirit Wisp", cat: "Spirit", aff: "spirit", spd: 12, bonus: 4, pas: "Calm", from: { cls: ["monk", "mystic"] }, blurb: "A calm little light",
+      sk: { name: "Soothing Light", cd: 14, text: "Heals {h:12}% of your HP", heal: 0.12 } },
+    crane: { name: "Paper Crane", cat: "Spirit", aff: "spirit", spd: 13, bonus: 4, pas: "Light as Paper", from: { path: "spirit", lv: 15 }, blurb: "Folded by a patient hand",
+      sk: { name: "Paper Gust", cd: 13, text: "The monster skips its next attack", skip: 1 } },
+    coin:  { name: "Lucky Coin", cat: "Oddity", aff: "life", spd: 13, bonus: 2, pas: "Lucky", from: { drop: "cellar" }, blurb: "Always lands face up",
+      sk: { name: "Coin Toss", cd: 9, text: "A {d:0.8}× flick and +5% gold (up to 3 times, shared with Lucky Find)", hit: 0.8, gold: 1 } },
+    mimic: { name: "Mimic", cat: "Oddity", aff: "life", spd: 8, bonus: 12, pas: "Treasure Sense", from: { drop: "spire" }, blurb: "It was a chest. Now it's a friend",
+      sk: { name: "Chomp", cd: 12, text: "A {d:2.2}× chomp", hit: 2.2 } },
+    moss:  { name: "Moss Sprite", cat: "Elemental", aff: "nature", spd: 10, bonus: 4, pas: "Thick Moss", from: { drop: "ruins" }, blurb: "Grows a new flower every spring",
+      sk: { name: "Thorn Snare", cd: 12, text: "Stuns the monster for 1.5 seconds", stun: 1.5 } },
+    // Dragon hatchlings: rare eggs from the hardest dungeons that hatch as you practice
+    ember: { name: "Ember Hatchling", cat: "Beast", aff: "craft", spd: 12, bonus: 7, pas: "Fire Heart", egg: true, from: { drop: "forge", rare: true }, blurb: "Puffs a little smoke when it's happy",
+      sk: { name: "Puff of Flame", cd: 11, text: "A {d:0.8}× puff that burns for {d:0.5}× every second for 5 seconds", hit: 0.8, burn: [0.5, 5] } },
+    frost: { name: "Frost Hatchling", cat: "Beast", aff: "spirit", spd: 11, bonus: 12, pas: "Cool Head", egg: true, from: { drop: "citadel", rare: true }, blurb: "Sneezes snowflakes",
+      sk: { name: "Frost Breath", cd: 12, text: "A {d:1.0}× breath, and the monster attacks 30% slower for 5 seconds", hit: 1.0, slow: [30, 5] } },
+    storm: { name: "Storm Hatchling", cat: "Beast", aff: "tech", spd: 14, bonus: 12, pas: "Static", egg: true, from: { drop: "citadel", rare: true }, blurb: "Its fluff stands up before a storm",
+      sk: { name: "Static Zap", cd: 11, text: "Three zaps, {d:0.5}× each, and a 0.5 second stun", multi: [0.5, 3], stun: 0.5 } },
+    jade:  { name: "Jade Hatchling", cat: "Beast", aff: "nature", spd: 10, bonus: 18, pas: "Jade Scales", egg: true, from: { drop: "spire", rare: true }, blurb: "Smells like spring rain",
+      sk: { name: "Healing Mist", cd: 14, text: "Heals {h:15}% of your HP", heal: 0.15 } },
+    star:  { name: "Star Hatchling", cat: "Beast", aff: "mind", spd: 11, bonus: 18, pas: "Lucky Star", egg: true, from: { drop: "spire", rare: true }, blurb: "Still peeking out of an egg full of stars",
+      sk: { name: "Starbreath", cd: 13, text: "A {d:2.6}× blast of starlight", hit: 2.6 } }
+  };
+  const FAM_DROP = 0.2, FAM_SURE = 5;          // a 1 in 5 drop per win, and it's yours by your 5th win there
+  const EGG_DROP = 0.05, EGG_SURE = 20;        // rare dragon eggs: 1 in 20 per win, and yours by your 20th win there
+  const EGG_MIN = 180;                         // an egg hatches after 3 hours of practice, logged after you find it
+  const dropOdds = F => F.from.rare ? [EGG_DROP, EGG_SURE] : [FAM_DROP, FAM_SURE];
+  const practicedMin = () => state.skills.reduce((n, s) => n + (s.earnedMin || 0), 0);
+  // How far an egg has come: 0 to 1, or null when it isn't an egg right now.
+  function eggProgress(key) { const r = fams()[key]; return r && r.egg ? Math.min(1, Math.max(0, (practicedMin() - (r.eggMin || 0)) / EGG_MIN)) : null; }
+  const famEggIds = () => Object.keys(FAMILIARS).filter(k => { famOwned(k); return eggProgress(k) !== null; });
+  const FAM_PATH_LV = 15;
+  const fams = () => { if (!state.fams || typeof state.fams !== "object") state.fams = {}; return state.fams; };
+  const famWins = id => ((state.stats || {}).wins || {})[id] || 0;
+  let famCls = [], famClsAt = 0;            // class unlocks, rechecked at most once a second
+  // Earned now? Path and class unlocks are remembered once earned, so they never go away.
+  function famEarned(key) {
+    const F = FAMILIARS[key], f = F.from;
+    if (f.path) return pathLevel(f.path) >= f.lv;
+    if (f.cls) { if (!famClsAt || performance.now() - famClsAt > 1000) { famCls = clsUnlockedIds(); famClsAt = performance.now(); } return f.cls.some(c => famCls.includes(c)); }
+    if (f.drop) return famWins(f.drop) >= dropOdds(F)[1];
+    return false;
+  }
+  function famOwned(key) {
+    if (!FAMILIARS[key]) return false;
+    const rec = fams()[key];
+    if (rec) {
+      if (!rec.egg) return true;
+      if (practicedMin() - (rec.eggMin || 0) >= EGG_MIN) { rec.egg = false; rec.hatched = dayKey(); return true; }   // it hatches
+      return false;
+    }
+    if (famEarned(key)) {
+      if (FAMILIARS[key].egg) { fams()[key] = { day: dayKey(), egg: true, eggMin: practicedMin() }; return false; }
+      fams()[key] = { day: dayKey() }; return true;
+    }
+    return false;
+  }
+  const famOwnedIds = () => Object.keys(FAMILIARS).filter(famOwned);
+  // How to earn a pet, and how close you are.
+  function famHow(key) {
+    const f = FAMILIARS[key].from;
+    if (f.path) return `Reach ${PATHS[f.path].label} path Lv ${f.lv} combined (now ${pathLevel(f.path)})`;
+    if (f.cls) return `Unlock the ${f.cls.map(c => (CLASS_BY[c] || { name: c }).name).join(" or ")} class`;
+    const ep = eggProgress(key);
+    if (ep !== null) { const left = Math.max(0, EGG_MIN - Math.round(ep * EGG_MIN)); return `You found its egg! It hatches as you practice: ${fmtH(left)} of practice to go`; }
+    if (f.drop) { const d = DUNGEONS.find(x => x.id === f.drop), [ch, sure] = dropOdds(FAMILIARS[key]);
+      return `${f.rare ? "A rare egg" : "Found"} in ${d ? d.name : "a dungeon"}: a 1 in ${Math.round(1 / ch)} chance per win, and yours by your ${sure}th win (${Math.min(sure, famWins(f.drop))} of ${sure})${f.rare ? `. Hatches after ${EGG_MIN / 60} hours of practice` : ""}`; }
+    if (f.gold) return `Sold in the shop for ${f.gold} gold`;
+    return "";
+  }
+  // A roster pet as a pet-shaped object, so the map, battle and portraits draw it like a designed beast.
+  const famPets = {};
+  const famPet = key => FAMILIARS[key] ? (famPets[key] = famPets[key] || { id: "fam:" + key, fam: key, kind: key, name: FAMILIARS[key].name, wear: {} }) : null;
+  const famKey = id => typeof id === "string" && id.indexOf("fam:") === 0 && FAMILIARS[id.slice(4)] ? id.slice(4) : null;
+  const petById = id => id === "draft" ? petDraft : famKey(id) ? famPet(famKey(id)) : pets().find(k => k.id === id);
+  const petAff = p => p && p.fam ? FAMILIARS[p.fam].aff : PET_AFF[p && p.kind] || "nature";
+  const petSkillDef = p => p && p.fam ? FAMILIARS[p.fam].sk : PET_SKILLS[p && p.kind] || PET_SKILLS.dog;
+  const petPas = p => p && p.fam ? FAMILIARS[p.fam].pas : PET_PAS[p && p.kind] || "Guard";
+  const compBonusOf = p => p && p.fam ? FAMILIARS[p.fam].bonus : PET_BONUS;
+  function compBonusNow() { const p = petActive(); return p ? { stat: petAff(p), bonus: compBonusOf(p) } : null; }
+  // Battle strength comes from your hero: auto-attacks from your stat of the companion's kind, skills from hero power.
+  function compStats(p, st) {
+    st = st || heroStats();
+    const aff = petAff(p), full = petFull(), power = 10 + (st.total[aff] || 0) * 0.6;
+    const spd = p.fam ? FAMILIARS[p.fam].spd : PET_SPD[p.kind] || 10;
+    return { aff, full, x: Math.min(1.6, 1 + st.power / 800), bonus: compBonusOf(p), pas: petPas(p), sk: petSkillDef(p),
+      mult: Math.min(0.3, 0.12 + power / 1000) * (full ? 2 : 1), every: Math.max(12, Math.round(300 / spd)) };
+  }
+  // Passives that change the fight itself (Guard, Cheer, Pounce, Fetch and Lucky run in petBattleTick, petGuard and petBattleEnd).
+  function petPassiveStart(b) { const P = PASSIVES[b.pet.pas]; if (P && P.on) P.on(b); }
+  const fmtX = n => String(+n.toFixed(2));
+  // Skill text with this companion's real numbers.
+  const compSkillText = (sk, cs) => sk.text.replace(/\{([dh]):([\d.]+)\}/g, (m, k, v) => k === "h" ? String(+(+v * cs.x).toFixed(1)) : fmtX(+v * cs.x * (cs.full ? 1.5 : 1)));
+
+  // ---------- In battle: tap the companion's skill like your own ----------
+  function compBookHTML() {
+    const p = petActive(); if (!p) return "";
+    const cs = compStats(p);
+    return `<h3 style="margin-top:4px">Pet skill</h3><div class="sb-grid"><div class="sb on"><span class="bt-ic">${skillIcon("paw")}</span><div><b>${esc(cs.sk.name)}</b><small>${esc(p.name || "Your pet")}: ${esc(compSkillText(cs.sk, cs))} · ${cdText(cs.sk.cd)}</small><small class="sb-req">Equipped · pick your pet on the Hero tab</small></div></div></div>`;
+  }
+  const petHit = (b, m) => { const pt = b.pet, d = Math.max(1, Math.round(b.baseDmg * m * pt.x * pt.full)); b.monHp -= d; b.monHit = b.t; pt.hop = b.t; pt.hits++; pt.dmg += d; return d; };
+  function petCast(b, sk) {
+    const pt = b.pet; if (!pt) return;
+    const S = pt.sk, nm = pt.p.name || "Your pet";
+    pt.hop = b.t; pt.cast = b.t;
+    if (S.hit) { const d = petHit(b, S.hit); btPop(d + "!", 42, 8, "#ffc98a", true); b.fx.push({ k: "slash", ttl: 4 }); }
+    if (S.multi) { pt.multi = { m: S.multi[0], n: S.multi[1], next: b.t }; }
+    if (S.stun) { btStun(b, S.stun); btPop("Stunned!", 46, 4, "#9aa0ae"); }
+    if (S.dodge) { b.missN = (b.missN || 0) + S.dodge; btPop("Dodge ×" + S.dodge, 14, 6, "#cfd6e4"); }
+    if (S.mark) { b.mark = Math.max(b.mark, S.mark); btPop("Marked!", 44, 6, "#9be07a"); }
+    if (S.hot) { b.hot = S.hot[1] * 10; b.hotPer = S.hot[0] * pt.x / S.hot[1]; b.fx.push({ k: "heal", ttl: 6 }); }
+    if (S.heal) { const h = btHeal(b, S.heal * pt.x); btPop("+" + h, 14, 8, "#4fc58d", true); b.fx.push({ k: "heal", ttl: 6 }); }
+    if (S.shield) { b.shield = Math.max(b.shield, S.shield); btPop(S.shield > 1 ? "Shield ×" + S.shield : "Shield", 14, 6, "#7ad0ff"); }
+    if (S.weak) { b.weakX = 1 - S.weak[0] / 100; b.weak = btBuff(S.weak[1]); btPop("Weakened", 46, 4, "#c89cf2"); }
+    if (S.turret) { b.turretDmg = Math.max(b.turret > 0 ? b.turretDmg : 0, b.baseDmg * S.turret[0] * pt.x * pt.full); b.turret = Math.max(b.turret, S.turret[1] * 10); btPop("Wind-up!", 14, 6, "#7ad0ff"); }
+    if (S.burn) { b.burnDmg = Math.max(b.burn > 0 ? b.burnDmg : 0, b.baseDmg * S.burn[0] * pt.x * pt.full); b.burn = Math.max(b.burn, S.burn[1] * 10); btPop("Burning", 46, 4, "#ff9a3a"); }
+    if (S.cdr) { const own = "p-" + (pt.p.fam || pt.p.kind); Object.keys(b.cds).forEach(k => { if (k !== own && b.cds[k] > 0 && b.cds[k] < 1e5) b.cds[k] = Math.max(0, b.cds[k] - S.cdr * 10); }); btPop("Insight", 14, 6, "#c89cf2"); }
+    if (S.slow) { if (!(b.slowT > 0)) { b.slowX = 1 + S.slow[0] / 100; b.monEvery *= b.slowX; } b.slowT = Math.max(b.slowT || 0, btBuff(S.slow[1])); btPop("Chilled", 46, 4, "#bfe3ff"); }
+    if (S.skip) { b.skip = Math.max(b.skip, S.skip); btPop("Blown back!", 46, 6, "#cfd6e4"); }
+    if (S.gold) { if (b.lucky < 3) { b.lucky++; btPop("+5% gold", 44, 12, "#f2c14e"); } else btPop("Gold maxed", 44, 12, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); }
+    b.log = `${nm}: ${S.name}!`;
+    Sound.play(S.hit || S.multi ? "win" : "unlock"); buzz(20);
+  }
+  // Multi-hit skills land one hit every 0.3 s.
+  function petMultiTick(b) {
+    const pt = b.pet, m = pt && pt.multi; if (!m || m.n <= 0 || b.t < m.next || b.monHp <= 0) return;
+    m.n--; m.next = b.t + 3;
+    const d = petHit(b, m.m); btPop("" + d, 38 + (m.n % 2) * 6, 14 - m.n, "#ffc98a"); Sound.play("hit");
+  }
+  // A pet drop after a won dungeon fight. Returns the pet key or null.
+  function famDrop(d, win) {
+    if (!win) return null;
+    const key = Object.keys(FAMILIARS).find(k => FAMILIARS[k].from.drop === d.id && !famOwned(k) && !fams()[k] && Math.random() < dropOdds(FAMILIARS[k])[0]);
+    if (!key) return null;
+    if (FAMILIARS[key].egg) { fams()[key] = { day: dayKey(), dungeon: d.id, egg: true, eggMin: practicedMin() }; return key; }   // an egg: it hatches as you practice
+    fams()[key] = { day: dayKey(), dungeon: d.id };
+    if (!petActive()) state.activePet = "fam:" + key;
+    return key;
+  }
+
+  // ---------- Companions panel pieces ----------
+  const statName = k => STATS[k] ? STATS[k].name : k;
+  function compInfoHTML(p) {
+    const aff = petAff(p), pas = petPas(p);
+    return `<span class="comp-stats"><span class="comp-bonus" title="Added to your hero while this pet is in your Pet slot">+${compBonusOf(p)} ${esc(statName(aff))}</span><span><b>${esc(pas)}:</b> ${esc(PASSIVES[pas].text)}</span></span>`;
+  }
+  function compSkillHTML(p) {
+    const cs = compStats(p);
+    return `<span class="comp-skill"><span class="bt-ic">${skillIcon("paw")}</span><span><b>${esc(cs.sk.name)}</b> · ${esc(compSkillText(cs.sk, cs))} · ${cs.sk.cd}s cooldown</span></span>`;
+  }
+  const petCat = p => p && p.fam ? FAMILIARS[p.fam].cat : "Beast";
+  const PET_CAT_TEXT = { Beast: "Animals, from loyal hounds to tiny dragons. Design your own to look like an animal in your life.", Arcane: "Spellbooks, owls and other magic.", Construct: "Gadgets, robots and things you build.", Spirit: "Sprites, wisps and gentle lights.", Elemental: "Little creatures of fire, stone and moss.", Oddity: "Everything else." };
+  // One card, the same for every pet. Designed beasts add Customize and Remove.
+  function petCardHTML(p) {
+    const act = petActive(), on = !!act && act.id === p.id, F = p.fam ? FAMILIARS[p.fam] : null;
+    const own = petUnlocked(p), buy = F && F.from.gold, s = !F && petSkill(p);
+    let how = "";
+    if (F && !own) how = famHow(p.fam);
+    if (!F) { const left = s ? Math.max(0, minFor(PET_UNLOCK) - totalXp(s)) : 0;
+      how = !s ? "Link it to an Animals skill to unlock it." : discOf(s) !== "animals" ? `${s.name} isn't an Animals skill any more. Move it back in its settings, or link another skill.` : own ? "" : `Unlocks when ${s.name} reaches Lv ${PET_UNLOCK} · ${Math.ceil(left)} XP to go`; }
+    const btns = (own ? (on ? `<span class="muted" style="font-size:13px">In your Pet slot</span>` : `<button class="btn small primary" data-act="${F ? "fam-bring" : "pet-bring"}" data-id="${esc(F ? p.fam : p.id)}">Equip</button>`)
+      : buy ? `<button class="btn small" data-act="fam-buy" data-id="${p.fam}" ${state.gold < buy ? "disabled" : ""}>${buy}g</button>` : "")
+      + (F ? "" : `<button class="btn small" data-act="pet-edit" data-id="${esc(p.id)}">Customize</button>${petAsk === p.id
+        ? `<button class="btn small danger" data-act="pet-remove" data-id="${esc(p.id)}">Remove</button><button class="btn small ghost" data-act="pet-keep">Keep</button>`
+        : `<button class="x" data-act="pet-ask" data-id="${esc(p.id)}">Remove</button>`}`);
+    const egg = !!F && F.egg && eggProgress(p.fam) !== null;
+    return `<div class="fam-item ${own || egg ? "" : "locked"} ${on ? "on" : ""}">
+      <canvas class="px" data-pet="${esc(p.id)}" data-scale="2" data-w="26" data-h="20" ${own || egg ? "" : 'data-still="1"'} aria-hidden="true"></canvas>
+      <div class="pet-info"><b>${esc(p.name || (F ? F.name : "Unnamed pet"))}</b>
+        <span class="muted">${F ? esc(F.blurb) : `Your ${esc(PET_KINDS[p.kind].name.toLowerCase())}${s ? " · " + esc(s.name) : ""}`}</span>
+        ${compInfoHTML(p)}${compSkillHTML(p)}${how ? `<span class="pet-status">${esc(how)}</span>` : ""}
+        <div class="pet-btns">${btns}</div>
+      </div></div>`;
+  }
+  // All pets by category: owned first in each, then the ones still to find.
+  function petGroupsHTML(beastExtra) {
+    const all = [...pets(), ...Object.keys(FAMILIARS).map(famPet)];
+    return PET_CATS.map(c => {
+      const list = all.filter(p => petCat(p) === c).sort((a, b) => petUnlocked(b) - petUnlocked(a));
+      if (!list.length && c !== "Beast") return "";
+      return `<h3 style="margin:6px 0 0">${c === "Beast" ? "Beasts" : c === "Oddity" ? "Oddities" : c + (c === "Arcane" ? "" : "s")}</h3>
+        <p class="hint" style="margin:0">${esc(PET_CAT_TEXT[c])}</p>
+        ${list.length ? `<div class="fam-grid">${list.map(petCardHTML).join("")}</div>` : ""}${c === "Beast" ? beastExtra || "" : ""}`;
+    }).join("");
+  }
+  function famClick(e) {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act, k = b.dataset.id;
+    if (act === "fam-bring") { if (famOwned(k)) { state.activePet = "fam:" + k; Sound.play("tap"); toast(`${esc(FAMILIARS[k].name)} is in your Pet slot.`); persist(); render(); } }
+    if (act === "fam-buy") {
+      const F = FAMILIARS[k]; if (!F || !F.from.gold || famOwned(k)) return;
+      if (state.gold < F.from.gold) { toast(`You need ${F.from.gold - state.gold} more gold. Run a dungeon to earn it.`); return; }
+      state.gold -= F.from.gold; fams()[k] = { day: dayKey(), bought: true }; state.activePet = "fam:" + k;
+      Sound.play("buy"); toast(`${esc(F.name)} joins you and goes in your Pet slot.`); persist(); render();
+    }
+  }
+  document.addEventListener("click", e => { try { famClick(e); } catch (err) { console.error(err); } });
+  // The Pet slot in Gear on your hero: any pet you have, or none.
+  function compSlotHTML() {
+    const opts = [...pets().filter(petUnlocked), ...famOwnedIds().map(famPet)];
+    if (!opts.length) return "";
+    const act = petActive(), cur = act ? act.id : "none";
+    return `<div class="field"><label class="lbl" for="slot-pet">Pet</label><select class="input" id="slot-pet" data-act-change="pet-slot">
+      ${opts.map(p => `<option value="${esc(p.id)}" ${cur === p.id ? "selected" : ""}>${esc(p.name || "Your pet")} · +${compBonusOf(p)} ${esc(statName(petAff(p)))}</option>`).join("")}
+      <option value="none" ${cur === "none" ? "selected" : ""}>None</option></select></div>`;
+  }
+  document.addEventListener("change", e => { const el = e.target; if (el && el.dataset && el.dataset.actChange === "pet-slot") { state.activePet = el.value === "none" ? "none" : el.value; persist(); render(); } });
+  // Familiar sprites: two idle frames each, facing right. Letters map to the familiar's own palette.
+  // E eye, e eye shine, K dark detail and R blush are shared. Floating familiars hover over their shadow.
+  const FAM_SHARED = { E: "#1d1a2b", e: "#ffffff", K: "#2a2230", R: "#f4a0a8" };
+  const FAM_ART = {
+    tome: { manual: true, float: true, pal: { P: "#7a46b8", p: "#4e2a82", q: "#a274e4", w: "#f8f1de", v: "#d8cba8", l: "#a08f72", Y: "#f2c14e", y: "#b8862a", R: "#d94a3a", E: "#2a1c40" }, frames: [[
+      "....................",
+      "....................",
+      "qqqq............qqqq",
+      "PwwwqqqP....PqqqwwwP",
+      "PwllwwwwqYYqwwwwllwP",
+      "PwwwllwwwYYwwwllwwwP",
+      "PvwllwwEwYYwEwwllwvP",
+      "PvvwwwwwwYYwwwwwwvvP",
+      ".PvvvwwwwYYwwwwvvvP.",
+      ".pPPvvvvvYYvvvvvPPp.",
+      "..ppPPPPPYYPPPPPpp..",
+      "....ppppyyyypppp....",
+      "..........R.........",
+      "..........RR........"
+    ], [
+      "q..................q",
+      "PqqP............PqqP",
+      "PwwwqP........PqwwwP",
+      "PwllwwqP....PqwwllwP",
+      "PwwwllwwqYYqwwllwwwP",
+      "PvwlwwwEwYYwEwwwlwvP",
+      "PvvwwwwwwYYwwwwwwvvP",
+      ".PvvvwwwwYYwwwwvvvP.",
+      ".pPPvvvvvYYvvvvvPPp.",
+      "..ppPPPPPYYPPPPPpp..",
+      "....ppppyyyypppp....",
+      "..........R.........",
+      "..........R.........",
+      ".........R.........."
+    ]] },
+    owl: { manual: true, float: true, pal: { B: "#6b5aa8", b: "#4b3d86", L: "#9585d6", F: "#dcd2f2", Y: "#f2c14e", E: "#1d1a2b", e: "#ffffff", N: "#f4a640", n: "#c07020", S: "#e6def6", s: "#a898d0", W: "#4b3d86", w: "#7a6ac0", O: "#f0a040", G: "#ffe58a" }, frames: [[
+      "..L............L..",
+      "..LB..........BL..",
+      ".LBBBBBBBBBBBBBBL.",
+      ".BBFFFFBBBBFFFFBB.",
+      ".BFFYYFFBBFFYYFFB.",
+      "BFFYEEYFBBFYEEYFFB",
+      "BFFYEeYFNNFYeEYFFB",
+      "BBFFYYFFNNFFYYFFBB",
+      "BBBFFFFBnnBFFFFBBB",
+      "WBBBBBBBBBBBBBBBBW",
+      "WwBSSSSSSSSSSSSBwW",
+      "WwBSsSSsSSsSSsSBwW",
+      "WwBSSSsSSSSsSSSBwW",
+      ".WwBSSSSSSSSSSBwW.",
+      "..WWBBSSSSSSBBWW..",
+      "...bbBBBBBBBBbb...",
+      ".....OO....OO....."
+    ], [
+      "..L............L..",
+      "..LB..........BL..",
+      ".LBBBBBBBBBBBBBBL.",
+      ".BBFFFFBBBBFFFFBB.",
+      ".BFFYYFFBBFFYYFFB.",
+      "BFFYEEYFBBFYEEYFFB",
+      "BFFYEeYFNNFYeEYFFB",
+      "BBFFYYFFNNFFYYFFBB",
+      "WBBFFFFBnnBFFFFBBW",
+      "WwBBBBBBBBBBBBBBwW",
+      "WwBSSSSSSSSSSSSBwW",
+      ".WBSsSSsSSsSSsSBW.",
+      "..BSSSsSSSSsSSSB..",
+      "..BBSSSSSSSSSSBB..",
+      "...bBBSSSSSSBBb...",
+      "...bbBBBBBBBBbb...",
+      ".....OO....OO....."
+    ]] },
+    paint: { manual: true, float: true, pal: { B: "#4d9fe8", b: "#2f74c0", L: "#bfe6ff", E: "#1d1a2b", e: "#ffffff", R: "#f4a0c0", M: "#2a3a6a", Y: "#ffd84a", y: "#e0a020", P: "#f07ab0", p: "#c84a88", G: "#72c24e", g: "#4a9a36" }, frames: [[
+      "......B..........",
+      "......BB.........",
+      ".....BLBB........",
+      ".....BLBB.....Y..",
+      "....BLLBBB...YyY.",
+      "...BBLBBBBB...Y..",
+      "...BLBBBBBBB.....",
+      "..BBBBBBBBBBB....",
+      "..BBBEeBBBEeB....",
+      "..BBBEEBBBEEB..P.",
+      "..BBRRBBBBRRB.PpP",
+      "..bBBBBMMBBBb..P.",
+      "...bBBBBBBBb.....",
+      "G...bbBBBbb......",
+      "gG....bBb........",
+      "G......b........."
+    ], [
+      "......B.......Y..",
+      "......BB.....YyY.",
+      ".....BLBB.....Y..",
+      ".....BLBB........",
+      "....BLLBBB.......",
+      "...BBLBBBBB......",
+      "...BLBBBBBBB.....",
+      "..BBBBBBBBBBB....",
+      "..BBBEeBBBEeB....",
+      "..BBBEEBBBEEB....",
+      "G.BBRRBBBBRRB....",
+      "gGbBBBBMMBBBb....",
+      "G..bBBBBBBBb...P.",
+      "....bbBBBbb...PpP",
+      "......bBb......P.",
+      ".......b........."
+    ]] },
+    clock: { manual: true, pal: { B: "#c99a3a", b: "#8a6424", L: "#ecc66a", S: "#c8d0dc", s: "#7e8696", G: "#a87a2a", g: "#6e4a18", Y: "#f2d27a", P: "#f0a0a8", E: "#1d1a2b", e: "#ffffff", N: "#f07a8a", K: "#3a3446" }, frames: [[
+      "...SSS.SSS........",
+      "...SsS.SsS........",
+      "....SSsSS.........",
+      "......s...........",
+      "....LLLLLL...LL...",
+      "..LLBBBBBBL.LPPL..",
+      ".LBBBBBBBBBBBPPB..",
+      ".LBBGGGBBBBBBBBBL.",
+      "LBBGgYgGBBBBBEeBB.",
+      "LBBGYYYGBBBBBEEBBN",
+      "bBBGgYgGBBBBBBBBB.",
+      ".bBBGGGBBBBBBBBb..",
+      "s.bbbbbbbbbbbbb...",
+      ".s..KK.....KK....."
+    ], [
+      "....SSS...........",
+      "....SsS...........",
+      ".....S............",
+      "......s...........",
+      "....LLLLLL...LL...",
+      "..LLBBBBBBL.LPPL..",
+      ".LBBBBBBBBBBBPPB..",
+      ".LBBGGGBBBBBBBBBL.",
+      "LBBGYgYGBBBBBEeBB.",
+      "LBBGgYgGBBBBBEEBBN",
+      "bBBGYgYGBBBBBBBBB.",
+      ".bBBGGGBBBBBBBBb..",
+      "s.bbbbbbbbbbbbb...",
+      "s..KK.....KK......"
+    ]] },
+    drone: { manual: true, float: true, pal: { B: "#eef1f6", b: "#b8c0cc", L: "#ffffff", S: "#5a6070", G: "#3a8ad8", g: "#1e4e90", e: "#bfe8ff", A: "#6a7080", K: "#3a3446", k: "#aab2c0", Q: "#e04a3a" }, frames: [[
+      "kkkkkkk....kkkkkkk",
+      "...K..........K...",
+      "...KAA......AAK...",
+      ".....LLLLLLLL.....",
+      "....LBBBBBBBBL....",
+      "...LBBBSSSSBBBL...",
+      "...BBBSGGGGSBBB...",
+      "...BBSGggggGSBB...",
+      "...BBSGgeggGSBB...",
+      "...bBBSGGGGSBBb...",
+      "....bBBSSSSBBQ....",
+      ".....bbBBBBbb.....",
+      "......AA..AA......"
+    ], [
+      "..kkk........kkk..",
+      "...K..........K...",
+      "...KAA......AAK...",
+      ".....LLLLLLLL.....",
+      "....LBBBBBBBBL....",
+      "...LBBBSSSSBBBL...",
+      "...BBBSGGGGSBBB...",
+      "...BBSGggggGSBB...",
+      "...BBSGgeggGSBB...",
+      "...bBBSGGGGSBBb...",
+      "....bBBSSSSBBQ....",
+      ".....bbBBBBbb.....",
+      "......AA..AA......"
+    ]] },
+    golem: { manual: true, pal: { B: "#9a948a", b: "#6e695f", L: "#bdb7ab", c: "#57524a", G: "#7ac852", g: "#4a9a36", Y: "#8ff0e0" }, frames: [[
+      "......GGGGGG......",
+      "....GGgGGGGgGG....",
+      "...GgLLLLLLLLgG...",
+      "...LBBBBBBBBBBL...",
+      "..LBBBBBBBBBBBBL..",
+      "..LBBYYBBBBYYBBL..",
+      "..BBBYYBBBBYYBBB..",
+      "..BBcBBBBBBBBcBB..",
+      "LL.bBBBBBBBBBBb.LL",
+      "LBL.bBBcBBcBBb.LBL",
+      "BBBb.BBBBBBBB.bBBB",
+      "BBBb.bBBBBBBb.bBBB",
+      ".bb..LBBBBBBL..bb.",
+      "....LBBbbbbBBL....",
+      "....bbb....bbb...."
+    ], [
+      "......GGGGGG......",
+      "....GGgGGGGgGG....",
+      "...GgLLLLLLLLgG...",
+      "...LBBBBBBBBBBL...",
+      "LL.LBBBBBBBBBBL.LL",
+      "LBL.BYYBBBBYYB.LBL",
+      "BBBb.YYBBBBYY.bBBB",
+      "BBBb.BBBBBBBB.bBBB",
+      ".bb.bBBBBBBBBb.bb.",
+      "....bBBcBBcBBb....",
+      ".....BBBBBBBB.....",
+      ".....bBBBBBBb.....",
+      ".....LBBBBBBL.....",
+      "....LBBbbbbBBL....",
+      "....bbb....bbb...."
+    ]] },
+    whelp: { manual: true, float: true, pal: { B: "#d9503a", b: "#9a3328", L: "#f07a5a", S: "#f2c27a", W: "#a8383a", w: "#5a1c18", Y: "#f2e0a0", E: "#1d1a2b", e: "#ffffff", N: "#5a1810", T: "#f2c27a" }, frames: [[
+      "....w...............",
+      "...wW..........Y....",
+      "..wWW.........YY....",
+      ".wWWW........LBBY...",
+      ".wWWWW......LBBBBB..",
+      "..wWWWW....LBBBEeBB.",
+      "...wWWWW..LBBBBEEBBN",
+      "....wWWBBBBBBBBBBBB.",
+      "T....BBBBBBBBSSbbb..",
+      "TB..BBBBBBBSSS......",
+      ".TBBBBBBBBSSS.......",
+      "..bbBBBbBBSS........",
+      "....bB...bB.........",
+      "....b.....b.........",
+      "...................."
+    ], [
+      "....................",
+      "...............Y....",
+      "..............YY....",
+      ".............LBBY...",
+      "............LBBBBB..",
+      "...........LBBBEeBB.",
+      "..........LBBBBEEBBN",
+      "........BBBBBBBBBBB.",
+      "T....BBBBBBBBSSbbb..",
+      "TB..BBwwwwwBSS......",
+      ".TBBBwWWWWWwS.......",
+      "..bbwWWWWWWw........",
+      "...wWWWWWWw.........",
+      "..wWWWWWww..........",
+      ".wwww..............."
+    ]] },
+    newt: { manual: true, pal: { B: "#e8743a", b: "#b04a20", L: "#ffa860", S: "#ffd27a", Y: "#ffe058", F: "#ff5a2a", f: "#ffd23a", E: "#1d1a2b", e: "#ffffff", R: "#ffb0a0" }, frames: [[
+      "..............LLLL..",
+      ".............LBBBBL.",
+      ".f..........LBBBEeB.",
+      "fFf...LLLLLLBBBBEEBB",
+      ".Ff..LBBYBBBBBYBBRBb",
+      "..FBBBBBBBYBBBBBSSb.",
+      "...bBBBYBBBBBBSSSb..",
+      "....bbbBSSSSSSbbb...",
+      ".....bB.bB...bB.bB..",
+      ".....b...b....b...b."
+    ], [
+      "..............LLLL..",
+      ".............LBBBBL.",
+      "f...........LBBBEeB.",
+      "Ff....LLLLLLBBBBEEBB",
+      "fFf..LBBYBBBBBYBBRBb",
+      "..FBBBBBBBYBBBBBSSb.",
+      "...bBBBYBBBBBBSSSb..",
+      "....bbbBSSSSSSbbb...",
+      "......bBbB....bBbB..",
+      "......b..b....b..b.."
+    ]] },
+    wisp: { manual: true, float: true, pal: { B: "#86d4ff", L: "#e4f8ff", D: "#4aa0dc", C: "#ffffff", E: "#1d1a2b", e: "#ffffff", R: "#f4a0c8", M: "#2a4a70" }, frames: [[
+      "......L.......",
+      ".....LL.......",
+      ".....LBL..L...",
+      "....LBBLLLB...",
+      "...LBBBBBBL...",
+      "..LBBCCBBBBL..",
+      "..BBBCBBBBBB..",
+      ".LBBEeBBEeBBL.",
+      ".BBBEEBBEEBBB.",
+      ".BBRBBBBBBRBB.",
+      ".BBBBBMMBBBBB.",
+      "..BBBBBBBBBB..",
+      "..DBBDBBDBBD..",
+      "...D..D..D..D.",
+      "..D..D..D....."
+    ], [
+      ".......L......",
+      ".......LL.....",
+      "...L..LBL.....",
+      "...BLLLBBL....",
+      "...LBBBBBBL...",
+      "..LBBCCBBBBL..",
+      "..BBBCBBBBBB..",
+      ".LBBEeBBEeBBL.",
+      ".BBBEEBBEEBBB.",
+      ".BBRBBBBBBRBB.",
+      ".BBBBBMMBBBBB.",
+      "..BBBBBBBBBB..",
+      "..BDBBDBBDBBD.",
+      ".D..D..D..D...",
+      "....D..D..D..."
+    ]] },
+    coin: { manual: true, float: true, pal: { Y: "#f2c14e", y: "#c8902a", L: "#fff0a0", D: "#a8781e", E: "#3a2410", R: "#f4a080", M: "#3a2410" }, frames: [[
+      "....DDDDDD....",
+      "..DDYYYYYYDD..",
+      ".DYYLLYYYYYYD.",
+      ".DYLyyyyyyYYD.",
+      "DYLyYYYYYYyYYD",
+      "DYLyYYYYYYyYYD",
+      "DYYyYEYYEYyYYD",
+      "DYYyYYYYYYyYYD",
+      "DYYyRYYYYRyYYD",
+      "DYYyYYMMYYyYyD",
+      ".DYYyyyyyyYyD.",
+      ".DYYYYYYYYyyD.",
+      "..DDyyyyyyDD..",
+      "....DDDDDD...."
+    ], [
+      "......DD......",
+      ".....DYYD.....",
+      "....DLYYyD....",
+      "....DLYYyD....",
+      "....DLYYyD....",
+      "....DLYYyD....",
+      "....DYYYyD....",
+      "....DYYYyD....",
+      "....DYYYyD....",
+      "....DYYYyD....",
+      "....DYYYyD....",
+      "....DYYyyD....",
+      ".....DyyD.....",
+      "......DD......"
+    ]] },
+    slime: { manual: true, pal: { B: "#62c862", b: "#3a9a4a", L: "#d4f8c4", o: "#a8eca0", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8", M: "#2a4a2a" }, frames: [[
+      "......BBBB......",
+      "....BBLLBBBB....",
+      "...BLLBBBBBBB...",
+      "..BLLBBBBBBBBB..",
+      "..BLBBEeBBEeBB..",
+      ".BBBBBEEBBEEBBB.",
+      ".BBBBRRBMMBRRBB.",
+      "BBBoBBBBBBBBBBBB",
+      "BBBBBBBBBBoBBBBB",
+      "BbBBBBBBBBBBBBbB",
+      ".bbbbbbbbbbbbbb."
+    ], [
+      "................",
+      "................",
+      ".....BBBBBB.....",
+      "...BBLLBBBBBB...",
+      "..BLLBBBBBBBBB..",
+      ".BLBBBEeBBEeBBB.",
+      ".BBBBBEEBBEEBBB.",
+      "BBBBBRRBMMBRRBBB",
+      "BBBoBBBBBBBBBBBB",
+      "BbBBBBBBBBoBBBbB",
+      "bbbbbbbbbbbbbbbb"
+    ]] },
+    moss: { manual: true, pal: { B: "#4f8a3a", b: "#355f26", L: "#7ab85a", G: "#8ad05a", g: "#5a9a36", F: "#f07ab0", Y: "#ffe58a", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8", M: "#1d2a14", S: "#6a4a2a" }, frames: [[
+      ".....g..........",
+      "....gGg...F.....",
+      ".....Gg..FYF....",
+      "......g...FG....",
+      "....LLLLLLLG....",
+      "...LBBLBBBBBB...",
+      "..LBBBBBBLBBBB..",
+      "..BBLBBBBBBBLB..",
+      ".LBBEeBBBBEeBBB.",
+      ".BBBEEBBBBEEBBB.",
+      ".BBRRBBMMBBRRBb.",
+      ".bBBBBBBBBBBBBb.",
+      "..bbBBBBBBBBbb..",
+      "....SS....SS...."
+    ], [
+      "......g.........",
+      ".....gGg..F.....",
+      "......Gg.FYF....",
+      "......g...FG....",
+      "....LLLLLLLG....",
+      "...LBBLBBBBBB...",
+      "..LBBBBBBLBBBB..",
+      "..BBLBBBBBBBLB..",
+      ".LBBEeBBBBEeBBB.",
+      ".BBBEEBBBBEEBBB.",
+      ".BBRRBBMMBBRRBb.",
+      ".bBBBBBBBBBBBBb.",
+      "..bbBBBBBBBBbb..",
+      "...SS......SS..."
+    ]] },
+    crane: { manual: true, float: true, pal: { W: "#faf8f2", w: "#d8d2c8", P: "#f2a4bc", E: "#1d1a2b" }, frames: [[
+      "........W.........",
+      "........WW........",
+      "........WwW.......",
+      "........WPwW......",
+      "W.......WPwwW...WW",
+      "WW......WPPwwW.WWw",
+      ".WW.....WPPwwwWWw.",
+      "..WW....WPPPwwWw..",
+      "...WWW..WPPPPWw...",
+      "....WWWWWWWWWWw...",
+      ".....wWWWWWWWw....",
+      "......wwwwwww.....",
+      "..................",
+      ".................."
+    ], [
+      "..................",
+      "..................",
+      "..................",
+      "..................",
+      "W...............WW",
+      "WW.............WWw",
+      ".WW...........WWw.",
+      "..WW.........WWw..",
+      "...WWW......WWw...",
+      "....WWWWWWWWWWw...",
+      ".....wWWWWWWWw....",
+      "......WPPPwwW.....",
+      ".......WPPwW......",
+      "........WPW......."
+    ]] },
+    mimic: { manual: true, pal: { B: "#9a6434", b: "#6a4020", L: "#c08a50", Y: "#f2c14e", y: "#b8862a", W: "#fffaf0", K: "#2a1418", P: "#e05a6a", E: "#1d1a2b", e: "#ffe060" }, frames: [[
+      "..bbbbbbbbbbbb..",
+      ".bLLLLLLLLLLLLb.",
+      ".bBBBEeBBEeBBBb.",
+      ".yYBBEEBBEEBBYy.",
+      ".yYYYYYYYYYYYYy.",
+      ".KWKWKWKWKWKWKK.",
+      ".KKKKKPPPPKKKKK.",
+      ".KKKKPPPPPPKKKK.",
+      ".KWKWKWKWKWKWKK.",
+      ".yYYYYYYYYYYYYy.",
+      ".bBBBBYyyYBBBBb.",
+      ".bBLLBYKKYBLLBb.",
+      ".bBBBBYYYYBBBBb.",
+      ".bbbbbbbbbbbbbb."
+    ], [
+      "................",
+      "................",
+      "................",
+      "..bbbbbbbbbbbb..",
+      ".bLLLLLLLLLLLLb.",
+      ".bBBBEeBBEeBBBb.",
+      ".yYBBEEBBEEBBYy.",
+      ".yYYYYYYYYYYYYy.",
+      ".KWKWKWKWKWKWKK.",
+      ".yYYYYYYYYYYYYy.",
+      ".bBBBBYyyYBBBBb.",
+      ".bBLLBYKKYBLLBb.",
+      ".bBBBBYYYYBBBBb.",
+      ".bbbbbbbbbbbbbb."
+    ]] },
+    ember: { manual: true, float: true, pal: { B: "#e8603c", b: "#ae482d", L: "#ef9076", S: "#ffd27a", N: "#74301e", W: "#c56250", w: "#812d1d", p: "#ffb02a", H: "#f6ead0", h: "#c8b890", T: "#ffb02a", Q: "#fff6e6", q: "#d8cab0", s: "#ea7050", C: "#f6ead0", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8" }, frames: [[
+      "w.........h.h.....",
+      "ww.......hHhH.....",
+      "wWw.....pLLLLL....",
+      "wWWw...pLBBBBBL...",
+      "wWWWw..LBBBBBBBB..",
+      ".wWWWwpBBBBBEeBBB.",
+      ".wWwWWpBBBBBEEBBBN",
+      "..w.wWWBBRBBBBBBB.",
+      ".....wWwbBBSSSSb..",
+      ".......bBBSSSSSb..",
+      "......bBBBSSSSSC..",
+      "......bBBBSSSSSb..",
+      "...T..bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ], [
+      "..........h.h.....",
+      ".........hHhH.....",
+      "........pLLLLL....",
+      ".......pLBBBBBL...",
+      ".......LBBBBBBBB..",
+      "......pBBBBBEeBBB.",
+      "......pBBBBBEEBBBN",
+      ".....wwBBRBBBBBBB.",
+      "..wwWWWwbBBSSSSb..",
+      ".wWWWWWbBBSSSSSb..",
+      "wWWWWWbBBBSSSSSC..",
+      "wWwWwWbBBBSSSSSb..",
+      "w.wTw.bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ]] },
+    frost: { manual: true, float: true, pal: { B: "#8fd0f0", b: "#6b9cb4", L: "#b1def4", S: "#eaf8ff", N: "#486878", W: "#6ba4d2", w: "#34658c", p: "#f4fcff", H: "#f6ead0", h: "#c8b890", T: "#f4fcff", Q: "#fff6e6", q: "#d8cab0", s: "#9ad5f2", C: "#f6ead0", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8" }, frames: [[
+      "w.........h.h.....",
+      "ww.......hHhH.....",
+      "wWw.....pLLLLL....",
+      "wWWw...pLBBBBBL...",
+      "wWWWw..LBBBBBBBB..",
+      ".wWWWwpBBBBBEeBBB.",
+      ".wWwWWpBBBBBEEBBBN",
+      "..w.wWWBBRBBBBBBB.",
+      ".....wWwbBBSSSSb..",
+      ".......bBBSSSSSb..",
+      "......bBBBSSSSSC..",
+      "......bBBBSSSSSb..",
+      "...T..bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ], [
+      "..........h.h.....",
+      ".........hHhH.....",
+      "........pLLLLL....",
+      ".......pLBBBBBL...",
+      ".......LBBBBBBBB..",
+      "......pBBBBBEeBBB.",
+      "......pBBBBBEEBBBN",
+      ".....wwBBRBBBBBBB.",
+      "..wwWWWwbBBSSSSb..",
+      ".wWWWWWbBBSSSSSb..",
+      "wWWWWWbBBBSSSSSC..",
+      "wWwWwWbBBBSSSSSb..",
+      "w.wTw.bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ]] },
+    storm: { manual: true, float: true, pal: { B: "#8a78d8", b: "#685aa2", L: "#ada0e4", S: "#f2e27a", N: "#453c6c", W: "#786bbe", w: "#3f347b", p: "#ffe14a", H: "#f6ead0", h: "#c8b890", T: "#ffe14a", Q: "#fff6e6", q: "#d8cab0", s: "#9686dc", C: "#f6ead0", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8" }, frames: [[
+      "w.........h.h.....",
+      "ww.......hHhH.....",
+      "wWw.....pLLLLL....",
+      "wWWw...pLBBBBBL...",
+      "wWWWw..LBBTBBBBB..",
+      ".wWWWwpBBTBBEeBBB.",
+      ".wWwWWpBBBTBEEBBBN",
+      "..w.wWWBBRBBBBBBB.",
+      ".....wWwbBBSSSSb..",
+      ".......bBBSSSSSb..",
+      "......bBBBSSSSSC..",
+      "......bBBBSSSSSb..",
+      "...T..bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ], [
+      "..........h.h.....",
+      ".........hHhH.....",
+      "........pLLLLL....",
+      ".......pLBBBBBL...",
+      ".......LBBTBBBBB..",
+      "......pBBTBBEeBBB.",
+      "......pBBBTBEEBBBN",
+      ".....wwBBRBBBBBBB.",
+      "..wwWWWwbBBSSSSb..",
+      ".wWWWWWbBBSSSSSb..",
+      "wWWWWWbBBBSSSSSC..",
+      "wWwWwWbBBBSSSSSb..",
+      "w.wTw.bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ]] },
+    jade: { manual: true, float: true, pal: { B: "#5cc48a", b: "#459368", L: "#8dd6ad", S: "#eef4c4", N: "#2e6245", W: "#5dac85", w: "#296c4a", p: "#f07ab0", H: "#f6ead0", h: "#c8b890", T: "#f07ab0", Q: "#fff6e6", q: "#d8cab0", s: "#6cca96", C: "#f6ead0", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8" }, frames: [[
+      "w.........h.h.....",
+      "ww.......hHhH.....",
+      "wWw.....pLLLLL....",
+      "wWWw...pLBBBBBL...",
+      "wWWWw..LBBBBBBBB..",
+      ".wWWWwpBBBBBEeBBB.",
+      ".wWwWWpBBBBBEEBBBN",
+      "..w.wWWBBRBBBBBBB.",
+      ".....wWwbBBSSSSb..",
+      ".......bBBSSSSSb..",
+      "......bBBBSSSSSC..",
+      "......bBBBSSSSSb..",
+      "...T..bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ], [
+      "..........h.h.....",
+      ".........hHhH.....",
+      "........pLLLLL....",
+      ".......pLBBBBBL...",
+      ".......LBBBBBBBB..",
+      "......pBBBBBEeBBB.",
+      "......pBBBBBEEBBBN",
+      ".....wwBBRBBBBBBB.",
+      "..wwWWWwbBBSSSSb..",
+      ".wWWWWWbBBSSSSSb..",
+      "wWWWWWbBBBSSSSSC..",
+      "wWwWwWbBBBSSSSSb..",
+      "w.wTw.bBBBSSSSb...",
+      "...TbbBBBBBSSb....",
+      ".....bbBBBBBb.....",
+      ".......bB..bB....."
+    ]] },
+    star: { manual: true, pal: { B: "#4a4f9a", b: "#383b74", L: "#8084b8", S: "#cdbfff", N: "#25284d", W: "#545485", w: "#20204a", p: "#ffe58a", H: "#f6ead0", h: "#c8b890", T: "#ffe58a", Q: "#fff6e6", q: "#d8cab0", s: "#ffd84a", C: "#f6ead0", E: "#1d1a2b", e: "#ffffff", R: "#f4a0a8" }, frames: [[
+      "......h.h.........",
+      "......hHhH........",
+      ".....pHLLLLL......",
+      "....pLBBBTBBL.....",
+      "....LBBTBBBBBBL...",
+      "W..pBBBBBBEeBBBBL.",
+      "WW.pBBTBBBEEBBBBBB",
+      "WWw.BBBBRBBBBBBNBB",
+      ".WwpbBBBBBBSSSSSb.",
+      "..w.bBBBBBSSSSSb..",
+      "....bBBBBBSSSSb...",
+      "....bBBBBBSSSb....",
+      "....bBBBBBSSBBC...",
+      "...Q.QbBBBSQBCQ.Q.",
+      "..QQQQQQQQQQQQQQ..",
+      "..QsQQQQQsQQQQQQ..",
+      "...QQQQsQQQQQsQ...",
+      "...qQQQQQQQQQQq...",
+      ".....qqqqqqqq....."
+    ], [
+      "......h.h.........",
+      "..W...hHhH........",
+      ".WW..pHLLLLL......",
+      "WWw.pLBBBTBBL.....",
+      "WWw.LBBTBBBBBBL...",
+      "WWwpBBBBBBEeBBBBL.",
+      ".Ww.BBTBBBEEBBBBBB",
+      "..w.BBBBRBBBBBBNBB",
+      "...pbBBBBBBSSSSSb.",
+      "....bBBBBBSSSSSb..",
+      "....bBBBBBSSSSb...",
+      "....bBBBBBSSSb....",
+      "....bBBBBBSSBBC...",
+      "...Q.QbBBBSQBCQ.Q.",
+      "..QQQQQQQQQQQQQQ..",
+      "..QsQQQQQsQQQQQQ..",
+      "...QQQQsQQQQQsQ...",
+      "...qQQQQQQQQQQq...",
+      ".....qqqqqqqq....."
+    ]] }
+  };
+  // A familiar as a padded color grid with a 1px outline, like petGrid. Floaters get empty rows under them that bob.
+  // An unhatched egg in its dragon's colors: it wobbles, and cracks show as it gets close to hatching.
+  const EGG_ART = ["...BBBB...", "..BBSBBB..", ".BBBBBBSB.", ".BSBBBBBB.", "BBBBBBSBBB", "BBBSBBBBBB", "BBBBBBBBSB", "BSBBBBBBBB", ".BBBBSBBB.", "..BBBBBB.."];
+  function eggRows(p, frame) {
+    let rows = EGG_ART.map(r => r.split(""));
+    if (p >= 0.5) [[4, 2], [5, 3], [4, 4]].forEach(([x, y]) => { rows[y][x] = "K"; });
+    if (p >= 0.8) [[6, 3], [7, 4], [3, 5], [2, 6]].forEach(([x, y]) => { rows[y][x] = "K"; });
+    rows = rows.map(r => r.join(""));
+    if (frame % 2) rows = rows.map((r, y) => y < 5 ? "." + r.slice(0, -1) : r);     // wobble
+    return rows;
+  }
+  function famGrid(key, frame = 0) {
+    const ep = typeof eggProgress === "function" && FAMILIARS[key] && FAMILIARS[key].egg ? eggProgress(key) : null;
+    const A = FAM_ART[key] || FAM_ART.slime, src = ep !== null ? eggRows(ep, frame) : A.frames[frame % A.frames.length];
+    const W = Math.max(...src.map(r => r.length)), at = (x, y) => (src[y] && src[y][x]) || ".";
+    const flat = new Set(["E", "e", "K", "R", "Q"]);
+    const cells = [];
+    src.forEach((row, y) => [...row].forEach((ch, x) => {
+      if (ch === "." || ch === " ") return;
+      let col = A.pal[ch] || FAM_SHARED[ch]; if (!col) return;
+      if (!A.manual && !flat.has(ch) && !FAM_SHARED[ch]) {
+        if (at(x, y - 1) === ".") col = tone(col, 0.18);
+        else if (at(x, y + 1) === ".") col = tone(col, -0.14);
+      }
+      cells.push([x, y, col]);
+    }));
+    const lift = A.float ? (frame % 2 ? 3 : 4) : 0, H = src.length;
+    const gw = W + 2, gh = H + 2 + lift;
+    const g = Array.from({ length: gh }, () => new Array(gw).fill(null));
+    const own = new Map(cells.map(c => [(c[0] + 1) + "," + (c[1] + 1), c[2]]));
+    own.forEach((col, k) => { const [x, y] = k.split(",").map(Number); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { const nx = x + ox, ny = y + oy; if (!own.has(nx + "," + ny) && ny >= 0 && ny < gh && nx >= 0 && nx < gw && !g[ny][nx]) g[ny][nx] = deepen(col); }); });
+    own.forEach((col, k) => { const [x, y] = k.split(",").map(Number); g[y][x] = col; });
+    return g;
+  }
+
   // ---------- Pet sprites ----------
   const petHash = (x, y, k) => { let h = (x * 374761393 + y * 668265263 + k * 2246822519) >>> 0; h = (h ^ (h >>> 13)) * 1274126177 >>> 0; return (h ^ (h >>> 16)) / 4294967296; };
   const petSeed = p => { let n = 7; String(p.id || "pet").split("").forEach(ch => { n = (n * 31 + ch.charCodeAt(0)) >>> 0; }); return n % 997; };
@@ -3588,6 +4526,7 @@ details.cg-set > summary { cursor: pointer; }
   }
   // Returns a padded color grid (with a 1px selective outline), plus where the hat sits.
   function petGrid(p, frame = 0, pose = "idle") {
+    if (p && p.fam) return famGrid(p.fam, frame);
     const k = PET_KINDS[p.kind] || PET_KINDS.dog;
     const rows = petRows(p.kind in PET_KINDS ? p.kind : "dog", p.size || 0, pose, frame);
     const [, base, shade] = k.pal[p.coat] || k.pal[k.col], acc = (k.pal[p.accent] || k.pal[5] || k.pal[0])[1];
@@ -3676,7 +4615,7 @@ details.cg-set > summary { cursor: pointer; }
   function paintPets() {
     const reduce = petReduce(), f = reduce ? 0 : petFrame;
     document.querySelectorAll("canvas[data-pet]").forEach(cv => {
-      const p = cv.dataset.pet === "draft" ? petDraft : pets().find(k => k.id === cv.dataset.pet); if (!p) return;
+      const p = petById(cv.dataset.pet); if (!p) return;
       const pose = cv.dataset.pose === "walk" || (cv.dataset.pose === "auto" && Math.floor(petFrame / 8) % 2) ? "walk" : "idle";
       paintPetCanvas(cv, p, +cv.dataset.scale || 3, cv.dataset.still ? 0 : Math.floor(f / 2), pose);
     });
@@ -3686,17 +4625,17 @@ details.cg-set > summary { cursor: pointer; }
   // ---------- Where the pet shows up ----------
   function petSideHTML() {
     const p = petActive(); if (!p) return "";
-    return `<div class="pet-side"><canvas class="px" data-pet="${esc(p.id)}" data-scale="2" data-w="26" data-h="20" aria-hidden="true"></canvas><span>with <b>${esc(p.name || "your pet")}</b> · Lv ${petLv(p)}</span></div>`;
+    return `<div class="pet-side"><canvas class="px" data-pet="${esc(p.id)}" data-scale="2" data-w="26" data-h="20" aria-hidden="true"></canvas><span>with <b>${esc(p.name || "your pet")}</b></span></div>`;
   }
   function petStageHTML() {
     const p = petActive(); if (!p) return "";
-    return `<div class="pet-stage"><canvas class="px" data-pet="${esc(p.id)}" data-scale="4" data-w="26" data-h="20" aria-label="${esc(p.name || "Your pet")}, your companion"></canvas><span class="pet-stage-name">${esc(p.name || "Your pet")} · Lv ${petLv(p)}</span></div>`;
+    return `<div class="pet-stage"><canvas class="px" data-pet="${esc(p.id)}" data-scale="4" data-w="26" data-h="20" aria-label="${esc(p.name || "Your pet")}, your pet"></canvas><span class="pet-stage-name">${esc(p.name || "Your pet")}</span></div>`;
   }
   // One-tap care presets on the linked skill. They log normal practice time (never extra XP).
   function petCareHTML(s) {
     if (discOf(s) !== "animals") return "";
     const p = pets().find(k => k.skillId === s.id);
-    if (!p) return `<div class="quick pet-care"><span>No companion yet</span><button class="btn small ghost" data-act="pet-new" data-id="${s.id}">Create a pet for ${esc(s.name)}</button></div>`;
+    if (!p) return `<div class="quick pet-care"><span>No beast yet</span><button class="btn small ghost" data-act="pet-new" data-id="${s.id}">Design a beast for ${esc(s.name)}</button></div>`;
     return `<div class="quick pet-care"><span>Care for ${esc(p.name || "your pet")}</span>${PET_CARE.map(([n, m]) => `<button class="btn small" data-act="pet-care" data-id="${s.id}" data-min="${m}" data-note="${esc(n)}">${esc(n)} · ${m}m</button>`).join("")}</div>`;
   }
 
@@ -3736,38 +4675,29 @@ details.cg-set > summary { cursor: pointer; }
     </div>`;
   }
   let petPreviewPose = "idle";
-  function petTricksHTML(p) {
-    const lv = petLv(p);
-    return `<ul class="pet-tricks">${PET_TRICKS.map(t => `<li class="${lv >= t.lv ? "on" : ""}"><b>${esc(t.name)}</b><span>${esc(t.desc)}</span><small>${lv >= t.lv ? "Learned" : "Lv " + t.lv}</small></li>`).join("")}</ul>`;
-  }
+
   function renderPetsPanel() {
     const list = pets(), an = animalSkills(), act = petActive();
     const used = new Set(list.map(p => p.skillId)), canAdd = an.some(s => !used.has(s.id));
-    let body;
-    if (petDraft) body = petEditorHTML();
-    else if (!an.length && !list.length) body = `<p class="hint" style="margin:0">Pets link to an Animals skill. Add one (like <b>Pet care</b> or <b>Dog walking</b> under Explore the outdoors) and log time with your real pet. Your companion joins at Lv ${PET_UNLOCK} (54 minutes).</p>
-      <div><button class="btn small primary" data-act="pet-add-skill">+ Add an Animals skill</button></div>`;
-    else body = `${list.length ? `<div class="pet-list">${list.map(p => {
-        const s = petSkill(p), lv = petLv(p), open = petUnlocked(p), on = act && act.id === p.id;
-        const left = s ? Math.max(0, minFor(PET_UNLOCK) - totalXp(s)) : 0;
-        return `<div class="pet-card ${on ? "on" : ""}">
-          <canvas class="px" data-pet="${esc(p.id)}" data-scale="3" data-w="26" data-h="20" aria-hidden="true"></canvas>
-          <div class="pet-info"><b>${esc(p.name || "Unnamed pet")}</b>
-            <span class="muted">${esc(PET_KINDS[p.kind].name)} · ${s ? `${esc(s.name)} · Lv ${lv}` : "linked skill removed"}</span>
-            <span class="pet-status">${!s ? "Link it to an Animals skill to bring it along." : discOf(s) !== "animals" ? `${esc(s.name)} isn't an Animals skill any more. Move it back in its settings, or link another skill.` : open ? (on ? "Adventuring with you" : "Waiting at home, happy as ever") : `Joins you at Lv ${PET_UNLOCK} · ${Math.ceil(left)} XP to go`}</span>
-            <div class="pet-btns">${open && !on ? `<button class="btn small primary" data-act="pet-bring" data-id="${esc(p.id)}">Bring along</button>` : ""}<button class="btn small" data-act="pet-edit" data-id="${esc(p.id)}">Customize</button>${petAsk === p.id
-              ? `<button class="btn small danger" data-act="pet-remove" data-id="${esc(p.id)}">Remove</button><button class="btn small ghost" data-act="pet-keep">Keep</button>`
-              : `<button class="x" data-act="pet-ask" data-id="${esc(p.id)}">Remove</button>`}</div>
-          </div>
-          <details class="pet-tr"><summary>Tricks · ${PET_TRICKS.filter(t => lv >= t.lv).length} of ${PET_TRICKS.length}</summary>${petTricksHTML(p)}</details>
-        </div>`; }).join("")}</div>` : `<p class="hint" style="margin:0">Create a companion that looks like your real pet.</p>`}
-      ${canAdd ? `<div><button class="btn small primary" data-act="pet-new">+ New pet</button></div>` : an.length ? `<p class="hint" style="margin:0">Each pet needs its own Animals skill. Add one for another pet.</p><div><button class="btn small" data-act="pet-add-skill">+ Add an Animals skill</button></div>` : ""}
+    const all = [...list, ...Object.keys(FAMILIARS).map(famPet)], have = all.filter(petUnlocked).length;
+    const slotCard = act ? `<div class="comp-now">
+        <canvas class="px" data-pet="${esc(act.id)}" data-scale="3" data-w="26" data-h="20" aria-hidden="true"></canvas>
+        <div class="pet-info"><span class="muted" style="font-size:12px;font-weight:600">PET SLOT · ${esc(petCat(act).toUpperCase())}</span><b>${esc(act.name || "Your pet")}</b>${compInfoHTML(act)}${compSkillHTML(act)}
+          <span class="pet-status">Its hits and skill grow with your hero's stats. Tap its skill in battle like your own.${petFull() ? " Your class makes it fight at full strength." : ""}</span></div>
+      </div>` : `<p class="hint" style="margin:0">Your Pet slot is empty. Equip any pet you have below.</p>`;
+    // designing your own beast: link it to an Animals skill (time with your animal)
+    const design = !an.length && !list.length ? `<p class="hint" style="margin:0">Design a beast that looks like an animal in your life: add an Animals skill (like <b>Pet care</b> or <b>Dog walking</b> under Explore the outdoors) and log time with them. Your beast unlocks when that skill reaches Lv ${PET_UNLOCK} (54 minutes).</p>
+      <div><button class="btn small primary" data-act="pet-add-skill">+ Add an Animals skill</button></div>`
+      : canAdd ? `<div><button class="btn small primary" data-act="pet-new">+ Design a beast</button></div>`
+      : `<p class="hint" style="margin:0">Each beast you design needs its own Animals skill.</p><div><button class="btn small" data-act="pet-add-skill">+ Add an Animals skill</button></div>`;
+    const body = petDraft ? petEditorHTML() : `${slotCard}
+      ${petGroupsHTML(design)}
       <h3 style="margin:6px 0 0">Pet gear</h3>
-      <p class="hint" style="margin:0">Cosmetic only. Equip while customizing a pet.</p>
+      <p class="hint" style="margin:0">Cosmetic only. Equip while customizing a beast you designed.</p>
       <div class="pet-shop">${PET_GEAR.map(g => { const own = petGear()[g.id]; return `<div class="pet-item"><canvas class="px" data-pet-gear="${g.id}" aria-hidden="true"></canvas><span><b>${esc(g.name)}</b><small>${g.slot === "head" ? "Hat" : "Neck"}</small></span>${own ? `<span class="muted" style="font-size:13px">Owned</span>` : `<button class="btn small" data-act="pet-buy" data-id="${g.id}" ${state.gold < g.price ? "disabled" : ""}>${g.price}g</button>`}</div>`; }).join("")}</div>`;
     return `<article class="panel set-card pets-panel">
-      <div class="train-row"><h3>Pets</h3>${list.length ? `<span class="muted" style="font-size:13px">${list.length} pet${list.length === 1 ? "" : "s"}</span>` : ""}</div>
-      <p class="hint" style="margin:0">Your companion adventures with your hero and levels with its Animals skill. It never gets hungry, sad or sick if you skip days.</p>
+      <div class="train-row"><h3>Pets</h3><span class="muted" style="font-size:13px">${have} of ${all.length} unlocked</span></div>
+      <p class="hint" style="margin:0">Your Pet slot holds one pet. Every pet boosts one stat, has a passive and a battle skill, and grows stronger as you do. Pets never get hungry, sad or sick if you skip days.</p>
       ${body}
     </article>`;
   }
@@ -3818,7 +4748,7 @@ details.cg-set > summary { cursor: pointer; }
       case "pet-mark": if (petDraft) { keepName(); petDraft.mark = +val; if (petDraft.mark && petDraft.accent === petDraft.coat) petDraft.accent = petDraft.coat === 5 ? 0 : 5; render(); } break;
       case "pet-set": if (petDraft && (b.dataset.key === "coat" || b.dataset.key === "accent")) { keepName(); petDraft[b.dataset.key] = +val; render(); } break;
       case "pet-pose": keepName(); petPreviewPose = val === "walk" ? "walk" : "idle"; render(); break;
-      case "pet-bring": { const p = pets().find(k => k.id === id); if (p && petUnlocked(p)) { state.activePet = p.id; Sound.play("tap"); toast(`${esc(p.name)} comes along on your adventures.`); persist(); render(); } break; }
+      case "pet-bring": { const p = pets().find(k => k.id === id); if (p && petUnlocked(p)) { state.activePet = p.id; Sound.play("tap"); toast(`${esc(p.name)} is in your Pet slot.`); persist(); render(); } break; }
       case "pet-ask": petAsk = id; render(); break;
       case "pet-keep": petAsk = null; render(); break;
       case "pet-remove": { const p = pets().find(k => k.id === id); state.pets = pets().filter(k => k.id !== id); if (state.activePet === id) state.activePet = null; petAsk = null; if (p) toast(`${esc(p.name || "Your pet")} removed. Your skill and its time are untouched.`); persist(); render(); break; }
@@ -3884,7 +4814,12 @@ details.cg-set > summary { cursor: pointer; }
   function petBattleStart(b) {
     const p = petActive(); if (!p) return;
     const fast = typeof clsFlag === "function" ? clsFlag("petSpeed") : 0;   // Packleader: the pet attacks 20% faster
-    b.pet = { p, lv: petLv(p), next: 25, hop: -9, burst: 0, guard: petHas(p, "Guard"), cheer: petHas(p, "Cheer"), pounce: petHas(p, "Pounce"), mult: petFull() ? 0.3 : 0.15, hits: 0, dmg: 0, every: Math.round(PET_EVERY / (1 + fast / 100)) };
+    const cs = compStats(p, b.st);
+    b.pet = { p, pas: cs.pas, next: 25, hop: -9, cast: -9, burst: 0, guard: petHas(p, "Guard"), cheer: petHas(p, "Cheer"), pounce: petHas(p, "Pounce"), mult: cs.mult, hits: 0, dmg: 0,
+      every: Math.max(8, Math.round(cs.every / (1 + fast / 100))), x: cs.x, full: cs.full ? 1.5 : 1, sk: cs.sk, multi: null };
+    // its battle skill joins your own, tapped the same way
+    b.skills.push({ key: "p-" + (p.fam || p.kind), pet: true, name: cs.sk.name, cd: cs.sk.cd, icon: "paw", desc: `${p.name || "Your pet"}: ${compSkillText(cs.sk, cs)}` });
+    petPassiveStart(b);
   }
   // Called by the classes branch (for example a Beastmaster skill): rapid pet attacks for a few seconds.
   function petBattleBurst(b, secs) {
@@ -3895,6 +4830,7 @@ details.cg-set > summary { cursor: pointer; }
   function petBattleTick(b) {
     const pt = b && b.pet; if (!pt || b.phase !== "fight") return;
     if (pt.burst > 0) pt.burst--;
+    petMultiTick(b);
     if (b.t >= pt.next && b.monHp > 0) {
       pt.next = b.t + (pt.burst > 0 ? PET_BURST_EVERY : (pt.every || PET_EVERY));
       const dmg = Math.max(1, Math.round(b.baseDmg * pt.mult * (0.9 + Math.random() * 0.2)));
@@ -3915,7 +4851,10 @@ details.cg-set > summary { cursor: pointer; }
     return true;
   }
   let petRunGold = 0;                             // the pet's share of the last fight's gold bonus, for the result line
-  function petBattleEnd(b, win) { petRunGold = 0; if (win && b && b.pet && petHas(b.pet.p, "Fetch")) { const g = petBattleGold(b.tfx); petRunGold = g - b.tfx.gold; b.tfx = Object.assign({}, b.tfx, { gold: g }); } }
+  function petBattleEnd(b, win) {                 // Fetch (bird) +3% and Lucky (Lucky Coin) +5%, inside the talent gold cap
+    petRunGold = 0; const pas = b && b.pet && b.pet.pas, add = pas === "Fetch" ? 3 : pas === "Lucky" ? 5 : 0;
+    if (win && add) { const g = Math.min(TAL_CAP.gold, b.tfx.gold + add); petRunGold = g - b.tfx.gold; b.tfx = Object.assign({}, b.tfx, { gold: g }); }
+  }
   function petPaintFight(c, b, f, s) {
     const pt = b && b.pet; if (!pt) return;
     const reduce = petReduce(), since = f - pt.hop;
@@ -4074,6 +5013,7 @@ details.cg-set > summary { cursor: pointer; }
     eye:   ["..KKK..", ".KWWWK.", "KWKKKWK", "KWKBKWK", "KWKKKWK", ".KWWWK.", "..KKK.."],
     coin:  ["..KKK..", ".KYYYK.", "KYYKYYK", "KYYKYYK", "KYYKYYK", ".KYYYK.", "..KKK.."],
     star:  ["...K...", "..KYK..", "KKKYKKK", "KYYYYYK", ".KYYYK.", "KYK.KYK", "KK...KK"],
+    paw:   [".K.K.K.", "KWKWKWK", ".K.K.K.", "..KKK..", ".KWWWK.", "KWWWWWK", ".KKKKK."],
     arrow: ["...KKKK", ".....KK", "....KWK", "...KWK.", "..KWK..", ".GK....", "G.G...."]
   };
   const SK_PAL = { K: "currentColor", W: "#ffffff", Y: "#f2c14e", B: "#7ad0ff", R: "#d94a3a", G: "#9aa0ae" };
@@ -4206,6 +5146,7 @@ details.cg-set > summary { cursor: pointer; }
   }
   // What a skill does. Kept apart from cooldowns so Encore can play a skill again.
   function castSkill(b, sk, caster) {
+    if (sk.pet) return petCast(b, sk);                  // PETS (v0.22): your pet's skill
     const P = sk.power, key = sk.key, X = classCastStart(b, sk);   // CLASSES (v0.15): Empower
     const hit = mult => { const mk = b.mark > 0 ? (b.mark--, 1.4) : 1; const dmg = Math.round(b.baseDmg * mult * P * X * b.skillMult * btMult(b) * mk); b.monHp -= dmg; b.monHit = b.t; b.heroAtk = b.t; return dmg; };
     if (key === "strike") { btPop(hit(1.8) + "!", 44, 9, "#ffe58a", true); b.fx.push({ k: "slash", ttl: 4 }); Sound.play("win"); buzz(25); }
@@ -4279,6 +5220,7 @@ details.cg-set > summary { cursor: pointer; }
     state.stats.runs += 1; if (win) { state.stats.clears += 1; state.stats.wins = state.stats.wins || {}; state.stats.wins[d.id] = (state.stats.wins[d.id] || 0) + 1; }
     if (trophy) state.trophies[d.id] = (state.trophies[d.id] || 0) + 1;
     state.runs.unshift({ id: uid(), dungeon: d.id, win, gold, trophy, relic: relic ? relic.name : null, day: dayKey(), ts: Date.now() });
+    famDrop(d, win);                                    // PETS (v0.22): a pet can drop here
     const unlocks = unlockDiff(snap);
     if (state.runs.length > 30) state.runs.length = 30;
     persist();
@@ -4326,6 +5268,7 @@ details.cg-set > summary { cursor: pointer; }
         return `<div class="sb ${on ? "on" : unlocked ? "spare" : "locked"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on ? (cls.includes(p) ? "Equipped · your class path" : "Equipped") : unlocked ? `Unlocked · ${classPathSlots()} skills max, class path first` : `${PATHS[p].label} path Lv ${SKILL_UNLOCK} combined (now ${lv})`}</small></div></div>`;
       }).join("")}</div>
       ${classSkillBook()}
+      ${compBookHTML()}
       ${(() => { const pool = talentFx().skills, on = talentLoadout().map(x => x.key); if (!pool.length) return "";
         return `<h3 style="margin-top:4px">Talent skills</h3><div class="sb-grid">${pool.map(sk => `<div class="sb ${on.includes(sk.key) ? "on" : "spare"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on.includes(sk.key) ? "Equipped" : "Benched"}${pool.length > maxTalSkills() ? ` · <button class="linkbtn" data-act="tal-skill" data-id="${sk.key}">${on.includes(sk.key) ? "Bench" : "Equip"}</button>` : ""}</small></div></div>`).join("")}</div>${pool.length > maxTalSkills() ? `<p class="hint" style="margin:0">You know ${pool.length} talent skills. Bring any ${maxTalSkills()} into a fight.</p>` : ""}`; })()}
       <p class="hint" style="margin:0">Your hero auto-attacks. Tap skills (or press number keys) in battle. Each path gives one skill, your class path first, plus your class's signature. Some talent capstones teach a skill; bring up to 2.</p>
@@ -9641,9 +10584,10 @@ details.cg-set > summary { cursor: pointer; }
 
   // Unlock snapshot so a celebration can list what just opened up.
   function unlockSnapshot() {
+    famClsAt = 0;
     const gear = {}; state.skills.forEach(s => gearFor(s).forEach(it => { if (earnedLv(s) >= it.lv) gear[it.id] = it.name; }));
     const tp = {}; CATEGORIES.forEach(c => { tp[c.id] = talentPts(c.id); });
-    return { bd: unlockedBackdrops(), themes: unlockedThemes(), gear, tp, frames: unlockedFrames(), cls: clsUnlockedIds() };
+    return { bd: unlockedBackdrops(), themes: unlockedThemes(), gear, tp, frames: unlockedFrames(), cls: clsUnlockedIds(), fam: famOwnedIds(), egg: famEggIds() };
   }
   function unlockDiff(before) {
     const after = unlockSnapshot(), out = [];
@@ -9651,6 +10595,8 @@ details.cg-set > summary { cursor: pointer; }
     after.themes.filter(k => !before.themes.includes(k)).forEach(k => out.push({ kind: "App theme", name: THEMES[k].name }));
     after.frames.filter(k => before.frames && !before.frames.includes(k)).forEach(k => out.push({ kind: "Portrait frame", name: FRAMES[k].name }));
     after.cls.filter(k => before.cls && !before.cls.includes(k) && !(state.clsSeen || []).includes(k)).forEach(k => out.unshift({ kind: "Class", name: CLASS_BY[k].name }));   // CLASSES (v0.15)
+    (after.fam || []).filter(k => before.fam && !before.fam.includes(k)).forEach(k => out.unshift({ kind: FAMILIARS[k].egg ? "Hatched" : "Pet", name: FAMILIARS[k].name }));
+    (after.egg || []).filter(k => before.egg && !before.egg.includes(k)).forEach(k => out.unshift({ kind: "Dragon egg found", name: FAMILIARS[k].name + " (hatches as you practice)" }));   // PETS (v0.22)
     Object.keys(after.gear).filter(k => !before.gear[k]).forEach(k => out.push({ kind: "Gear to buy", name: after.gear[k] }));
     Object.keys(after.tp).filter(k => before.tp && after.tp[k] > (before.tp[k] || 0) && TALENT_TREES[k]).forEach(k => out.unshift({ kind: "Talent point", name: `${TALENT_TREES[k].short} tree`, cat: k }));
     return out;
@@ -10086,8 +11032,8 @@ details.cg-set > summary { cursor: pointer; }
           <div class="slot-grid">${slots.map(sl => `<div class="field"><label class="lbl" for="slot-${sl}">${SLOT_NAMES[sl]}</label><select class="input" id="slot-${sl}" data-act-change="ap-slot" data-slot="${sl}">
             <option value="auto" ${!ap.show[sl] || ap.show[sl] === "auto" ? "selected" : ""}>Auto</option>
             ${bySlot[sl].map(o => `<option value="${o.id}" ${ap.show[sl] === o.id ? "selected" : ""}>${esc(o.name)}</option>`).join("")}
-            <option value="none" ${ap.show[sl] === "none" ? "selected" : ""}>Hide</option></select></div>`).join("")}</div>`
-        : `<p class="hint" style="margin:0">Gear you buy shows on your hero. Practice unlocks it; dungeon gold buys it in the Shop.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>`}
+            <option value="none" ${ap.show[sl] === "none" ? "selected" : ""}>Hide</option></select></div>`).join("")}${compSlotHTML()}</div>`
+        : `<p class="hint" style="margin:0">Gear you buy shows on your hero. Practice unlocks it; dungeon gold buys it in the Shop.</p><div><button class="btn small" data-act="tab" data-tab="gear">Browse gear</button></div>${compSlotHTML() ? `<div class="slot-grid">${compSlotHTML()}</div>` : ""}`}
       </article>
     </section>`;
   }

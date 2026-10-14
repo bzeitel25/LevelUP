@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.22.0 — 2026-10-14 (build 2026-10-14.1)
+
+Pets join the fight.
+
+- **New Pet slot:** one pet goes in your hero's Pet slot like a piece of gear. Pick it under Gear on your hero or in the Pets panel, or leave the slot empty. Any hero can use any pet, whatever the class.
+- **Every pet works the same way:**
+  - A set bonus to one stat, like gear.
+  - One always-on passive.
+  - One battle skill. It sits next to your skills and you tap it the same way, with its own cooldown.
+
+  Pets don't level. Their hits and skill grow with your hero's stats, so training yourself is what makes them stronger.
+- **Six categories:** Beasts, Arcane, Constructs, Spirits, Elementals and Oddities.
+- **Design your own beast:** a beast you design to look like an animal in your life unlocks when its Animals skill reaches Lv 3 (about an hour). It gives +4 to its stat, and the old pet tricks are now passives with no level gate.
+  - Dog: +Might, Guard (blocks one hit per fight), Tackle (a hit that stuns).
+  - Cat: +Focus, Pounce (its attacks can stun), Swipe (three scratches).
+  - Rabbit: +Fortune, Sniff (+5% chest gold), Zigzag (dodge the next 2 attacks).
+  - Bird: +Inspiration, Fetch (+3% battle gold), Dive (a hit that boosts your next 2).
+  - Reptile: +Instinct, Cheer (a heal when your HP drops low), Sun Bask (a heal over time).
+- **14 more pets to find:** Dragon Whelp, Flying Tome, Arcane Owl, Clockwork Critter, Scout Drone, Pebble Golem, Paint Sprite, Spirit Wisp, Paper Crane, Ember Newt, Moss Sprite, Lucky Coin, Pocket Slime and Mimic. Each has its own pixel art, stat bonus (+2 to +12, bigger for harder ones), passive (crit, dodge, shorter cooldowns, max HP, relic luck and more) and skill (shields, burns, turrets, stuns, heals and more).
+- **Dragon hatchlings:** five rare baby dragons that hover beside you, flapping their little wings, each with a crest in its element's color. The Star Hatchling is still peeking out of its starry egg.
+  - Ember Hatchling: an egg in the Ember Forge.
+  - Frost and Storm Hatchlings: eggs in the Sky Citadel.
+  - Jade and Star Hatchlings: eggs in the Endless Spire.
+
+  Each win in those dungeons has a 1 in 20 chance of an egg, and you're sure to have one by your 20th win there. An egg hatches after 3 hours of practice, so you raise it by training yourself. Hatchlings have the biggest stat bonuses (+7 to +18) and strong passives and skills: Puff of Flame, Frost Breath, Static Zap, Healing Mist and Starbreath.
+- **Where to find the others:**
+  - Path levels: Tome, Drone and Crane at Mind, Tech or Spirit path Lv 15 combined.
+  - Classes: Paint Sprite, Clockwork Critter and Spirit Wisp.
+  - Dungeon drops: Lucky Coin, Moss Sprite, Arcane Owl, Ember Newt, Dragon Whelp and Mimic. Each win has a 1 in 5 chance, and the pet is yours by your 5th win in that dungeon. Wins you already have count.
+  - The shop: Pocket Slime for 250 gold and Pebble Golem for 600.
+- **Pets panel on the Hero tab:** your Pet slot, then every pet by category with how to get it. The skill book lists your pet's skill.
+- Beastmaster, Packleader, Wildheart and Outrider make any pet fight at full strength: double auto-attack power and +50% skill damage.
+
 ## v0.21.2 — 2026-10-13 (build 2026-10-13.5)
 
 - **Hats sit higher:** the wizard hat, chef's toque, night cap, top hat, straw hat, cap, feathered cap and bee veil were raised so their brims rest on top of the hair, not at the fringe. Your hero has one more row of headroom in its frame.

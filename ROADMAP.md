@@ -33,6 +33,7 @@ Design rules that every feature follows:
 | v0.19 | Veteran Reserve: veteran tiers (Dabbler to Lifelong) with an estimator, a per-skill reserve of bonus XP (+50/100/200%) that practice spends, reserve stretch on the XP bar, "coming back" refresher mode, Caught Up milestone and achievement. Honest sessions: "Still practicing?" check with auto-pause, trim or bank before saving, 24-hour trim window |
 | v0.20 | Hand-drawn pixel icons for every item (187 designs for 255 skill items and 336 class pieces), with rarity glow and twinkling sparkles |
 | v0.21 | Heroes wear their gear: wearable art for every item matching its icon, an off-hand slot for shields and books, clean layering, hats that sit on the head, gear shown in every hero view including battles and the map |
+| v0.22 | Pets: a Pet slot for one pet, each with a gear-sized stat bonus, an always-on passive and a tap-to-use battle skill that scale with your hero; 6 categories, design-your-own beasts, 14 more pets from path levels, classes, dungeon drops and the shop, and 5 rare dragon hatchlings whose eggs hatch as you practice |
 
 ## Next up
 
@@ -75,6 +76,12 @@ Design rules that every feature follows:
 
 - More skills per path that unlock at higher path levels (pick which ones to equip, like talent skills already do).
 
-### 7. iPhone widgets
+### 7. Pet follow-ups
+
+- A pet roster across classes and skills where one fits: beasts for animal and nature paths, plus summons, robots, flying books, aliens and more for the rest. Not every class or skill needs one.
+- Pet gear that any pet can wear.
+- Pet levels or pet talents only much later, if ever: the focus stays on training yourself, not your pets.
+
+### 8. iPhone widgets
 
 - The WidgetKit code is written, in mobile/native/ios. Building it needs a Mac.
