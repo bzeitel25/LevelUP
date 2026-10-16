@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.24.0 — 2026-10-15 (build 2026-10-15.2)
+
+Ascended classes, the last tier of the Class Compendium. 98 classes in all.
+
+- **9 Ascended classes:** one for each path at Lv 50 (about 250 hours in that path), plus the Polymath for any 3 paths at Lv 25 each.
+  - Virtuoso (Art, Support): Standing Ovation, +30% damage and 25% faster attacks for 6 s, and a 10% heal.
+  - Warlord (Body, Striker): Warcry, a 2.5× hit, then +25% damage for 5 s.
+  - Archmage (Mind, Controller): Time Stop, the monster skips its next 2 attacks and takes a 1.5× hit.
+  - Master Artisan (Craft, Guardian): Masterwork Bulwark, 40% less damage for 5 s and 2 blocked hits.
+  - Technarch (Tech, Striker): Singularity, a drone that zaps for 0.6× a second for 6 s, and a 1 s stun.
+  - Luminary (Spirit, Support): Radiance, a 20% heal and 1.5 s of no damage.
+  - Grand Steward (Life, Treasure Hunter): Grand Ledger, a 1.5× hit and +15% gold from the fight.
+  - Archdruid (Nature, Controller): Wild Growth, the monster attacks 50% slower for 5 s while you heal 15%.
+  - Polymath (any 3 paths, All-rounder): Renaissance, your best path skill twice, then a 1.5× hit. Carries 4 path skills.
+- **Glowing gear sets:** each Ascended class has a 4-piece set in pearl and starlight with the strongest shimmer (400 gold a piece). The full set gives half again its role's bonus.
+- **Ascended portrait frames:** one per class, unlocked with the class.
+- **Ascended in the class tree:** a new group at the bottom, with progress toward each.
+- **Suggest a class:** a form at the bottom of the class panel asks for a name, the real skills it's built on, a role, a signature skill idea and why it fits you. The best ideas become official with "Suggested by" credit.
+- Perks share the talent caps like every other class, and classes still never add XP.
+
 ## v0.23.0 — 2026-10-15 (build 2026-10-15.1)
 
 Veteran Reserve follow-ups.

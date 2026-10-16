@@ -679,6 +679,9 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .cls-on { font-size: 12.5px; font-weight: 700; color: var(--xp); }
 .cls-card.open { border-color: color-mix(in srgb, var(--xp-fill) 55%, var(--line)); }
 .cls-card.locked { border-style: dashed; }
+.cls-card.asc { border-color: color-mix(in srgb, #b9a6ff 70%, var(--line)); background: linear-gradient(160deg, color-mix(in srgb, #b9a6ff 12%, var(--panel)), var(--panel) 60%); }
+.cls-card.asc:not(.locked) { box-shadow: 0 0 0 1px color-mix(in srgb, #b9a6ff 45%, transparent), 0 0 12px color-mix(in srgb, #b9a6ff 35%, transparent); }
+.cls-asc .cls-gh { color: color-mix(in srgb, #7b62e0 80%, var(--ink)); }
 .cls-card.locked .cls-card-top b, .cls-card.locked .cls-card-sig { opacity: .8; }
 .cls-card.near { border: 2px solid var(--rest); border-style: solid; background: color-mix(in srgb, var(--rest) 7%, var(--panel)); }
 .cls-need { display: grid; gap: 1px; margin-top: 2px; }
@@ -917,6 +920,21 @@ details.cg-set > summary { cursor: pointer; }
     <div class="field"><label for="fb-text" id="fb-label">Your message</label><textarea class="input" id="fb-text" rows="4" maxlength="600" style="resize:vertical"></textarea></div>
     <div class="err" id="fb-err"></div>
     <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="fb-send">Send</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-cls">
+  <form class="dlg" id="form-cls" method="dialog">
+    <h2>Suggest a class</h2>
+    <p class="muted" style="margin:0">The best ideas become official in an update, with "Suggested by" credit on the class card. A class must be earned by practice the app can log and fit one of the five roles.</p>
+    <div class="field"><label for="sc-name">Class name</label><input class="input" id="sc-name" maxlength="30" placeholder="Barista, Potter, Stargazer…"></div>
+    <div class="field"><label for="sc-skills">Real skills it's built on</label><input class="input" id="sc-skills" maxlength="120" placeholder="Coffee brewing, latte art"></div>
+    <div class="field"><label for="sc-role">Role</label><select class="input" id="sc-role"><option>Striker</option><option>Guardian</option><option>Support</option><option>Controller</option><option>Treasure Hunter</option></select></div>
+    <div class="field"><label for="sc-sig">Signature skill idea</label><input class="input" id="sc-sig" maxlength="140" placeholder="Espresso Shot: attack 30% faster for 4 s"></div>
+    <div class="field"><label for="sc-why">Why it fits you</label><textarea class="input" id="sc-why" rows="3" maxlength="400" style="resize:vertical"></textarea></div>
+    <div class="field"><label for="sc-by">Credit as (optional)</label><input class="input" id="sc-by" maxlength="30" placeholder="Your hero name"></div>
+    <div class="err" id="sc-err"></div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="sc-send">Send</button></div>
   </form>
 </dialog>
 
@@ -1341,7 +1359,7 @@ details.cg-set > summary { cursor: pointer; }
   // A class gives a signature battle skill and an always-on perk. Never XP.
   // Signature skills are recipes run by castSkill's recipe branch (keys start "c-"); the new recipe
   // fields are handled in classRecipe(). Effect perks add into talentFx() before the caps.
-  const CLASS_TIERS = { neutral: "Neutral class", starter: "Starter class", spec: "Specialization", dual: "Dual-discipline class", two: "Two-path class" };
+  const CLASS_TIERS = { neutral: "Neutral class", starter: "Starter class", spec: "Specialization", dual: "Dual-discipline class", two: "Two-path class", asc: "Ascended class" };
   const CLASS_ROLE_KEY = { "Striker": "striker", "Guardian": "guardian", "Support": "support", "Controller": "controller", "Treasure Hunter": "treasure", "All-rounder": "all" };
   const CLS_CLOTH = [["Indigo Ink", "#3b3a8f", "#272566"], ["Mint Wash", "#7fd3b0", "#55a687"]];   // Illustrator colors, appended to CLOTH
   const starterClass = (id, name, disc, role, sig, perk, gear) => ({ id, name, tier: "starter", disc, role, req: { disc, lv: 10 }, sig, perk, gear });
@@ -1568,12 +1586,41 @@ details.cg-set > summary { cursor: pointer; }
     twoClass(["life", "nature"], "forager", "Forager", "Treasure Hunter", { name: "Gather", desc: "Heal 5%, and a win this fight has +25% chance to drop a Healing Potion (once per fight)", cd: 16, icon: "heart", once: true, heal: 0.05, gatherPot: 25 },
       { desc: "5% chance after any win to find a Healing Potion", potWin: 5 })
   ];
-  CLASSES.push(...CLASS_SPECS, ...CLASS_DUALS, ...CLASS_TWOPATH);
+  // ===== Ascended classes (v0.24) =====
+  // The long-term goals from the Class Compendium: one path at Lv 50 (about 250 hours in that path), or any 3 paths
+  // at Lv 25 each (Polymath). Each has a stronger signature skill, a glowing gear set and its own portrait frame.
+  // Signatures reuse the recipe fields above, combined. Perks share the talent caps like every other class.
+  const ASC_LV = 50, POLY_LV = 25, POLY_N = 3;
+  const ascClass = (apath, id, name, role, sig, perk, gear) => ({ id, name, tier: "asc", apath, role, sig, perk, gear });
+  const CLASS_ASC = [
+    ascClass("music", "virtuoso", "Virtuoso", "Support", { name: "Standing Ovation", desc: "+30% damage and attack 25% faster for 6 s, and heal 10%", cd: 14, icon: "note", buff: [30, 6], haste: [25, 6], heal: 0.1 },
+      { name: "Encore", desc: "Buffs last 20% longer and heals are 10% stronger", fx: { buffDur: 20, healPow: 10 } }, ["Starlit cape", "Golden lute", "Laurel circlet", "Velvet doublet"]),
+    ascClass("body", "warlord", "Warlord", "Striker", { name: "Warcry", desc: "A 2.5× hit, then +25% damage for 5 s", cd: 12, icon: "sword", mult: 2.5, buff: [25, 5] },
+      { name: "Veteran of a Hundred Fights", desc: "+6% auto-attack damage and +3% crit chance", fx: { atkDmg: 6, crit: 3 } }, ["Warlord's plate armor", "Greatsword", "Horned war helm", "Battle standard cloak"]),
+    ascClass("mind", "archmage", "Archmage", "Controller", { name: "Time Stop", desc: "The monster skips its next 2 attacks and takes a 1.5× hit", cd: 16, icon: "rune", skipC: 2, mult: 1.5 },
+      { name: "Arcane Mastery", desc: "+8% skill damage, and stuns and slows last 10% longer", fx: { skillDmg: 8, ctrlDur: 10 } }, ["Astral robe", "Archmage's staff", "Starfire crown", "Floating grimoire"]),
+    ascClass("craft", "masterartisan", "Master Artisan", "Guardian", { name: "Masterwork Bulwark", desc: "Take 40% less damage for 5 s and block the next 2 hits", cd: 16, icon: "gear", guard: [40, 5], shieldHits: 2 },
+      { name: "Maker's Mark", desc: "Equipped gear 15% stronger", fx: { gearPow: 15 } }, ["Masterwork hammer", "Guildmaster's apron", "Tower shield", "Master's goggles"]),
+    ascClass("tech", "technarch", "Technarch", "Striker", { name: "Singularity", desc: "A drone zaps for 0.6× every second for 6 s, and a 1 s stun", cd: 16, icon: "gear", turret: [0.6, 6], stun: 1 },
+      { name: "Overclocked", desc: "Skill cooldowns 8% shorter", fx: { cdr: 8 } }, ["Quantum visor", "Plasma core", "Nanoweave coat", "Drone gauntlet"]),
+    ascClass("spirit", "luminary", "Luminary", "Support", { name: "Radiance", desc: "Heal 20% and take no damage for 1.5 s", cd: 18, icon: "heart", heal: 0.2, immune: 1.5 },
+      { name: "Inner Light", desc: "Regenerate 1% HP every 5 s, and heals are 10% stronger", fx: { regen: 1, healPow: 10 } }, ["Halo of dawn", "Radiant robe", "Sunstone amulet", "Lotus sandals"]),
+    ascClass("life", "grandsteward", "Grand Steward", "Treasure Hunter", { name: "Grand Ledger", desc: "A 1.5× hit and +15% gold from this fight, once per fight", cd: 16, icon: "coin", once: true, goldPct: 15, mult: 1.5 },
+      { name: "Well-Kept House", desc: "+6% dungeon gold and +10% gold from map chests", fx: { gold: 6, chestGold: 10 } }, ["Grand keyring", "Golden ledger", "Steward's longcoat", "Gilded lantern"]),
+    ascClass("nature", "archdruid", "Archdruid", "Controller", { name: "Wild Growth", desc: "Roots slow the monster's attacks by 50% for 5 s, and you heal 15% over 5 s", cd: 16, icon: "heart", slow: [50, 5], meal: [0.15, 5] },
+      { name: "Heart of the Wild", desc: "Monsters attack 6% slower, and you see 1 tile farther on the map", fx: { monSlow: 6, reveal: 1 } }, ["Antler crown", "Living staff", "Mossweave cloak", "Seed pouch"]),
+    { id: "polymath", name: "Polymath", tier: "asc", poly: true, role: "All-rounder",
+      sig: { name: "Renaissance", desc: "Use your best path skill twice, then a 1.5× hit", cd: 12, icon: "star", trick: true, mult: 1.5 },
+      perk: { name: "Many Talents", desc: "Carry 4 path skills instead of 3, and +4% skill damage", pathSlots: 4, fx: { skillDmg: 4 } },
+      gear: ["Scholar-knight tabard", "Many-tool belt", "Polymath's monocle", "Folio of everything"] }
+  ];
+  CLASSES.push(...CLASS_SPECS, ...CLASS_DUALS, ...CLASS_TWOPATH, ...CLASS_ASC);
   const CLASS_BY = Object.fromEntries(CLASSES.map(c => [c.id, c]));
   CLASSES.forEach(c => {
     if (c.tier === "spec") { c.disc = CLASS_BY[c.from].disc; c.req = { disc: c.disc, lv: SPEC_LV }; }
     if (c.tier === "dual") { c.discs = Object.keys(DISCIPLINES).filter(d => DISCIPLINES[d].path === c.path); c.req = { discs: c.discs, lv: DUAL_LV }; }
     if (c.tier === "two") c.req = { paths: c.paths, lv: TWO_LV };
+    if (c.tier === "asc") c.req = c.poly ? { poly: POLY_N, lv: POLY_LV } : { apath: c.apath, lv: ASC_LV };
   });
   const clsSpecsOf = id => CLASS_SPECS.filter(c => c.from === id);
 
@@ -1584,6 +1631,7 @@ details.cg-set > summary { cursor: pointer; }
   const clsDiscLv = d => lvFrom(clsDiscXp(d));
   const clsLvExact = xp => Math.min(MAX_LV, Math.sqrt(Math.max(0, xp) / MIN_PER_LV));
   const clsPaths5 = () => Object.keys(PATHS).filter(p => clsPathLv(p) >= 5).length;
+  const clsTopPaths = n => Object.keys(PATHS).map(p => ({ p, xp: clsPathXp(p) })).sort((a, b) => b.xp - a.xp).slice(0, n);   // Polymath: your best paths
   // Each unlock rule as a list of parts: { label, have, need, frac }.
   function clsReqs(c) {
     const q = c.req || {}, out = [];
@@ -1596,6 +1644,8 @@ details.cg-set > summary { cursor: pointer; }
     if (q.disc) { const xp = clsDiscXp(q.disc); add(DISCIPLINES[q.disc].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); }
     if (q.discs) q.discs.forEach(d => { const xp = clsDiscXp(d); add(DISCIPLINES[d].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); });
     if (q.paths) q.paths.forEach(p => { const xp = clsPathXp(p); add(PATHS[p].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); });
+    if (q.apath) { const xp = clsPathXp(q.apath); add(PATHS[q.apath].label, lvFrom(xp), q.lv, clsLvExact(xp) / q.lv, true); }
+    if (q.poly) { const top = clsTopPaths(q.poly); add(`Paths at Lv ${q.lv}`, top.filter(t => lvFrom(t.xp) >= q.lv).length, q.poly, top.reduce((n, t) => n + Math.min(1, clsLvExact(t.xp) / q.lv), 0) / q.poly); }
     return out;
   }
   const clsReqText = r => r.lvl ? `${r.label} Lv ${r.have} / ${r.need}` : `${r.label} ${r.have} / ${r.need}`;
@@ -1605,12 +1655,12 @@ details.cg-set > summary { cursor: pointer; }
   // The class you play: your pick while it's unlocked, otherwise Wanderer.
   const curClassId = () => typeof state.cls === "string" && Object.hasOwn(CLASS_BY, state.cls) && classUnlocked(state.cls) ? state.cls : "wanderer";
   const curClass = () => CLASS_BY[curClassId()];
-  const clsPathOf = c => c.disc ? DISCIPLINES[c.disc].path : c.path || null;
+  const clsPathOf = c => c.disc ? DISCIPLINES[c.disc].path : c.path || c.apath || null;
   function classHero() { const c = curClass(), p = clsPathOf(c); return { id: c.id, name: c.name, role: c.role, paths: c.paths ? c.paths.slice() : p ? [p] : [] }; }
   const clsPairText = c => c.paths.map(p => PATHS[p].label).join(" + ");
-  const clsWhere = c => c.disc ? `${PATHS[clsPathOf(c)].label} · ${DISCIPLINES[c.disc].label}` : c.path ? `${PATHS[c.path].label} · Dual-discipline` : c.paths ? `${clsPairText(c)} · Two-path` : CLASS_TIERS[c.tier];
+  const clsWhere = c => c.apath ? `${PATHS[c.apath].label} · Ascended` : c.poly ? `${POLY_N} paths · Ascended` : c.disc ? `${PATHS[clsPathOf(c)].label} · ${DISCIPLINES[c.disc].label}` : c.path ? `${PATHS[c.path].label} · Dual-discipline` : c.paths ? `${clsPairText(c)} · Two-path` : CLASS_TIERS[c.tier];
   // The discipline levels behind a class, for the panel kicker: "Performing Lv 27" or "Performing Lv 12, Visual Lv 10".
-  const clsLvLine = c => c.paths ? c.paths.map(p => `${PATHS[p].label} Lv ${clsPathLv(p)}`).join(", ") : (c.discs || (c.disc ? [c.disc] : [])).map(d => `${DISCIPLINES[d].label} Lv ${clsDiscLv(d)}`).join(", ");
+  const clsLvLine = c => c.apath ? `${PATHS[c.apath].label} Lv ${clsPathLv(c.apath)}` : c.poly ? clsTopPaths(POLY_N).map(t => `${PATHS[t.p].label} Lv ${lvFrom(t.xp)}`).join(", ") : c.paths ? c.paths.map(p => `${PATHS[p].label} Lv ${clsPathLv(p)}`).join(", ") : (c.discs || (c.disc ? [c.disc] : [])).map(d => `${DISCIPLINES[d].label} Lv ${clsDiscLv(d)}`).join(", ");
   function classSubline() { const c = curClass(); return `${c.role} · ${clsWhere(c)}`; }
   // Perks that are plain effects add into the talent totals, before the shared caps.
   function classPerkFx(fx) { const c = curClass(); Object.entries(c.perk.fx || {}).forEach(([k, v]) => { fx[k] = (fx[k] || 0) + v; }); fx.cls = c.id; }
@@ -2045,7 +2095,7 @@ details.cg-set > summary { cursor: pointer; }
   }
   const clsRole = c => `<span class="cls-role r-${CLASS_ROLE_KEY[c.role] || "all"}">${esc(c.role)}</span>`;
   // What a card says under the class name: its discipline, the starter it grows from, or its path.
-  const clsCardWhere = c => c.tier === "spec" ? `${CLASS_BY[c.from].name} · Lv ${SPEC_LV}` : c.tier === "dual" ? `${PATHS[c.path].label} · both at Lv ${DUAL_LV}` : c.tier === "two" ? `${clsPairText(c)} · both at Lv ${TWO_LV}` : c.disc ? DISCIPLINES[c.disc].label : CLASS_TIERS[c.tier];
+  const clsCardWhere = c => c.apath ? `${PATHS[c.apath].label} · Lv ${ASC_LV}` : c.poly ? `Any ${POLY_N} paths · Lv ${POLY_LV} each` : c.tier === "spec" ? `${CLASS_BY[c.from].name} · Lv ${SPEC_LV}` : c.tier === "dual" ? `${PATHS[c.path].label} · both at Lv ${DUAL_LV}` : c.tier === "two" ? `${clsPairText(c)} · both at Lv ${TWO_LV}` : c.disc ? DISCIPLINES[c.disc].label : CLASS_TIERS[c.tier];
   // mode: "cur" (playing), "open" (unlocked, switch), "have" (unlocked, shown in the class tree) or "locked".
   function clsCard(c, mode, near, extra) {
     const isNew = clsNewIds.includes(c.id) && mode === "open", reqs = mode === "locked" ? clsReqs(c) : [];
@@ -2076,7 +2126,8 @@ details.cg-set > summary { cursor: pointer; }
       </div>`).join("")}</div></div>`;
     });
     h += `<div class="cls-group"><div class="cls-gh">Dual-discipline <small>both disciplines of one path at Lv ${DUAL_LV}</small></div><div class="cls-grid">${CLASS_DUALS.map(c => clsCard(c, mode(c), near.includes(c.id))).join("")}</div></div>`;
-    h += `<div class="cls-group" id="cls-two"><div class="cls-gh">Two-path <small>two paths at Lv ${TWO_LV} each</small></div><div class="cls-grid">${CLASS_TWOPATH.map(c => clsCard(c, mode(c), near.includes(c.id))).join("")}</div></div>`;
+    const asc = `<div class="cls-group cls-asc" id="cls-asc"><div class="cls-gh">Ascended <small>one path at Lv ${ASC_LV}, or any ${POLY_N} paths at Lv ${POLY_LV}</small></div><div class="cls-grid">${CLASS_ASC.map(c => clsCard(c, mode(c), near.includes(c.id), "asc")).join("")}</div></div>`;
+    h += `<div class="cls-group" id="cls-two"><div class="cls-gh">Two-path <small>two paths at Lv ${TWO_LV} each</small></div><div class="cls-grid">${CLASS_TWOPATH.map(c => clsCard(c, mode(c), near.includes(c.id))).join("")}</div></div>` + asc;
     return h;
   }
   function renderClassPanel() {
@@ -2089,7 +2140,7 @@ details.cg-set > summary { cursor: pointer; }
       <div class="cls-cur r-${CLASS_ROLE_KEY[cur.role] || "all"}">
         <span class="cls-crest" aria-hidden="true">${skillIcon(sig.icon)}</span>
         <div class="cls-cur-main">
-          <div class="cls-kicker">${esc(CLASS_TIERS[cur.tier])}${cur.disc || cur.path ? ` · ${esc(PATHS[clsPathOf(cur)].label)}` : cur.paths ? ` · ${esc(clsPairText(cur))}` : ""}${lvl ? ` · ${esc(lvl)}` : ""}${cur.tier === "spec" ? ` · from ${esc(CLASS_BY[cur.from].name)}` : ""}</div>
+          <div class="cls-kicker">${esc(CLASS_TIERS[cur.tier])}${cur.disc || cur.path || cur.apath ? ` · ${esc(PATHS[clsPathOf(cur)].label)}` : cur.paths ? ` · ${esc(clsPairText(cur))}` : ""}${lvl ? ` · ${esc(lvl)}` : ""}${cur.tier === "spec" ? ` · from ${esc(CLASS_BY[cur.from].name)}` : ""}</div>
           <div class="cls-name">${esc(cur.name)}</div>
           ${clsRole(cur)}
         </div>
@@ -2106,10 +2157,11 @@ details.cg-set > summary { cursor: pointer; }
         ${mine.length < 2 ? `<p class="hint" style="margin:0">Practice unlocks classes: total level opens neutral ones, 10 hours in a discipline opens its starter class.</p>` : ""}
       </div>
       <details class="cls-all" ${open ? "open" : ""}><summary><b>Class tree</b> <span class="muted" style="font-size:13px">· ${locked.length ? `${locked.length} to unlock` : "all unlocked"}</span></summary>
-        <p class="hint cls-tree-hint">Starter class: 10 hours in a discipline. Specializations: about 62 hours (Lv ${SPEC_LV}); you keep the starter. Dual-discipline: 10 hours in both of a path's disciplines. Two-path: Lv ${TWO_LV} in two paths (about 10 hours each).</p>
+        <p class="hint cls-tree-hint">Starter class: 10 hours in a discipline. Specializations: about 62 hours (Lv ${SPEC_LV}); you keep the starter. Dual-discipline: 10 hours in both of a path's disciplines. Two-path: Lv ${TWO_LV} in two paths (about 10 hours each). Ascended: one path at Lv ${ASC_LV} (about 250 hours), or any ${POLY_N} paths at Lv ${POLY_LV} (about 62 hours each).</p>
         ${clsTreeHTML(ids, near)}
       </details>
       <p class="hint" style="margin:0">Classes unlock from real hours you log, so rested XP, elixirs and the Veteran Reserve don't speed them up. Classes never add XP. Yours sets your signature skill and perk, and its path's skill goes first in battle. Class and talent gold bonuses share one cap (+${TAL_CAP.gold}%).</p>
+      <div><button class="linkbtn" style="font-size:13px" data-act="suggest-class">Suggest a class</button></div>
     </article>`;
   }
   function classSkillBook() {
@@ -2128,7 +2180,7 @@ details.cg-set > summary { cursor: pointer; }
   // your hero's look; owning all 4 while you play that class adds a small role bonus. Each role also has a class
   // talent tree (8 nodes and a capstone), with points from your current class's discipline or path level.
   // Both add into talentFx() before the shared caps (TAL_CAP). Never XP. Saved as state.clsGear and state.clsTree.
-  const CG_PRICE = { starter: 120, two: 180, dual: 180, spec: 250 };
+  const CG_PRICE = { starter: 120, two: 180, dual: 180, spec: 250, asc: 400 };
   const CG_TWO = {
     loremaster: ["Storyteller's cloak", "Lore lute", "Illuminated tome", "Quill circlet"], bladedancer: ["Silk sash", "Twin sabers", "Ankle bells", "Dancer's wraps"],
     luthier: ["Carving knife", "Tonewood lute", "Varnish kit", "Maker's apron"], synthmage: ["Studio headphones", "Keytar", "LED visor", "Waveform staff"],
@@ -2192,16 +2244,18 @@ details.cg-set > summary { cursor: pointer; }
   const CG_ROLES = ["striker", "guardian", "support", "controller", "treasure"];
   // Pieces are tinted with their role's color: extra palettes after the tier palettes (added on first use).
   const CG_PAL = [{ A: "#d2563c", a: "#8e2f1c", L: "#f39a80" }, { A: "#3d72c9", a: "#244a8a", L: "#8fb4ee" }, { A: "#2f9e64", a: "#1d6a42", L: "#86dcae" },
-    { A: "#8a55d0", a: "#5a3290", L: "#c49cf2" }, { A: "#c08a10", a: "#7e5a08", L: "#f2cc66" }];
+    { A: "#8a55d0", a: "#5a3290", L: "#c49cf2" }, { A: "#c08a10", a: "#7e5a08", L: "#f2cc66" },
+    { A: "#e9e4ff", a: "#9d8fd8", L: "#fffbe0" }];   // the last one: Ascended sets, pearl and starlight
   let cgPalAt = -1;
-  function cgTier(c) { if (cgPalAt < 0) { cgPalAt = TIER_PAL.length; TIER_PAL.push(...CG_PAL); } return cgPalAt + Math.max(0, CG_ROLES.indexOf(CLASS_ROLE_KEY[c.role])); }
+  function cgTier(c) { if (cgPalAt < 0) { cgPalAt = TIER_PAL.length; TIER_PAL.push(...CG_PAL); } return cgPalAt + (c.tier === "asc" ? CG_PAL.length - 1 : Math.max(0, CG_ROLES.indexOf(CLASS_ROLE_KEY[c.role]))); }
   // Set bonus by role, while you own all 4 pieces and play that class.
-  const CG_BONUS = { striker: { atkDmg: 4 }, guardian: { hp: 6 }, support: { healPow: 8 }, controller: { ctrlDur: 8 }, treasure: { gold: 4 } };
+  const CG_BONUS = { striker: { atkDmg: 4 }, guardian: { hp: 6 }, support: { healPow: 8 }, controller: { ctrlDur: 8 }, treasure: { gold: 4 }, all: { skillDmg: 3, atkDmg: 3 } };
   const cgHasSet = c => !!(c && c.gear && c.tier !== "neutral");
   const cgPieceId = (c, i) => `${c.id}.${i}`;
   const cgOwned = (c, i) => !!(state.clsGear && state.clsGear[cgPieceId(c, i)]);
   const cgCount = c => cgHasSet(c) ? c.gear.filter((_, i) => cgOwned(c, i)).length : 0;
-  const cgBonusOf = c => CG_BONUS[CLASS_ROLE_KEY[c.role]] || {};
+  // Ascended sets give half again their role's bonus.
+  const cgBonusOf = c => { const b = CG_BONUS[CLASS_ROLE_KEY[c.role]] || {}; return c.tier === "asc" ? Object.fromEntries(Object.entries(b).map(([k, v]) => [k, Math.round(v * 1.5)])) : b; };
   const cgBonusText = c => Object.entries(cgBonusOf(c)).map(([k, v]) => FX_TEXT[k](v)).join(", ");
   const cgBonusOn = c => cgHasSet(c) && cgCount(c) === 4 && curClassId() === c.id;
   const cgPrice = c => Math.round(CG_PRICE[c.tier] * shopMult());
@@ -2244,6 +2298,8 @@ details.cg-set > summary { cursor: pointer; }
   function ctLevel(c) {
     if (!c) return 0;
     if (c.paths) return Math.min(...c.paths.map(clsPathLv));
+    if (c.apath) return clsPathLv(c.apath);
+    if (c.poly) return lvFrom(clsTopPaths(POLY_N)[POLY_N - 1].xp);
     if (c.discs) return Math.min(...c.discs.map(clsDiscLv));
     return c.disc ? clsDiscLv(c.disc) : 0;
   }
@@ -2296,7 +2352,7 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // --- UI ---
-  const cgRuleText = () => `Each non-neutral class has a 4-piece gear set (${CG_PRICE.starter}g a piece for starter, ${CG_PRICE.two}g for two-path and dual-discipline, ${CG_PRICE.spec}g for specializations). Pieces are cosmetic; all 4 while playing that class add a small role bonus. Each role also has a class tree (8 talents and a capstone), with points at class level ${CT_AT.join(", ")} (its discipline level, or the lower of two). Both share the talent caps and never add XP. Tree resets are free.`;
+  const cgRuleText = () => `Each non-neutral class has a 4-piece gear set (${CG_PRICE.starter}g a piece for starter, ${CG_PRICE.two}g for two-path and dual-discipline, ${CG_PRICE.spec}g for specializations, ${CG_PRICE.asc}g for Ascended sets, which give half again their role bonus). Pieces are cosmetic; all 4 while playing that class add a small role bonus. Each role also has a class tree (8 talents and a capstone), with points at class level ${CT_AT.join(", ")} (its discipline level, or the lower of two). Both share the talent caps and never add XP. Tree resets are free.`;
   function cgCard(c, open) {
     const n = cgCount(c), on = cgBonusOn(c), unl = classUnlocked(c.id), price = cgPrice(c), off = price < CG_PRICE[c.tier], rk = CLASS_ROLE_KEY[c.role];
     const status = on ? `<b style="color:var(--good)">Active</b>` : n === 4 ? `Active while you play ${esc(c.name)}` : `${n} of 4 pieces`;
@@ -2837,8 +2893,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-15.1";
-  const APP_VERSION = "0.23.0";
+  const BUILD = "2026-10-15.2";
+  const APP_VERSION = "0.24.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -9473,7 +9529,7 @@ details.cg-set > summary { cursor: pointer; }
   }
   // Rarity glow: skill gear follows its tier (Radiant relics are tier 6); class gear passes its own level.
   const icFxLevel = tier => tier <= RELIC_TIER ? tier : 0;
-  const CG_FX = { starter: 0, two: 3, dual: 3, spec: 4 };
+  const CG_FX = { starter: 0, two: 3, dual: 3, spec: 4, asc: 6 };
   function itemIcon(canvas, sprite, tier, size = 52, name, skill, fx) {
     const pick = name || skill ? iconFor(name, sprite, skill, tier) : IC_BY_SPRITE[sprite] || null;
     if (!pick || !IC[pick[0]]) { icLive.delete(canvas); return itemCrop(canvas, sprite, tier, size); }
@@ -10864,7 +10920,17 @@ details.cg-set > summary { cursor: pointer; }
     legend:  { name: "Legend",           pal: ["#1d1a2b", "#3a3550", "#0d0b14", "#ffe58a"], corner: "star", studs: 3, req: { skillLv: 100 } },
     ranger:  { name: "Ranger's Leaf",    pal: ["#5a7d34", "#8fb455", "#3a5220", "#c8742a"], corner: "acorn", req: { path: "nature", lv: 20 } },
     sketch:  { name: "Sketchbook",       pal: ["#e8e0cc", "#fffaf0", "#b8ab8a", "#3b3a8f"], corner: "round", studs: 4, req: { cls: "illustrator" } },   // CLASSES (v0.15): Illustrator frames
-    gallery: { name: "Gallery",          pal: ["#3b3a8f", "#7fd3b0", "#272566", "#f2c14e"], corner: "star", studs: 5, req: { cls: "illustrator" } }
+    gallery: { name: "Gallery",          pal: ["#3b3a8f", "#7fd3b0", "#272566", "#f2c14e"], corner: "star", studs: 5, req: { cls: "illustrator" } },
+    // Ascended (v0.24): one frame per Ascended class, unlocked with the class
+    virtuoso:  { name: "Virtuoso's Stage",   pal: ["#b8243c", "#ff7a8a", "#6e1022", "#fff1a8"], corner: "note", studs: 3, req: { cls: "virtuoso" } },
+    warlord:   { name: "Warlord's Banner",   pal: ["#5a5f6e", "#d9dee8", "#2c2f3a", "#ff4a2a"], corner: "shield", studs: 3, req: { cls: "warlord" } },
+    archmage:  { name: "Archmage's Sigil",   pal: ["#3a2a8f", "#9a8cff", "#1c1450", "#7af0ff"], corner: "rune", studs: 3, req: { cls: "archmage" } },
+    masterartisan: { name: "Master's Seal",  pal: ["#8a5a1c", "#f2c14e", "#4a2e0a", "#ffffff"], corner: "hammer", studs: 3, req: { cls: "masterartisan" } },
+    technarch: { name: "Technarch's Grid",   pal: ["#1a3a4a", "#4ff0ff", "#0a1a24", "#ff5af0"], corner: "gear", studs: 3, req: { cls: "technarch" } },
+    luminary:  { name: "Luminary's Dawn",    pal: ["#e8c25a", "#fff6c8", "#9a7420", "#ffffff"], corner: "leaf", studs: 3, req: { cls: "luminary" } },
+    grandsteward: { name: "Grand Hall",      pal: ["#2f5a3a", "#8fd0a0", "#163020", "#ffd54a"], corner: "coin", studs: 3, req: { cls: "grandsteward" } },
+    archdruid: { name: "Archdruid's Grove",  pal: ["#3a6a24", "#a8e070", "#1e3a10", "#ff9ad5"], corner: "acorn", studs: 3, req: { cls: "archdruid" } },
+    polymath:  { name: "Polymath's Atlas",   pal: ["#d8d2f0", "#ffffff", "#8a80b8", "#f2c14e"], corner: "star", studs: 3, req: { cls: "polymath" } }
   };
   const pathLevel = p => state.skills.filter(s => s.cat === p).reduce((n, s) => n + earnedLv(s), 0);
   function frameUnlocked(k) {
@@ -11308,7 +11374,7 @@ details.cg-set > summary { cursor: pointer; }
           <li>Categories organize skills; each skill levels on its own.</li>
           <li>Each category grows a talent tree. Its category level is its skill levels added up; points come at ${TALENT_AT.join(", ")}. Trees give combat effects, battle skills, gold, loot and shop discounts, never XP. Resets are free.</li>
           <li>Each skill feeds one of 16 disciplines, two per path across 8 paths: Art (performing and visual), Body (strength and endurance), Mind (knowledge and words), Craft (kitchen and workshop), Tech (software and hardware), Spirit (movement and stillness), Life (home, and money and time) and Nature (outdoors and animals). Change a skill's discipline in its settings.</li>
-          <li>Practice unlocks classes; pick one in the Hero tab. Everyone starts as a Wanderer. Other neutral classes open with total level; each starter class at discipline Lv 10 (10 hours across its skills, from total minutes, not summed levels). Switching is free outside battle. A class gives a signature skill and a perk, never XP. There are 98 classes in all: 5 neutral, 16 starter, 32 specializations (a discipline at Lv 25), 8 dual-discipline (both disciplines of a path at Lv 10), 28 two-path classes (two paths at Lv 10 each, one class for every pair) and 9 ascended classes still to come.</li>
+          <li>Practice unlocks classes; pick one in the Hero tab. Everyone starts as a Wanderer. Other neutral classes open with total level; each starter class at discipline Lv 10 (10 hours across its skills, from total minutes, not summed levels). Switching is free outside battle. A class gives a signature skill and a perk, never XP. There are 98 classes in all: 5 neutral, 16 starter, 32 specializations (a discipline at Lv 25), 8 dual-discipline (both disciplines of a path at Lv 10), 28 two-path classes (two paths at Lv 10 each, one class for every pair) and 9 Ascended classes (one path at Lv 50, about 250 hours, or any 3 paths at Lv 25). Ascended classes have stronger signatures, a glowing gear set and their own portrait frame. Have an idea for a class? Use Suggest a class at the bottom of the class panel.</li>
           <li>${esc(cgRuleText())}</li>
           <li>Pets: link each to its own Animals skill (like Dog walking or Pet care). It joins at that skill's Lv 3 and learns tricks as it levels. Pets never add XP and never get hungry or sad if you skip days.</li>
           <li>On the map, villagers give missions, caves hide side fights, and each region's boss has a big attack you can stun, shield or dodge. Healing and Shield potions are found, never sold; drink one per fight.</li>
@@ -11513,6 +11579,27 @@ details.cg-set > summary { cursor: pointer; }
     toast(sample ? "Example mode: nothing was sent." : fbMode === "tip" ? "Thanks! Your tip was sent for review." : "Thanks! Your feedback was sent.");
   });
 
+  // Suggest a class (v0.24): goes to the same review box as tips and feedback.
+  const dlgCls = document.getElementById("dlg-cls");
+  function openSuggestClass() {
+    ["sc-name", "sc-skills", "sc-sig", "sc-why"].forEach(k => { document.getElementById(k).value = ""; });
+    document.getElementById("sc-by").value = state.heroName || "";
+    document.getElementById("sc-err").textContent = "";
+    dlgCls.showModal();
+  }
+  document.getElementById("form-cls").addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = k => document.getElementById(k).value.trim(), err = document.getElementById("sc-err");
+    const name = v("sc-name"), skills = v("sc-skills");
+    if (name.length < 3) { err.textContent = "Give your class a name (at least 3 characters)."; return; }
+    if (skills.length < 3) { err.textContent = "Name the real skills it's built on, so practice can unlock it."; return; }
+    if (CLASSES.some(c => c.name.toLowerCase() === name.toLowerCase())) { err.textContent = `${name} is already a class. Try another name, or describe how yours differs.`; return; }
+    const btn = document.getElementById("sc-send"); btn.disabled = true;
+    await submit({ kind: "class", name, skills, role: v("sc-role"), sig: v("sc-sig"), text: v("sc-why"), by: v("sc-by") });
+    btn.disabled = false; dlgCls.close();
+    toast(sample ? "Example mode: nothing was sent." : `Thanks! ${esc(name)} was sent for review.`);
+  });
+
   const dlgStart = document.getElementById("dlg-start");
   let startFor = null;
   function openStart(id) {
@@ -11700,6 +11787,7 @@ details.cg-set > summary { cursor: pointer; }
         break;
       }
       case "suggest-tip": openFeedback("tip", id); break;
+      case "suggest-class": openSuggestClass(); break;
       case "vote": {
         const sk = skillById(id), key = b.dataset.key, v = b.dataset.v;
         state.tipVotes[key] = v; persist(); render();
