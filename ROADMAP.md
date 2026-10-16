@@ -34,54 +34,41 @@ Design rules that every feature follows:
 | v0.20 | Hand-drawn pixel icons for every item (187 designs for 255 skill items and 336 class pieces), with rarity glow and twinkling sparkles |
 | v0.21 | Heroes wear their gear: wearable art for every item matching its icon, an off-hand slot for shields and books, clean layering, hats that sit on the head, gear shown in every hero view including battles and the map |
 | v0.22 | Pets: a Pet slot for one pet, each with a gear-sized stat bonus, an always-on passive and a tap-to-use battle skill that scale with your hero; 6 categories, design-your-own beasts, 14 more pets from path levels, classes, dungeon drops and the shop, and 5 rare dragon hatchlings whose eggs hatch as you practice |
+| v0.23 | Veteran Reserve follow-ups: 406 new veteran-level tips (Expert to Grandmaster), per-skill "Still practicing?" length (1 to 8 hours, longer defaults for outings), a 5× boost ceiling, class unlocks stay on real hours |
+| v0.24 | 9 Ascended classes (one per path at Lv 50, plus the Polymath for 3 paths at Lv 25) with stronger signatures, glowing gear sets and their own frames; Suggest a class form. 98 classes in all |
+| v0.25 | 16 new path skills (2 more per path, at path Lv 25 and 50); pick which one each path brings |
+| v0.26 | Pet roster: 79 new pets with pixel art (class pets from unlocked classes, skill pets at skill Lv 15); hats and charms fit every pet, 8 new pieces of pet gear |
+| v0.27 | Linked apps on Android (Usage access, "Found 15 min in Duolingo, log it?", auto-approve per app, on-device only); CSV history import as veteran hours |
 
 ## Next up
 
-### 1. Veteran Reserve follow-ups
+### 1. Online world (MMO-style)
 
-- More veteran-level tips per skill (tips already follow lifetime hours: veteran plus logged).
-- Per-skill length for the "Still practicing?" check (3 hours for everything today).
-- Consider a global boost ceiling (about 4x to 5x) before adding more boost sources.
-- Decide whether class unlocks should count XP (today they count real minutes, so boosts don't speed them up).
-
-### 2. Linked apps (auto-logging)
-
-- A Linked apps screen maps another app to a skill (Duolingo to Spanish, Yousician to Guitar).
-- Android: read other apps' foreground time with Usage access (granted in system settings). No background service: on app open or widget refresh, read back the last few days. Check Google Play's policy for this permission first.
-- Health Connect for workouts from Strava, Garmin, Fitbit and others. Ties into Verified practice.
-- Detected time shows as "Found 15 min in Duolingo, log it?" with one-tap approval and optional auto-approve. Approved time counts as real logged hours.
-- Duolingo has no official public API, so don't build on unofficial endpoints. iPhone: little beyond Apple Health workouts.
-- Later: import history from other trackers (CSV or app exports) as a more credible source for veteran hours.
-
-### 3. Classes
-
-- Choose your class from everything your practice unlocks: 5 neutral, 16 starter (one per discipline), 32 specializations, 8 dual-discipline, 28 two-path and 9 Ascended classes (98 in all). Full design in the Class Compendium doc.
-- Shipped: the class picker with neutral and starter classes and adventuring pets (v0.15), then specializations and dual-discipline classes (v0.16), then two-path classes (v0.17), then class gear sets and role talent trees (v0.18).
-- Next: Ascended classes and a Suggest a class form.
-
-### 4. Online world (MMO-style)
+Needs decisions first: where accounts and data live (a hosted backend such as Supabase or Firebase), sign-in method, and cost.
 
 - Start with accounts and a small backend, so heroes live online and sync across devices.
 - See other players' heroes, titles and achievements.
 - Shared "meet" maps and exploration areas where players see each other walking around.
 - Leaderboards rank by real logged hours, not XP.
+- Player votes on Suggest a class ideas.
 - Later: parties for group adventures and co-op bosses.
 
-### 5. Verified practice
+### 2. Verified practice and Health Connect
 
-- Private, on-device checks that sync with apps like Health Connect.
-- Verified time counts for a little more. The honor system stays the default.
+- Health Connect for workouts from Strava, Garmin, Fitbit and others, through the Linked apps screen.
+- Private, on-device checks. Verified time counts for a little more. The honor system stays the default.
+- Before publishing to Google Play: Usage access needs a clear in-app disclosure (in place since v0.27) and a policy review; make a separate, secret signing key.
 
-### 6. Combat follow-ups
+### 3. Linked apps follow-ups
 
-- More skills per path that unlock at higher path levels (pick which ones to equip, like talent skills already do).
+- iPhone: little beyond Apple Health workouts.
+- Duolingo has no official public API, so don't build on unofficial endpoints.
 
-### 7. Pet follow-ups
+### 4. Pet follow-ups
 
-- A pet roster across classes and skills where one fits: beasts for animal and nature paths, plus summons, robots, flying books, aliens and more for the rest. Not every class or skill needs one.
-- Pet gear that any pet can wear.
 - Pet levels or pet talents only much later, if ever: the focus stays on training yourself, not your pets.
+- Answered in v0.26: class pets need only the class unlocked; skill pets come at skill Lv 15.
 
-### 8. iPhone widgets
+### 5. iPhone widgets
 
 - The WidgetKit code is written, in mobile/native/ios. Building it needs a Mac.
