@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.26.0 — 2026-10-15 (build 2026-10-15.4)
+
+The pet roster: 79 new pets, and gear any pet can wear.
+
+- **79 new pets, each with its own pixel art,** across all six categories:
+  - Beasts (29): Wolf Pup, Hound, Bear Cub, Pony, Hawk, Falcon, Hedgehog, Fawn, Boar Piglet, Bumblebee, Songbird, Squirrel, Fox Kit, Lion Cub, Badger, Homing Pigeon, Hen, Raven, Tortoise, Baby Griffin, Peacock, Cricket, Butterfly, Fencing Crab, Yarn Spider, Panda Cub, Pack Camel, Goldfish and Garden Snail.
+  - Arcane (10): Star Kitten, Imp, Crystal Fairy, Shadow Twin, Seeing Orb, Ink Sprite, Flask Homunculus, Floating Sword, Lantern Moth and Quill Sprite.
+  - Constructs (16): Gear Golem, Combat Drone, Bit Bug, Glitch Cat, Firewall Sentry, Mech Pup, Wind-up Mouse, Rocket Bot, Synth Bot, Shield Drone, Butler Bot, Living Armor, Anvil Golem, Clay Golem, Toy Soldier and Rubber Duck.
+  - Spirits (9): Halo Sprite, Dream Jelly, Prism Sprite, Kite Spirit, Echo Spirit, Totem Spirit, Lotus Spirit, Note Sprite and Spirit Wolf.
+  - Elementals (4): Ember Sprite, Magma Pup, Water Sprite and Zen Pebble.
+  - Oddities (11): Living Dumpling, Pudding Slime, Dust Bunny, Gargoyle, Lucky Cat, Golden Toad, Hourglass Sprite, Film Reel Critter, Chess Knight, Little Alien and Gingerbread Pal.
+- **How they unlock:**
+  - Class pets join when you unlock their class. You don't have to play the class to keep the pet. Bigger classes bring bigger bonuses: +4 from starter classes, +5 from dual-discipline and two-path classes, +6 from specializations.
+  - Skill pets join when a skill reaches Lv 15: Goldfish (fishing), Garden Snail (gardening), Rubber Duck (coding), Chess Knight (chess), Little Alien (astronomy) and Gingerbread Pal (baking).
+- Every new pet works like the others: a stat bonus, a passive and a battle skill that grows with your hero. New skill effects: Enchant and Encore raise your damage, and Chirp speeds up your attacks. New passive: Thick Fur (+6% max HP).
+- **Pet gear for every pet:** hats and the new charms fit any pet, including roster pets and dragon hatchlings. Neckwear still fits the beasts you design. Dress up whichever pet is in your slot, right in the Pets panel.
+- **New pet gear:** Cozy beanie, Flower crown and Little crown, plus five charms that float beside your pet: Star, Heart, Leaf, Music note and Gem. Still just for looks.
+- Pets with one drawing now breathe gently while they idle.
+
 ## v0.25.0 — 2026-10-15 (build 2026-10-15.3)
 
 More battle skills for every path.

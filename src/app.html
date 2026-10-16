@@ -680,6 +680,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .cls-card.open { border-color: color-mix(in srgb, var(--xp-fill) 55%, var(--line)); }
 .cls-card.locked { border-style: dashed; }
 .sb-paths { display: grid; gap: 12px; }
+.pet-dress-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.pet-dress { display: grid; gap: 2px; min-width: 120px; flex: 1 1 120px; }
 .sb-ph { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; font-size: 13px; }
 .cls-card.asc { border-color: color-mix(in srgb, #b9a6ff 70%, var(--line)); background: linear-gradient(160deg, color-mix(in srgb, #b9a6ff 12%, var(--panel)), var(--panel) 60%); }
 .cls-card.asc:not(.locked) { box-shadow: 0 0 0 1px color-mix(in srgb, #b9a6ff 45%, transparent), 0 0 12px color-mix(in srgb, #b9a6ff 35%, transparent); }
@@ -2895,8 +2897,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-15.3";
-  const APP_VERSION = "0.25.0";
+  const BUILD = "2026-10-15.4";
+  const APP_VERSION = "0.26.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -3601,13 +3603,46 @@ details.cg-set > summary { cursor: pointer; }
     { id: "bell", name: "Bell collar", slot: "neck", price: 90, col: "#3a6fc8", tag: "#ffe58a", bell: true },
     { id: "party", name: "Party hat", slot: "head", price: 80 },
     { id: "tophat", name: "Tiny top hat", slot: "head", price: 120 },
-    { id: "wizard", name: "Wizard hat", slot: "head", price: 150 }
+    { id: "wizard", name: "Wizard hat", slot: "head", price: 150 },
+    // v0.26: more gear, and hats and charms fit every pet
+    { id: "beanie", name: "Cozy beanie", slot: "head", price: 70 },
+    { id: "flowers", name: "Flower crown", slot: "head", price: 100 },
+    { id: "crown", name: "Little crown", slot: "head", price: 220 },
+    { id: "c-star", name: "Star charm", slot: "charm", price: 90, charm: [".Y.", "YYY", ".Y."], pal: { Y: "#ffe58a" } },
+    { id: "c-heart", name: "Heart charm", slot: "charm", price: 90, charm: ["R.R", "RRR", ".R."], pal: { R: "#f06a8a" } },
+    { id: "c-leaf", name: "Leaf charm", slot: "charm", price: 60, charm: [".GG", "GG.", "G.."], pal: { G: "#5cc85a" } },
+    { id: "c-note", name: "Music note charm", slot: "charm", price: 90, charm: [".BB", ".B.", "BB."], pal: { B: "#9a7ae0" } },
+    { id: "c-gem", name: "Gem charm", slot: "charm", price: 160, charm: [".C.", "CWC", ".C."], pal: { C: "#4ac0f0", W: "#e8fbff" } }
   ];
+  const PET_SLOT_NAME = { neck: "Neck", head: "Hat", charm: "Charm" };
   const PET_HATS = {
     party: { rows: ["..Y..", "..R..", ".RYR.", ".YRY.", "RYRYR"], pal: { R: "#e05a8a", Y: "#ffe58a" } },
     tophat: { rows: [".KKK.", ".KKK.", ".RRR.", "KKKKK"], pal: { K: "#2e3142", R: "#d94a3a" } },
-    wizard: { rows: ["...V..", "..VV..", "..VYV.", ".VVVV.", "VVVVVV"], pal: { V: "#7a4ac8", Y: "#ffe58a" } }
+    wizard: { rows: ["...V..", "..VV..", "..VYV.", ".VVVV.", "VVVVVV"], pal: { V: "#7a4ac8", Y: "#ffe58a" } },
+    beanie: { rows: ["..W..", ".RRR.", "RRRRR", "WWWWW"], pal: { R: "#3a8ad8", W: "#f4f4f4" } },
+    flowers: { rows: ["P.Y.P", "GGGGG"], pal: { P: "#f06a9a", Y: "#ffe58a", G: "#4aa84a" } },
+    crown: { rows: ["Y.Y.Y", "YRYBY", "YYYYY"], pal: { Y: "#f2c14e", R: "#e04a5a", B: "#4a8ae0" } }
   };
+  // Roster pets keep their gear by pet (state.famWear); designed beasts keep it on themselves (p.wear).
+  const famWears = () => { if (!state.famWear || typeof state.famWear !== "object" || Array.isArray(state.famWear)) state.famWear = {}; return state.famWear; };
+  const famWear = key => famWears()[key] || null;
+  // A hat sits above the head (found from the eyes); a charm floats up and behind the pet, bobbing.
+  function petWearCells(cells, wear, frame, src) {
+    const eyes = cells.filter(c => c[3] === "E" || c[3] === "e");
+    const head = PET_GEAR.find(g => g.id === wear.head), top = head && PET_HATS[head.id];
+    if (top && eyes.length) {
+      const ex = Math.round(eyes.reduce((n, c) => n + c[0], 0) / eyes.length);
+      const near = cells.filter(c => Math.abs(c[0] - ex) <= 2 && c[3] !== "X"), ty = Math.min(...near.map(c => c[1]));
+      const hx = ex - Math.floor(top.rows[0].length / 2), hy = ty - top.rows.length + 1;
+      top.rows.forEach((r, ry) => [...r].forEach((ch, rx) => { if (ch !== ".") cells.push([hx + rx, hy + ry, top.pal[ch], "X"]); }));
+    }
+    const charm = PET_GEAR.find(g => g.id === wear.charm); if (charm) petCharmCells(cells, charm, frame);
+  }
+  function petCharmCells(cells, g, frame) {
+    const minX = Math.min(...cells.map(c => c[0])), minY = Math.min(...cells.map(c => c[1]));
+    const x0 = minX - 4, y0 = minY + (frame % 2 ? 0 : 1);
+    g.charm.forEach((r, ry) => [...r].forEach((ch, rx) => { if (ch !== ".") cells.push([x0 + rx, y0 + ry, g.pal[ch], "X"]); }));
+  }
 
   const pets = () => { if (!Array.isArray(state.pets)) state.pets = []; return state.pets; };
   const petGear = () => { if (!state.petGear || typeof state.petGear !== "object") state.petGear = {}; return state.petGear; };
@@ -3683,6 +3718,7 @@ details.cg-set > summary { cursor: pointer; }
     "Cool Head": { text: "Your skill cooldowns are 8% shorter", on: b => { b.cdX *= 0.92; } },
     Static:  { text: "+8% critical hit chance", on: b => { b.critCh += 0.08; } },
     "Jade Scales": { text: "+12% max HP", on: b => { b.heroMax = Math.round(b.heroMax * 1.12); b.heroHp = b.heroMax; } },
+    "Thick Fur": { text: "+6% max HP", on: b => { b.heroMax = Math.round(b.heroMax * 1.06); b.heroHp = b.heroMax; } },
     "Lucky Star": { text: "Radiant relics are 15% more likely, and +5% trophy chance", on: b => { b.tfx.relicFind = (b.tfx.relicFind || 0) + 15; b.tfx.trophy = (b.tfx.trophy || 0) + 5; } }
   };
   const PET_SPD = { dog: 11, cat: 12, rabbit: 13, bird: 12, reptile: 9 };
@@ -3694,6 +3730,8 @@ details.cg-set > summary { cursor: pointer; }
     reptile: { name: "Sun Bask", cd: 14, text: "Heals {h:12}% of your HP over 4 seconds", hot: [0.12, 4] }
   };
   // from: { path, lv } combined path level · { cls: [...] } any of these classes unlocked · { drop } dungeon · { gold } shop
+  // · { skill, lv } a skill of that kind (its tip set) at that level
+  const FAM_SKILL_LV = 15;
   const FAMILIARS = {
     tome:  { name: "Flying Tome", cat: "Arcane", aff: "mind", spd: 10, bonus: 4, pas: "Footnotes", from: { path: "mind", lv: 15 }, blurb: "A spellbook that reads itself aloud",
       sk: { name: "Page Storm", cd: 10, text: "Four paper cuts, {d:0.45}× each", multi: [0.45, 4] } },
@@ -3733,8 +3771,171 @@ details.cg-set > summary { cursor: pointer; }
     jade:  { name: "Jade Hatchling", cat: "Beast", aff: "nature", spd: 10, bonus: 18, pas: "Jade Scales", egg: true, from: { drop: "spire", rare: true }, blurb: "Smells like spring rain",
       sk: { name: "Healing Mist", cd: 14, text: "Heals {h:15}% of your HP", heal: 0.15 } },
     star:  { name: "Star Hatchling", cat: "Beast", aff: "mind", spd: 11, bonus: 18, pas: "Lucky Star", egg: true, from: { drop: "spire", rare: true }, blurb: "Still peeking out of an egg full of stars",
-      sk: { name: "Starbreath", cd: 13, text: "A {d:2.6}× blast of starlight", hit: 2.6 } }
+      sk: { name: "Starbreath", cd: 13, text: "A {d:2.6}× blast of starlight", hit: 2.6 } },
+    // ===== Pet roster (v0.26) =====
+    // Class pets join when you unlock their class (you don't have to play it to keep the pet). Skill pets join when
+    // a skill of that kind reaches Lv 15. Bonus is set below from where the pet comes from.
+    wolfpup: { name: "Wolf Pup", cat: "Beast", aff: "nature", spd: 12, bonus: 0, pas: "Warm Up", from: { cls: ["beastmaster"] }, blurb: "Howls at the moon, and at doorbells", roster: true,
+      sk: {"name": "Howl", "cd": 12, "text": "Your next 3 hits deal +40%", "mark": 3} },
+    hound: { name: "Hound", cat: "Beast", aff: "nature", spd: 12, bonus: 0, pas: "Guard", from: { cls: ["packleader"] }, blurb: "Never loses a scent", roster: true,
+      sk: {"name": "Pack Bite", "cd": 9, "text": "Two quick bites, {d:0.8}× each", "multi": [0.8, 2]} },
+    bearcub: { name: "Bear Cub", cat: "Beast", aff: "body", spd: 9, bonus: 0, pas: "Thick Fur", from: { cls: ["wildheart"] }, blurb: "Mostly fluff, partly honey", roster: true,
+      sk: {"name": "Bear Hug", "cd": 14, "text": "Blocks the next hit and heals {h:6}% of your HP", "shield": 1, "heal": 0.06} },
+    pony: { name: "Pony", cat: "Beast", aff: "nature", spd: 13, bonus: 0, pas: "Scouting", from: { cls: ["outrider"] }, blurb: "Small legs, big gallop", roster: true,
+      sk: {"name": "Charge", "cd": 11, "text": "A {d:1.3}× charge that stuns for 1 second", "hit": 1.3, "stun": 1} },
+    hawk: { name: "Hawk", cat: "Beast", aff: "nature", spd: 13, bonus: 0, pas: "Night Vision", from: { cls: ["ranger"] }, blurb: "Sees the trail from above", roster: true,
+      sk: {"name": "Swoop", "cd": 11, "text": "A {d:1.1}× swoop, and your next 2 hits deal +40%", "hit": 1.1, "mark": 2} },
+    falcon: { name: "Falcon", cat: "Beast", aff: "nature", spd: 14, bonus: 0, pas: "Night Vision", from: { cls: ["sharpshooter"] }, blurb: "The fastest thing in the sky", roster: true,
+      sk: {"name": "Dive Strike", "cd": 12, "text": "A {d:2.0}× dive", "hit": 2.0} },
+    hedgehog: { name: "Hedgehog", cat: "Beast", aff: "nature", spd: 9, bonus: 0, pas: "Sturdy", from: { cls: ["herbalist"] }, blurb: "Snuffles through the herb patch", roster: true,
+      sk: {"name": "Curl Up", "cd": 13, "text": "Blocks the next hit, and the spines prick for {d:0.6}×", "shield": 1, "hit": 0.6} },
+    fawn: { name: "Fawn", cat: "Beast", aff: "mind", spd: 12, bonus: 0, pas: "Calm", from: { cls: ["druid"] }, blurb: "Born in a ring of mushrooms", roster: true,
+      sk: {"name": "Forest Blessing", "cd": 14, "text": "Heals {h:12}% of your HP over 4 seconds", "hot": [0.12, 4]} },
+    boar: { name: "Boar Piglet", cat: "Beast", aff: "body", spd: 10, bonus: 0, pas: "Warm Up", from: { cls: ["barbarian"] }, blurb: "Charges first, asks never", roster: true,
+      sk: {"name": "Gore", "cd": 11, "text": "A {d:1.8}× gore", "hit": 1.8} },
+    bee: { name: "Bumblebee", cat: "Beast", aff: "craft", spd: 14, bonus: 0, pas: "Clockwork", from: { cls: ["beekeeper"] }, blurb: "Busy, fuzzy and very polite", roster: true,
+      sk: {"name": "Sting", "cd": 10, "text": "A {d:0.8}× sting that burns for {d:0.3}× every second for 4 seconds", "hit": 0.8, "burn": [0.3, 4]} },
+    songbird: { name: "Songbird", cat: "Beast", aff: "music", spd: 13, bonus: 0, pas: "Inspired", from: { cls: ["wildsinger"] }, blurb: "Knows every song you hum", roster: true,
+      sk: {"name": "Lullaby", "cd": 13, "text": "The monster skips its next attack", "skip": 1} },
+    squirrel: { name: "Squirrel", cat: "Beast", aff: "life", spd: 14, bonus: 0, pas: "Sniff", from: { cls: ["forager"] }, blurb: "Remembers where every nut is", roster: true,
+      sk: {"name": "Stash", "cd": 9, "text": "A {d:0.7}× nibble and +5% gold (up to 3 times, shared with Lucky Find)", "hit": 0.7, "gold": 1} },
+    foxkit: { name: "Fox Kit", cat: "Beast", aff: "tech", spd: 13, bonus: 0, pas: "Light as Paper", from: { cls: ["scout"] }, blurb: "Too clever by half", roster: true,
+      sk: {"name": "Trickster", "cd": 13, "text": "You dodge the next 2 attacks", "dodge": 2} },
+    lioncub: { name: "Lion Cub", cat: "Beast", aff: "body", spd: 11, bonus: 0, pas: "Warm Up", from: { cls: ["gladiator"] }, blurb: "Practicing its roar", roster: true,
+      sk: {"name": "Roar", "cd": 12, "text": "The monster deals 25% less damage for 5 seconds", "weak": [25, 5]} },
+    badger: { name: "Badger", cat: "Beast", aff: "body", spd: 11, bonus: 0, pas: "Night Vision", from: { cls: ["berserker"] }, blurb: "Small, stripy and fearless", roster: true,
+      sk: {"name": "Frenzy", "cd": 10, "text": "Three fast bites, {d:0.6}× each", "multi": [0.6, 3]} },
+    pigeon: { name: "Homing Pigeon", cat: "Beast", aff: "body", spd: 13, bonus: 0, pas: "Clockwork", from: { cls: ["courier"] }, blurb: "Always finds its way back", roster: true,
+      sk: {"name": "Swift Delivery", "cd": 15, "text": "Your other skills recharge 3 seconds sooner", "cdr": 3} },
+    hen: { name: "Hen", cat: "Beast", aff: "craft", spd: 10, bonus: 0, pas: "Ooze", from: { cls: ["homesteader"] }, blurb: "Lays an egg on good days", roster: true,
+      sk: {"name": "Egg Toss", "cd": 11, "text": "A {d:0.9}× egg and a {h:5}% heal", "hit": 0.9, "heal": 0.05} },
+    raven: { name: "Raven", cat: "Beast", aff: "music", spd: 12, bonus: 0, pas: "Night Vision", from: { cls: ["skald"] }, blurb: "Remembers every story", roster: true,
+      sk: {"name": "Omen", "cd": 12, "text": "A {d:0.6}× peck, and your next 2 hits deal +40%", "hit": 0.6, "mark": 2} },
+    tortoise: { name: "Tortoise", cat: "Beast", aff: "spirit", spd: 6, bonus: 0, pas: "Sturdy", from: { cls: ["bastion"] }, blurb: "Slow, steady, unbothered", roster: true,
+      sk: {"name": "Shell Up", "cd": 15, "text": "Blocks the next 2 hits", "shield": 2} },
+    griffin: { name: "Baby Griffin", cat: "Beast", aff: "body", spd: 11, bonus: 0, pas: "Thick Fur", from: { cls: ["paladin"] }, blurb: "Half eagle, half lion, all heart", roster: true,
+      sk: {"name": "Guardian Wing", "cd": 14, "text": "Blocks the next hit and heals {h:8}% of your HP", "shield": 1, "heal": 0.08} },
+    peacock: { name: "Peacock", cat: "Beast", aff: "life", spd: 11, bonus: 0, pas: "Lucky", from: { cls: ["impresario"] }, blurb: "Never misses a chance to show off", roster: true,
+      sk: {"name": "Dazzle", "cd": 12, "text": "You dodge the next attack, and the monster deals 15% less for 4 seconds", "dodge": 1, "weak": [15, 4]} },
+    cricket: { name: "Cricket", cat: "Beast", aff: "music", spd: 12, bonus: 0, pas: "Inspired", from: { cls: ["luthier"] }, blurb: "Keeps perfect time", roster: true,
+      sk: {"name": "Chirp", "cd": 13, "text": "You attack 25% faster for 4 seconds", "haste": [25, 4]} },
+    butterfly: { name: "Butterfly", cat: "Beast", aff: "music", spd: 13, bonus: 0, pas: "Light as Paper", from: { cls: ["bladedancer"] }, blurb: "Dances on the breeze", roster: true,
+      sk: {"name": "Flutter", "cd": 13, "text": "You dodge the next 2 attacks", "dodge": 2} },
+    crab: { name: "Fencing Crab", cat: "Beast", aff: "body", spd: 10, bonus: 0, pas: "Sturdy", from: { cls: ["duelist"] }, blurb: "En garde, sideways", roster: true,
+      sk: {"name": "Parry and Pinch", "cd": 11, "text": "Blocks the next hit, then a {d:1.0}× pinch", "shield": 1, "hit": 1.0} },
+    spider: { name: "Yarn Spider", cat: "Beast", aff: "craft", spd: 11, bonus: 0, pas: "Thick Moss", from: { cls: ["weaver"] }, blurb: "Spins the softest yarn", roster: true,
+      sk: {"name": "Web", "cd": 12, "text": "The monster attacks 35% slower for 5 seconds", "slow": [35, 5]} },
+    panda: { name: "Panda Cub", cat: "Beast", aff: "spirit", spd: 9, bonus: 0, pas: "Calm", from: { cls: ["monk"] }, blurb: "Meditates between snacks", roster: true,
+      sk: {"name": "Roll", "cd": 11, "text": "A {d:1.2}× roll that stuns for 1 second", "hit": 1.2, "stun": 1} },
+    camel: { name: "Pack Camel", cat: "Beast", aff: "life", spd: 9, bonus: 0, pas: "Lucky", from: { cls: ["trader"] }, blurb: "Carries everything, complains a little", roster: true,
+      sk: {"name": "Caravan", "cd": 10, "text": "A {d:0.8}× kick and +5% gold (up to 3 times, shared with Lucky Find)", "hit": 0.8, "gold": 1} },
+    goldfish: { name: "Goldfish", cat: "Beast", aff: "nature", spd: 8, bonus: 0, pas: "Ooze", from: { skill: "fishing", lv: FAM_SKILL_LV }, blurb: "Brought home in its own bowl", roster: true,
+      sk: {"name": "Bubble Shield", "cd": 13, "text": "Blocks the next hit and heals {h:4}% of your HP", "shield": 1, "heal": 0.04} },
+    snail: { name: "Garden Snail", cat: "Beast", aff: "nature", spd: 5, bonus: 0, pas: "Thick Moss", from: { skill: "gardening", lv: FAM_SKILL_LV }, blurb: "In no hurry at all", roster: true,
+      sk: {"name": "Slime Trail", "cd": 12, "text": "The monster attacks 30% slower for 6 seconds", "slow": [30, 6]} },
+    starkitten: { name: "Star Kitten", cat: "Arcane", aff: "mind", spd: 13, bonus: 0, pas: "Night Vision", from: { cls: ["wizard"] }, blurb: "Purrs in constellations", roster: true,
+      sk: {"name": "Starfall", "cd": 11, "text": "Five falling stars, {d:0.35}× each", "multi": [0.35, 5]} },
+    imp: { name: "Imp", cat: "Arcane", aff: "mind", spd: 13, bonus: 0, pas: "Fire Heart", from: { cls: ["warlock"] }, blurb: "A summon with a mischievous grin", roster: true,
+      sk: {"name": "Hex", "cd": 11, "text": "Burns the monster for {d:0.45}× every second for 5 seconds", "burn": [0.45, 5]} },
+    fairy: { name: "Crystal Fairy", cat: "Arcane", aff: "mind", spd: 14, bonus: 0, pas: "Inspired", from: { cls: ["enchanter"] }, blurb: "Leaves a trail of glitter", roster: true,
+      sk: {"name": "Enchant", "cd": 13, "text": "+25% damage for 5 seconds", "buff": [25, 5]} },
+    shadowtwin: { name: "Shadow Twin", cat: "Arcane", aff: "music", spd: 12, bonus: 0, pas: "Light as Paper", from: { cls: ["illusionist"] }, blurb: "Copies you, a moment late", roster: true,
+      sk: {"name": "Mirror", "cd": 13, "text": "A decoy draws the next 2 attacks", "dodge": 2} },
+    orb: { name: "Seeing Orb", cat: "Arcane", aff: "spirit", spd: 9, bonus: 0, pas: "Clockwork", from: { cls: ["oracle"] }, blurb: "Shows what's coming, mostly", roster: true,
+      sk: {"name": "Foresight", "cd": 12, "text": "You dodge the next attack, and the monster deals 20% less for 4 seconds", "dodge": 1, "weak": [20, 4]} },
+    inksprite: { name: "Ink Sprite", cat: "Arcane", aff: "mind", spd: 12, bonus: 0, pas: "Footnotes", from: { cls: ["loremaster"] }, blurb: "Escaped from a very old book", roster: true,
+      sk: {"name": "Ink Blot", "cd": 12, "text": "The monster deals 25% less damage for 5 seconds", "weak": [25, 5]} },
+    homunculus: { name: "Flask Homunculus", cat: "Arcane", aff: "craft", spd: 9, bonus: 0, pas: "Calm", from: { cls: ["alchemist"] }, blurb: "Bubbles when it's thinking", roster: true,
+      sk: {"name": "Potion Toss", "cd": 14, "text": "Heals {h:12}% of your HP", "heal": 0.12} },
+    floatsword: { name: "Floating Sword", cat: "Arcane", aff: "body", spd: 13, bonus: 0, pas: "Fire Heart", from: { cls: ["spellblade"] }, blurb: "Sharp, loyal and a little vain", roster: true,
+      sk: {"name": "Flurry", "cd": 11, "text": "Four sword strikes, {d:0.45}× each", "multi": [0.45, 4]} },
+    moth: { name: "Lantern Moth", cat: "Arcane", aff: "spirit", spd: 12, bonus: 0, pas: "Ooze", from: { cls: ["sage"] }, blurb: "Glows softly when you read", roster: true,
+      sk: {"name": "Glow", "cd": 14, "text": "Heals {h:12}% of your HP over 4 seconds", "hot": [0.12, 4]} },
+    quill: { name: "Quill Sprite", cat: "Arcane", aff: "mind", spd: 13, bonus: 0, pas: "Footnotes", from: { cls: ["scribe"] }, blurb: "Takes notes on every fight", roster: true,
+      sk: {"name": "Footnote", "cd": 10, "text": "Your next 3 hits deal +40%", "mark": 3} },
+    geargolem: { name: "Gear Golem", cat: "Construct", aff: "tech", spd: 8, bonus: 0, pas: "Sturdy", from: { cls: ["engineer"] }, blurb: "Clanks happily", roster: true,
+      sk: {"name": "Gear Grind", "cd": 14, "text": "A gear turret hits for {d:0.35}× every second for 5 seconds", "turret": [0.35, 5]} },
+    combatdrone: { name: "Combat Drone", cat: "Construct", aff: "tech", spd: 13, bonus: 0, pas: "Scouting", from: { cls: ["dronemaster"] }, blurb: "Hovers, scans, zaps", roster: true,
+      sk: {"name": "Laser", "cd": 11, "text": "Burns the monster for {d:0.4}× every second for 5 seconds", "burn": [0.4, 5]} },
+    bitbug: { name: "Bit Bug", cat: "Construct", aff: "tech", spd: 13, bonus: 0, pas: "Clockwork", from: { cls: ["technomancer"] }, blurb: "A bug that's a feature", roster: true,
+      sk: {"name": "Glitch", "cd": 12, "text": "Stuns the monster for 1.5 seconds", "stun": 1.5} },
+    glitchcat: { name: "Glitch Cat", cat: "Construct", aff: "tech", spd: 13, bonus: 0, pas: "Night Vision", from: { cls: ["codebreaker"] }, blurb: "Phases through firewalls", roster: true,
+      sk: {"name": "Exploit", "cd": 11, "text": "A {d:0.8}× hit, and your next 2 hits deal +40%", "hit": 0.8, "mark": 2} },
+    firewall: { name: "Firewall Sentry", cat: "Construct", aff: "tech", spd: 7, bonus: 0, pas: "Sturdy", from: { cls: ["netwarden"] }, blurb: "Nothing gets past it", roster: true,
+      sk: {"name": "Firewall", "cd": 15, "text": "Blocks the next 2 hits", "shield": 2} },
+    mechpup: { name: "Mech Pup", cat: "Construct", aff: "tech", spd: 12, bonus: 0, pas: "Warm Up", from: { cls: ["mechanomancer"] }, blurb: "Wags its antenna", roster: true,
+      sk: {"name": "Rocket Paw", "cd": 12, "text": "A {d:1.9}× rocket paw", "hit": 1.9} },
+    windmouse: { name: "Wind-up Mouse", cat: "Construct", aff: "craft", spd: 14, bonus: 0, pas: "Clockwork", from: { cls: ["tinker"] }, blurb: "Zooms until the key stops", roster: true,
+      sk: {"name": "Zip", "cd": 9, "text": "Four quick zips, {d:0.4}× each", "multi": [0.4, 4]} },
+    rocketbot: { name: "Rocket Bot", cat: "Construct", aff: "tech", spd: 12, bonus: 0, pas: "Fire Heart", from: { cls: ["inventor"] }, blurb: "Prototype number 47", roster: true,
+      sk: {"name": "Launch", "cd": 13, "text": "A {d:1.3}× blast that burns for {d:0.3}× every second for 4 seconds", "hit": 1.3, "burn": [0.3, 4]} },
+    synthbot: { name: "Synth Bot", cat: "Construct", aff: "music", spd: 10, bonus: 0, pas: "Inspired", from: { cls: ["synthmage"] }, blurb: "Plays a bassline when it walks", roster: true,
+      sk: {"name": "Bass Drop", "cd": 13, "text": "A {d:1.6}× drop and a 0.5 second stun", "hit": 1.6, "stun": 0.5} },
+    shielddrone: { name: "Shield Drone", cat: "Construct", aff: "body", spd: 11, bonus: 0, pas: "Sturdy", from: { cls: ["vanguard"] }, blurb: "Always between you and danger", roster: true,
+      sk: {"name": "Barrier", "cd": 14, "text": "Blocks the next hit and heals {h:5}% of your HP", "shield": 1, "heal": 0.05} },
+    butlerbot: { name: "Butler Bot", cat: "Construct", aff: "life", spd: 9, bonus: 0, pas: "Lucky", from: { cls: ["majordomo"] }, blurb: "Polishes your boots between fights", roster: true,
+      sk: {"name": "Tidy Up", "cd": 15, "text": "Your other skills recharge 3 seconds sooner", "cdr": 3} },
+    livingarmor: { name: "Living Armor", cat: "Construct", aff: "body", spd: 8, bonus: 0, pas: "Thick Fur", from: { cls: ["knight"] }, blurb: "Empty inside, full of courage", roster: true,
+      sk: {"name": "Stand Guard", "cd": 12, "text": "Blocks the next hit and strikes for {d:0.6}×", "shield": 1, "hit": 0.6} },
+    anvilgolem: { name: "Anvil Golem", cat: "Construct", aff: "craft", spd: 7, bonus: 0, pas: "Warm Up", from: { cls: ["smith"] }, blurb: "Rings like a bell when it laughs", roster: true,
+      sk: {"name": "Hammer Down", "cd": 12, "text": "A {d:2.0}× hammer blow", "hit": 2.0} },
+    claygolem: { name: "Clay Golem", cat: "Construct", aff: "craft", spd: 8, bonus: 0, pas: "Sturdy", from: { cls: ["artisan"] }, blurb: "Still has your fingerprints", roster: true,
+      sk: {"name": "Mold", "cd": 12, "text": "Blocks the next hit, and the monster deals 15% less for 4 seconds", "shield": 1, "weak": [15, 4]} },
+    toysoldier: { name: "Toy Soldier", cat: "Construct", aff: "life", spd: 10, bonus: 0, pas: "Scouting", from: { cls: ["strategist"] }, blurb: "Marches in perfect formation", roster: true,
+      sk: {"name": "Formation", "cd": 13, "text": "The monster skips its next attack", "skip": 1} },
+    rubberduck: { name: "Rubber Duck", cat: "Construct", aff: "tech", spd: 9, bonus: 0, pas: "Clockwork", from: { skill: "coding", lv: FAM_SKILL_LV }, blurb: "Listens to every bug you explain", roster: true,
+      sk: {"name": "Debug", "cd": 12, "text": "The monster deals 25% less damage for 5 seconds", "weak": [25, 5]} },
+    halosprite: { name: "Halo Sprite", cat: "Spirit", aff: "spirit", spd: 12, bonus: 0, pas: "Calm", from: { cls: ["cleric"] }, blurb: "A little light that hums hymns", roster: true,
+      sk: {"name": "Blessing", "cd": 13, "text": "Heals {h:12}% of your HP", "heal": 0.12} },
+    dreamjelly: { name: "Dream Jelly", cat: "Spirit", aff: "spirit", spd: 9, bonus: 0, pas: "Thick Moss", from: { cls: ["dreamwalker"] }, blurb: "Drifts in from your dreams", roster: true,
+      sk: {"name": "Drowse", "cd": 12, "text": "Stuns the monster for 1.5 seconds", "stun": 1.5} },
+    prism: { name: "Prism Sprite", cat: "Spirit", aff: "music", spd: 13, bonus: 0, pas: "Night Vision", from: { cls: ["lightweaver"] }, blurb: "Splits light into every color", roster: true,
+      sk: {"name": "Refract", "cd": 10, "text": "Three bouncing beams, {d:0.55}× each", "multi": [0.55, 3]} },
+    kitespirit: { name: "Kite Spirit", cat: "Spirit", aff: "spirit", spd: 14, bonus: 0, pas: "Light as Paper", from: { cls: ["windwalker"] }, blurb: "Rides every gust", roster: true,
+      sk: {"name": "Gust", "cd": 13, "text": "The monster skips its next attack", "skip": 1} },
+    echospirit: { name: "Echo Spirit", cat: "Spirit", aff: "music", spd: 11, bonus: 0, pas: "Inspired", from: { cls: ["cantor"] }, blurb: "Repeats your last word, softly", roster: true,
+      sk: {"name": "Echo", "cd": 14, "text": "Your other skills recharge 3 seconds sooner", "cdr": 3} },
+    totemspirit: { name: "Totem Spirit", cat: "Spirit", aff: "spirit", spd: 7, bonus: 0, pas: "Ooze", from: { cls: ["totemcarver"] }, blurb: "Carved, then woke up", roster: true,
+      sk: {"name": "Ward", "cd": 14, "text": "Heals {h:12}% of your HP over 4 seconds", "hot": [0.12, 4]} },
+    lotus: { name: "Lotus Spirit", cat: "Spirit", aff: "spirit", spd: 8, bonus: 0, pas: "Calm", from: { cls: ["ascetic"] }, blurb: "Blooms when you sit still", roster: true,
+      sk: {"name": "Stillness", "cd": 14, "text": "Blocks the next hit and heals {h:6}% of your HP", "shield": 1, "heal": 0.06} },
+    notesprite: { name: "Note Sprite", cat: "Spirit", aff: "music", spd: 13, bonus: 0, pas: "Inspired", from: { cls: ["bard"] }, blurb: "Hops from staff to staff", roster: true,
+      sk: {"name": "Encore", "cd": 12, "text": "+20% damage for 4 seconds", "buff": [20, 4]} },
+    spiritwolf: { name: "Spirit Wolf", cat: "Spirit", aff: "nature", spd: 12, bonus: 0, pas: "Warm Up", from: { cls: ["shaman"] }, blurb: "Runs beside you, see-through and loyal", roster: true,
+      sk: {"name": "Spirit Bite", "cd": 11, "text": "A {d:1.1}× bite and a {h:5}% heal", "hit": 1.1, "heal": 0.05} },
+    embersprite: { name: "Ember Sprite", cat: "Elemental", aff: "craft", spd: 13, bonus: 0, pas: "Fire Heart", from: { cls: ["grillmaster"] }, blurb: "Loves a good cookout", roster: true,
+      sk: {"name": "Sear", "cd": 11, "text": "Burns the monster for {d:0.45}× every second for 5 seconds", "burn": [0.45, 5]} },
+    magmapup: { name: "Magma Pup", cat: "Elemental", aff: "body", spd: 11, bonus: 0, pas: "Warm Up", from: { cls: ["forgeblade"] }, blurb: "Warm paws, warmer heart", roster: true,
+      sk: {"name": "Eruption", "cd": 12, "text": "A {d:1.2}× blast that burns for {d:0.3}× every second for 4 seconds", "hit": 1.2, "burn": [0.3, 4]} },
+    watersprite: { name: "Water Sprite", cat: "Elemental", aff: "music", spd: 12, bonus: 0, pas: "Calm", from: { cls: ["siren"] }, blurb: "Sings like a stream", roster: true,
+      sk: {"name": "Tide", "cd": 14, "text": "Heals {h:12}% of your HP over 4 seconds", "hot": [0.12, 4]} },
+    pebble: { name: "Zen Pebble", cat: "Elemental", aff: "spirit", spd: 6, bonus: 0, pas: "Sturdy", from: { cls: ["minimalist"] }, blurb: "Owns nothing, needs nothing", roster: true,
+      sk: {"name": "Steady", "cd": 13, "text": "You take 25% less damage for 5 seconds", "weak": [25, 5]} },
+    dumpling: { name: "Living Dumpling", cat: "Oddity", aff: "craft", spd: 10, bonus: 0, pas: "Ooze", from: { cls: ["chef"] }, blurb: "Steamed with love", roster: true,
+      sk: {"name": "Snack Break", "cd": 13, "text": "Heals {h:10}% of your HP", "heal": 0.1} },
+    pudding: { name: "Pudding Slime", cat: "Oddity", aff: "craft", spd: 8, bonus: 0, pas: "Sturdy", from: { cls: ["feastmaster"] }, blurb: "Wobbles but never falls", roster: true,
+      sk: {"name": "Wobble", "cd": 12, "text": "Blocks the next hit", "shield": 1} },
+    dustbunny: { name: "Dust Bunny", cat: "Oddity", aff: "life", spd: 13, bonus: 0, pas: "Sniff", from: { cls: ["steward"] }, blurb: "Found under the couch, kept forever", roster: true,
+      sk: {"name": "Sweep", "cd": 10, "text": "You dodge the next attack", "dodge": 1} },
+    gargoyle: { name: "Gargoyle", cat: "Oddity", aff: "life", spd: 7, bonus: 0, pas: "Sturdy", from: { cls: ["castellan"] }, blurb: "Guards the castle from the gutters", roster: true,
+      sk: {"name": "Stone Watch", "cd": 15, "text": "Blocks the next 2 hits", "shield": 2} },
+    luckycat: { name: "Lucky Cat", cat: "Oddity", aff: "life", spd: 10, bonus: 0, pas: "Lucky", from: { cls: ["merchant"] }, blurb: "Waves in every customer", roster: true,
+      sk: {"name": "Beckon", "cd": 9, "text": "A {d:0.6}× paw and +5% gold (up to 3 times, shared with Lucky Find)", "hit": 0.6, "gold": 1} },
+    goldtoad: { name: "Golden Toad", cat: "Oddity", aff: "life", spd: 9, bonus: 0, pas: "Treasure Sense", from: { cls: ["magnate"] }, blurb: "Croaks when gold is near", roster: true,
+      sk: {"name": "Gold Rush", "cd": 10, "text": "A {d:1.0}× hop and +5% gold (up to 3 times, shared with Lucky Find)", "hit": 1.0, "gold": 1} },
+    hourglass: { name: "Hourglass Sprite", cat: "Oddity", aff: "life", spd: 8, bonus: 0, pas: "Clockwork", from: { cls: ["timekeeper"] }, blurb: "Always exactly on time", roster: true,
+      sk: {"name": "Rewind", "cd": 15, "text": "Turns back the clock: heals {h:10}% of your HP", "heal": 0.1} },
+    filmreel: { name: "Film Reel Critter", cat: "Oddity", aff: "music", spd: 11, bonus: 0, pas: "Inspired", from: { cls: ["auteur"] }, blurb: "Shouts \"cut!\" at the best moments", roster: true,
+      sk: {"name": "Take Two", "cd": 15, "text": "Your other skills recharge 4 seconds sooner", "cdr": 4} },
+    chessknight: { name: "Chess Knight", cat: "Oddity", aff: "mind", spd: 10, bonus: 0, pas: "Footnotes", from: { skill: "chess", lv: FAM_SKILL_LV }, blurb: "Only ever moves in an L", roster: true,
+      sk: {"name": "Fork", "cd": 10, "text": "Two {d:0.75}× hits", "multi": [0.75, 2]} },
+    alien: { name: "Little Alien", cat: "Oddity", aff: "mind", spd: 12, bonus: 0, pas: "Night Vision", from: { skill: "astronomy", lv: FAM_SKILL_LV }, blurb: "Came for the stars, stayed for you", roster: true,
+      sk: {"name": "Abduct", "cd": 15, "text": "The monster skips its next 2 attacks", "skip": 2} },
+    gingerbread: { name: "Gingerbread Pal", cat: "Oddity", aff: "craft", spd: 11, bonus: 0, pas: "Ooze", from: { skill: "baking", lv: FAM_SKILL_LV }, blurb: "Smells like the holidays", roster: true,
+      sk: {"name": "Crumbs", "cd": 13, "text": "Heals {h:10}% of your HP", "heal": 0.1} },
   };
+  const ROSTER_BONUS = { starter: 4, spec: 6, dual: 5, two: 5, asc: 8 };
+  Object.values(FAMILIARS).forEach(F => { if (F.roster) F.bonus = F.from.skill ? 4 : ROSTER_BONUS[(CLASS_BY[F.from.cls[0]] || {}).tier] || 4; });
   const FAM_DROP = 0.2, FAM_SURE = 5;          // a 1 in 5 drop per win, and it's yours by your 5th win there
   const EGG_DROP = 0.05, EGG_SURE = 20;        // rare dragon eggs: 1 in 20 per win, and yours by your 20th win there
   const EGG_MIN = 180;                         // an egg hatches after 3 hours of practice, logged after you find it
@@ -3753,6 +3954,7 @@ details.cg-set > summary { cursor: pointer; }
     if (f.path) return pathLevel(f.path) >= f.lv;
     if (f.cls) { if (!famClsAt || performance.now() - famClsAt > 1000) { famCls = clsUnlockedIds(); famClsAt = performance.now(); } return f.cls.some(c => famCls.includes(c)); }
     if (f.drop) return famWins(f.drop) >= dropOdds(F)[1];
+    if (f.skill) return state.skills.some(s => tipSetKey(s) === f.skill && earnedLv(s) >= f.lv);
     return false;
   }
   function famOwned(key) {
@@ -3780,6 +3982,8 @@ details.cg-set > summary { cursor: pointer; }
     if (f.drop) { const d = DUNGEONS.find(x => x.id === f.drop), [ch, sure] = dropOdds(FAMILIARS[key]);
       return `${f.rare ? "A rare egg" : "Found"} in ${d ? d.name : "a dungeon"}: a 1 in ${Math.round(1 / ch)} chance per win, and yours by your ${sure}th win (${Math.min(sure, famWins(f.drop))} of ${sure})${f.rare ? `. Hatches after ${EGG_MIN / 60} hours of practice` : ""}`; }
     if (f.gold) return `Sold in the shop for ${f.gold} gold`;
+    if (f.skill) { const best = Math.max(0, ...state.skills.filter(s => tipSetKey(s) === f.skill).map(earnedLv)); const nm = f.skill.charAt(0).toUpperCase() + f.skill.slice(1).replace(/-/g, " ");
+      return `Reach Lv ${f.lv} in ${nm}${best ? ` (now Lv ${best})` : ` (add a ${nm} skill to start)`}`; }
     return "";
   }
   // A roster pet as a pet-shaped object, so the map, battle and portraits draw it like a designed beast.
@@ -3831,6 +4035,8 @@ details.cg-set > summary { cursor: pointer; }
     if (S.cdr) { const own = "p-" + (pt.p.fam || pt.p.kind); Object.keys(b.cds).forEach(k => { if (k !== own && b.cds[k] > 0 && b.cds[k] < 1e5) b.cds[k] = Math.max(0, b.cds[k] - S.cdr * 10); }); btPop("Insight", 14, 6, "#c89cf2"); }
     if (S.slow) { if (!(b.slowT > 0)) { b.slowX = 1 + S.slow[0] / 100; b.monEvery *= b.slowX; } b.slowT = Math.max(b.slowT || 0, btBuff(S.slow[1])); btPop("Chilled", 46, 4, "#bfe3ff"); }
     if (S.skip) { b.skip = Math.max(b.skip, S.skip); btPop("Blown back!", 46, 6, "#cfd6e4"); }
+    if (S.buff) { b.rallyX = 1 + S.buff[0] / 100; b.rally = btBuff(S.buff[1]); b.fx.push({ k: "notes", ttl: b.rally }); btPop("+" + S.buff[0] + "% damage", 14, 6, "#ffe58a"); }
+    if (S.haste) { if (!(b.hasteT > 0)) { b.hasteX = 1 + S.haste[0] / 100; b.heroEvery /= b.hasteX; b.nextHero = Math.min(b.nextHero, b.t + Math.ceil(b.heroEvery)); } b.hasteT = Math.max(b.hasteT || 0, btBuff(S.haste[1])); btPop("Haste!", 14, 4, "#9be07a"); }
     if (S.gold) { if (b.lucky < 3) { b.lucky++; btPop("+5% gold", 44, 12, "#f2c14e"); } else btPop("Gold maxed", 44, 12, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); }
     b.log = `${nm}: ${S.name}!`;
     Sound.play(S.hit || S.multi ? "win" : "unlock"); buzz(20);
@@ -3923,6 +4129,86 @@ details.cg-set > summary { cursor: pointer; }
   // E eye, e eye shine, K dark detail and R blush are shared. Floating familiars hover over their shadow.
   const FAM_SHARED = { E: "#1d1a2b", e: "#ffffff", K: "#2a2230", R: "#f4a0a8" };
   const FAM_ART = {
+    // v0.26 roster art: auto-shaded like the beasts; one-frame ground pets breathe on frame 2 (see famGrid)
+    wolfpup: {"pal":{"B":"#8a8f9e","b":"#5f6372","L":"#d6d9e2","N":"#2a2230"},"frames":[["...........B..B.","..........BBbBB.","..........BBBBBB","B.........BEeBLLN","BB.......BBBBLLL",".BBBBBBBBBBBLLL.",".BBBBBBBBBBBBL..","..BBBBBBBBBBB...","..BLLLLLLLLBB...","..BB.BB..BB.BB..","..bb.bb..bb.bb.."]]},
+    hound: {"pal":{"B":"#b8783c","b":"#7e4e22","L":"#f0d6b0","N":"#2a2230","D":"#7e4e22"},"frames":[["..........BBB...",".........BBBBBB.",".........DBEeBBN","B........DBBBLLL",".B.......DBBLLL.",".BBBBBBBBBBBBB..",".BBBBBBBBBBBBB..","..BBBBBBBBBBB...","..BLLLLLLLLLB...","..BB.BB..BB.BB..","..bb.bb..bb.bb.."]]},
+    bearcub: {"pal":{"B":"#7a5232","b":"#52341c","L":"#c89a6a","N":"#2a2230"},"frames":[["........BB..BB..","........BBBBBB..",".......BBBBBBBB.",".......BBBEeBLLL","..BBBBBBBBBBLLNL",".BBBBBBBBBBBBLL.","BBBBBBBBBBBBBB..","BBBBBBBBBBBBBB..",".BBBLLLLLLLBBB..",".BBB.BBB.BBB....",".bbb.bbb.bbb...."]]},
+    pony: {"pal":{"B":"#c9a27a","b":"#8a6440","M":"#5a3a22","L":"#efe0c8","N":"#2a2230"},"frames":[["..........MB....",".........MMBB...","........MMBBBB..","........MBBEeBB.","........MBBBBLLL",".M......MBBB.LNL","MMBBBBBBBBBB....","M.BBBBBBBBBB....","..BBBBBBBBBB....","..BB.B....B.BB..","..BB.B....B.BB..","..bb.b....b.bb.."]]},
+    hawk: {"float":true,"pal":{"B":"#8a5a32","b":"#5a3a1c","L":"#e8d6b8","Y":"#f2c14e","W":"#6e4626"},"frames":[["..........BBB...",".........BBEeBY.",".........BBBBYYY","..WW.....BLLLB..","..WWWW..BBLLLB..","...WWWWBBBLLLB..","....WWWWBBLLB...","......BBBBBBB...",".....BB.YY.Y....","....BB.........."],["......WW.BBB....",".....WWW.BEeBY..","....WWWWBBBBYYY.","...WWWWBBLLLB...","..WWWW.BBLLLB...","........BLLLB...",".......BBBLLB...","......BBBBBBB...",".....BB.YY.Y....","....BB.........."]]},
+    falcon: {"float":true,"pal":{"B":"#5a6a82","b":"#3a465a","L":"#f0ece0","Y":"#f2c14e","W":"#46546a","K":"#1d1a2b"},"frames":[["..........BBB...",".........BKEeBY.",".........BKBBYYY","..WW.....BLLLB..","..WWWW..BBLKLB..","...WWWWBBBLLLB..","....WWWWBBLKB...","......BBBBBBB...",".....BB.YY.Y....","....BB.........."],["......WW.BBB....",".....WWW.BKEeY..","....WWWWBBKBYYY.","...WWWWBBLLLB...","..WWWW.BBLKLB...","........BLLLB...",".......BBBLKB...","......BBBBBBB...",".....BB.YY.Y....","....BB.........."]]},
+    hedgehog: {"pal":{"S":"#7a5a42","s":"#4e3624","B":"#e8c89a","N":"#2a2230"},"frames":[["....S.S.S.......","...SSSSSSSS.....","..SsSSsSSsSS....",".SSSSSSSSSSSBB..",".SsSSsSSsSSBBEB.","SSSSSSSSSSSBBBBN","SSsSSsSSsSSBBBB.",".SSSSSSSSSSSBB..","..BB.....BB.....","..ss.....ss....."]]},
+    fawn: {"pal":{"B":"#c08050","b":"#8a5430","L":"#f4e4cc","W":"#fff6e8","N":"#2a2230"},"frames":[["..........B..B..","..........BB.BB.","..........BBBB..",".........BBBEeB.",".........BBBBBLN","B........BBBBLL.",".BBBBBBBBBBB....",".BWBBWBBWBBB....",".BBBBBBBBBBB....","..LLLLLLLLL.....","..B.B....B.B....","..B.B....B.B....","..b.b....b.b...."]]},
+    boar: {"pal":{"B":"#7a4e3a","b":"#4e2e20","M":"#3a2418","T":"#fff6e0","N":"#e0909a"},"frames":[["...M.M.M........","..BBBBBBBB.B....",".BBBBBBBBBBBBB..","BBBBBBBBBBBEeBB.","BBBBBBBBBBBBBBNN","BBBBBBBBBBBBBTNN",".BBBBBBBBBBBBT..","..BB.BB..BB.BB..","..bb.bb..bb.bb.."]]},
+    bee: {"float":true,"pal":{"Y":"#f2c14e","K":"#2a2230","W":"#dff4ff","w":"#b8e0f4"},"frames":[[".....WW.WW......","....WWWWWWW.....",".....wWWwW......","...YKYKYYYY.....","..YYKYKYYEeY....","KYYYKYKYYYYY....","..YYKYKYYYY.....","...YKYKYYY......"],["................","...WWW..WWW.....","....WWWWWW......","...YKYKYYYY.....","..YYKYKYYEeY....","KYYYKYKYYYYY....","..YYKYKYYYY.....","...YKYKYYY......"]]},
+    songbird: {"float":true,"pal":{"B":"#5a9ad8","b":"#3a6aa8","L":"#fff0c8","Y":"#f2a040","W":"#3a6aa8"},"frames":[[".........BBB....","........BBEeBY..","........BBBBBYY.","..W.....BLLLB...",".WWW...BBLLLB...","..WWWWBBBLLB....","...WWWBBBBB.....",".....bb..Y......"],["....W....BBB....","...WWW..BBEeBY..","..WWWW..BBBBBYY.","...WWWW.BLLLB...","....WWWBBLLLB...","......BBBLLB....","......BBBBB.....",".....bb..Y......"]]},
+    squirrel: {"pal":{"B":"#b8642e","b":"#7a3e18","L":"#f4dcb8","T":"#d07a3a","N":"#2a2230"},"frames":[[".TTT............","TTTTT.......B...","TTTTTT.....BBB..","TT.TTT....BBEeB.","T...TT....BBBBBN",".....TT..BBBBLL.",".....TTBBBBBLL..","......BBBBBLLL..","......BBBBBBLL..","......BB.BB.LL..","......bb.bb.bb.."]]},
+    foxkit: {"pal":{"B":"#e07a32","b":"#a04e1a","L":"#fff4e4","K":"#2a2230","N":"#2a2230"},"frames":[["...........K..K.","...........BB.BB","..........BBBBB.","..........BBEeBB","BL........BBBLLLN","BBB.......BBLLL.",".BBBBBBBBBBBBL..","..BBBBBBBBBBB...","..BLLLLLLLLBB...","..BB.BB..BB.BB..","..KK.KK..KK.KK.."]]},
+    lioncub: {"pal":{"B":"#e8b04a","b":"#a8762a","M":"#a85a22","L":"#fff0c8","N":"#2a2230"},"frames":[[".........MMMM...","........MMBBMM..","........MBBEeBM.","B.......MBBBBLLL",".B......MMBBLLNL",".BBBBBBBBMMBBL..",".BBBBBBBBBBBB...","..BBBBBBBBBBB...","..BLLLLLLLLBB...","..BB.BB..BB.BB..","..bb.bb..bb.bb.."]]},
+    badger: {"pal":{"B":"#5a5e6a","b":"#363a44","W":"#f4f4f4","K":"#2a2230","N":"#2a2230"},"frames":[["........KK.KK...","........BWWWB...","...BBBBBWKWKWB..",".BBBBBBBWKEeKWB.","BBBBBBBBBWWWWWWN","BBBBBBBBBBBWWW..",".BBBBBBBBBBBB...",".BB.BB...BB.BB..",".KK.KK...KK.KK.."]]},
+    pigeon: {"pal":{"B":"#9aa2b8","b":"#6a7088","G":"#5ac0a0","P":"#b86ab8","Y":"#f08a5a","W":"#7a8298"},"frames":[[".........BBB....","........BBEeB...","........BBBBBY..","........GGPB....","...BBBBBGPGB....","..WWWWBBBBBB....",".WWWWWBBBBBB....","....BBBBBBB.....",".......Y.Y......","......YY.YY....."]]},
+    hen: {"pal":{"B":"#f4f0e4","b":"#c8c0ac","R":"#e04a3a","Y":"#f2a040","W":"#dcd4c0"},"frames":[["..........RR....",".........RBBB...",".........BBEeB..",".........BBBBYY.","BB.......BBBBR..","BBB....BBBBBBR..",".BBBBBBBWWBBB...",".BBBBBWWWWBBB...","..BBBBBWWBBB....","....BBBBBBB.....",".......Y.Y......","......YY.YY....."]]},
+    raven: {"float":true,"pal":{"B":"#3a3a52","b":"#24243a","L":"#6a6a92","Y":"#8a8aa8","W":"#2e2e46"},"frames":[[".........BBB....","........BBEeBY..","........BBBBBYYY","..W.....BLBBB...",".WWW...BBLBBB...","..WWWWBBBBBB....","...WWWBBBBB.....",".....bb..Y......"],["....W....BBB....","...WWW..BBEeBY..","..WWWW..BBBBBYYY","...WWWW.BLBBB...","....WWWBBLBBB...","......BBBBBB....","......BBBBB.....",".....bb..Y......"]]},
+    tortoise: {"pal":{"S":"#5a8a3a","s":"#3a5a22","H":"#8ab85a","B":"#a8b878","N":"#2a2230"},"frames":[["....SSSSSS......","...SHSSHSSS.....","..SSHHSSHHSS.BB.",".SSSSSSSSSSSSBEB",".SHSSHHSSHSSSBBB","BsssssssssssBBB.",".BB.BB...BB.BB..",".BB.BB...BB.BB.."]]},
+    griffin: {"pal":{"B":"#e8c060","b":"#a8822a","W":"#fff6dc","w":"#e0d0a8","Y":"#f08a3a","L":"#f4e4b8"},"frames":[["...WW....WWW....","..WWWW..WWEeW...",".WWWwW..WWWWWYY.",".WWwwW...WLLWY..","..Www.BBBWLLW...","B...BBBBBBBBB...",".B..BBBBBBBBB...",".BBBBBBBBBBBB...","..BB.BB..BB.YY..","..bb.bb..bb.Y.Y."]]},
+    peacock: {"pal":{"B":"#2a7ac8","b":"#1a4e8a","T":"#2aa87a","t":"#1a7a56","O":"#f2c14e","E2":"#000","Y":"#f2a040","C":"#2a7ac8"},"frames":[["TTtT.......C....","TOTOT.....BBB...","TtOTtT....BEeY..","TOTOTOT...BBB...","TTtTtTT...BB....",".TTOTTT.BBBB....","..TTTTBBBBBB....","....TBBBBBB.....","......BBBB......",".......Y.Y......","......YY.YY....."]]},
+    cricket: {"pal":{"B":"#6ab83a","b":"#3a7a1e","W":"#a8e078","K":"#2a2230"},"frames":[["............K...","...........K....","..WWWWWW..BBK...",".WWWWWWWWBBEe...","BBBBBBBBBBBBB...","BBBBBBBBBBBB....","..K..K..K.K.....",".K..K..K..K....."]]},
+    butterfly: {"float":true,"pal":{"P":"#e86aa8","p":"#a83a78","Y":"#f2c14e","B":"#3a2a4a"},"frames":[[".PP.....PP......","PPPP.K.PPPP.....","PYPPPBPPPYP.....","PPPPBEePPPP.....",".PPPBBBPPP......","..PYPBPYP.......","...PPBPP........","....PB.........."],["......K.........","..PPPKPPP.......",".PYPPBPPYP......","..PPBEePP.......","...PBBBP........","...PYBPY........","....PBP.........",".....B.........."]]},
+    crab: {"pal":{"B":"#e05a3a","b":"#a03a22","C":"#f08a6a","K":"#2a2230","W":"#e8e8f0"},"frames":[["..W......BB.....","..W....BBBBB....","..W...B.E.e.B...","..BB..B.K.K.B.C.",".BBBBBBBBBBBBBCC","..BBBBBBBBBBBB..","..B.B.B..B.B.B..",".B..B..B.B..B..B"]]},
+    spider: {"pal":{"B":"#7a5ab8","b":"#4e3482","Y":"#f4a0c8","K":"#2a2230"},"frames":[["Y...............",".Y..............","..YY...BBBB.....","....YBBBBBBB....","K.K.BBBBBBEeB.K.",".K.KBBBBBBBBBK..","K.K.BBBBBBBBB.K.",".K.K.BBBBBB.K.K.","...K.K....K.K..."]]},
+    panda: {"pal":{"W":"#f8f8f4","K":"#2a2230","N":"#2a2230"},"frames":[[".........KK..KK.","........KWWWWWWK","........WWWWWWWW","........WKKWWKKW","........WKeWWKeW","..WWWWWWWWWWNWW.",".WWWWWKKKWWWWW..","WWWWWWKKKKWWW...","WWWWWWWKKKKW....",".KKK.KK..KK.KK..",".KKK.KK..KK.KK.."]]},
+    camel: {"pal":{"B":"#d8a868","b":"#a07438","L":"#f0d8a8","R":"#c84a3a","Y":"#f2c14e","N":"#2a2230"},"frames":[["..........BB....",".........BBEeB..",".........BBBBBN.","....BB...BB.....","...BBBBBBBB.....","..BRYRYRYBB.....",".BBBBBBBBBB.....","BBBBBBBBBBB.....","B.BBBBBBBB......","..B.B...B.B.....","..B.B...B.B.....","..b.b...b.b....."]]},
+    goldfish: {"pal":{"G":"#bfe4f8","g":"#8ac0e0","O":"#f08a3a","o":"#c05a1a","W":"#e8f6ff","Y":"#f2c14e"},"frames":[["..GGGGGGGGGG..",".G..........G.","G....OOO.....G","G.O.OOOOO....G","G.OOOOOEeO...G","G.O.OOOOO....G","G....OOO..W..G","GgggggggggggggG",".GGGGGGGGGGGG.","..YYYYYYYYYY.."],["..GGGGGGGGGG..",".G..........G.","G.....OOO....G","G..OOOOOOO...G","G...OOOOEeO..G","G..OOOOOOO...G","G.....OOO.W..G","GgggggggggggggG",".GGGGGGGGGGGG.","..YYYYYYYYYY.."]]},
+    snail: {"pal":{"S":"#c87a4a","s":"#8a4e2a","H":"#f0b07a","B":"#b8c890","N":"#2a2230"},"frames":[["..........E..E..","...SSSSS..B..B..","..SSHHHSS.B..B..",".SSHSSSHSSBBBB..",".SSHSHSHSSBBEB..",".SSHSSHHSSBBBB..","..SSHHHSSBBBB...","BBBBBBBBBBBBB...","BBBBBBBBBBBB...."]]},
+    starkitten: {"float":true,"pal":{"B":"#3a3a8a","b":"#26265e","Y":"#ffe58a","P":"#f4a0c8","L":"#6a6ac8"},"frames":[["..Y.............",".YYY.....B...B..","..Y......BB.BB..",".........BBBBB..","B........BEeBEe.","BB.......BBPBBB.",".BB.BBBBBBBBBB..","..BBBBYBBBBYB...","...BBBBBYBBBB...","...B.B....B.B..."]]},
+    imp: {"float":true,"pal":{"B":"#c83a4a","b":"#8a1e2e","H":"#2a2230","W":"#6a1a2a","Y":"#ffe58a"},"frames":[["....H.....H.....","....HB...BH.....","W....BBBBB....W.","WW..BBYEBYEB.WW.","WWW.BBBBBBBB.WWW",".WW.BBKKKBB..WW.","..W..BBBBB...W..",".....BBBBB......","......B.B..B....","............BB.."]]},
+    fairy: {"float":true,"pal":{"C":"#bfe8ff","c":"#7ac0e8","S":"#f6d8c0","H":"#c86ae0","Y":"#ffe58a"},"frames":[["CC.....HHH...CC.","CCC...HSSSH.CCC.",".CCC..HSEeS.CC..","..CCC..SSS.CC...","...CCCYCCYCC....",".....CCCCC......","......CcC.......","......C.C......."],[".......HHH......","CCC...HSSSH..CCC","CCCC..HSEeS.CCCC",".CCCC..SSS.CCCC.","...CCCYCCYCC....",".....CCCCC......","......CcC.......","......C.C......."]]},
+    shadowtwin: {"float":true,"pal":{"B":"#3a2e5a","b":"#241a3e","L":"#6a5a9a","Y":"#c8a0ff"},"frames":[[".....BBBBB......","....BBBBBBB.....","....BYBBBYB.....","....BYBBBYB.....","....BBBBBBB.....",".....BBBBB......","...BBBBBBBBB....","..BBLBBBBBLBB...","..B.BBBBBBB.B...","....BBBBBBB.....","....BB.B.BB.....","...B..B.B..B...."]]},
+    orb: {"float":true,"pal":{"G":"#a8d8ff","g":"#5a8ad8","W":"#ffffff","P":"#c86ae0","Y":"#c8a04a","y":"#8a6a2a"},"frames":[[".....GGGGG......","...GGGWWGGGG....","..GGWWGGGPGGG...","..GGWGGPPPGGG...","..GGGGPPEPPGG...","..GGGGGPPPGGG...","...GGGGGPGGG....","....GGGGGGG.....","....YYYYYYY.....","...yYYYYYYYy...."]]},
+    inksprite: {"float":true,"pal":{"B":"#2a3a6a","b":"#1a2448","L":"#4a6aa8","W":"#ffffff"},"frames":[["......B.........",".....BBB........","....BBBBB.......","...BBLBBBB......","..BBLBBBBBB.....","..BBBWEBWEB.....","..BBBBBBBBB.....","...BBBBBBB......","..B.BB.BB.B.....",".B...B..B..B...."]]},
+    homunculus: {"pal":{"G":"#d0ecf4","g":"#8ab8c8","L":"#6ad87a","l":"#3aa84a","K":"#7a5a3a","W":"#ffffff"},"frames":[[".....KKK........",".....GGG........","....GGGGG.......","...GGLLLGG......","..GGLLLLLLG.....","..GLLEeLEeL.....","..GLLLLLLLG.....","..GLLLlLLLG.....","...GGGGGGG......","....l...l......."]]},
+    floatsword: {"float":true,"pal":{"S":"#d8e0ec","s":"#8a94a8","H":"#c8a04a","h":"#8a6a2a","R":"#c83a4a"},"frames":[["..............S.",".............SS.","............SS..","...........SS...","..........SS....",".........SS.....","..H.....SS......","...H..sSS.......","....HHHS........","....hRH.........","...h..H.........","..h.............",".R.............."]]},
+    moth: {"float":true,"pal":{"W":"#e8dcc0","w":"#b8a888","B":"#8a7a5a","Y":"#ffe58a","y":"#f2c14e","K":"#2a2230"},"frames":[[".....K...K......","......K.K.......","WWW...BBB...WWW.","WWWW.BEBeB.WWWW.","WwWWWBBBBBWWWwW.",".WWWWBBBBBWWWW..","..WW.BYYYB.WW...",".....BYyYB......","......YYY.......",".......Y........"],[".....K...K......","..W...K.K...W...",".WWW..BBB..WWW..",".WWWWBEBeBWWWW..","..WwWBBBBBWwW...","...WWBBBBBWW....",".....BYYYB......",".....BYyYB......","......YYY.......",".......Y........"]]},
+    quill: {"float":true,"pal":{"W":"#f4f0e8","w":"#c8c0b0","K":"#2a2230","B":"#2a3a6a","Y":"#ffe58a"},"frames":[["..........WW....",".........WWWW...","........WWwWW...",".......WWwWWW...","......WWwWEeW...",".....WWwWWWW....","....WWwWWWW.....","...WWwWWW.......","...Y.WW.........","..Y.K...........",".B.K............","BB.............."]]},
+    geargolem: {"pal":{"B":"#a8742a","b":"#6e4a18","G":"#d8a84a","K":"#2a2230","Y":"#ffe58a"},"frames":[["....G.G.G.......","...GGGGGGG......","..GGBBBBBGG.....","...BBYKBYKB.....","..GBBBBBBBG.....","...BBKKKKBB.....","..BBBBBBBBBB....",".GBBGGBBGGBBG...",".BBBBBBBBBBBB...","..BBB....BBB....","..bbb....bbb...."]]},
+    combatdrone: {"float":true,"pal":{"B":"#6a7488","b":"#464e60","R":"#e04a3a","L":"#a8b4c8","K":"#2a2230","Y":"#ffe58a"},"frames":[["LLLL.......LLLL.","..K.........K...","..K..BBBBB..K...","..KBBBBBBBBBK...","...BBRRRRRBB....","...BBRYRRRBB....","....BBBBBBB.....",".....B...B......","....B.....B....."],[".LLLL.....LLLL..","..K.........K...","..K..BBBBB..K...","..KBBBBBBBBBK...","...BBRRRRRBB....","...BBRRYRRBB....","....BBBBBBB.....",".....B...B......","....B.....B....."]]},
+    bitbug: {"pal":{"B":"#3ac87a","b":"#1e8a4e","K":"#1a2a22","W":"#c8ffe0"},"frames":[["..........K.K...","...........K....","....BBBBBBBBB...","...BWBWBBBWEeB..","..BBBBBBBBBBBB..","..BWBBWBWBBBBB..","...BBBBBBBBBB...","..K.K.K..K.K....",".K.K.K..K.K....."]]},
+    glitchcat: {"pal":{"B":"#5a4ac8","b":"#3a2a8a","C":"#3ae8e0","P":"#f05ac8","K":"#2a2230"},"frames":[["...........B..B.","..........BBBBBB","..........BCeBCe","C.........BBBBPB",".B.......PBBBBB.",".BBBBBBBBBBBBB..","..BCBBBPBBBBB...","..BBBBBBBBCBB...","..BB.BB..BB.BB..","..bb.bb..bb.bb.."],["...........B..B.","..........BBBBBB","..........BCeBCe",".C........BBBBPB","..B.......BBBBB.",".BBBBBBBBBBBBB..","..BBBCBBBBBPB...","..BBBBBBBBBBB...","..BB.BB..BB.BB..","..bb.bb..bb.bb.."]]},
+    firewall: {"pal":{"S":"#7a8498","s":"#4e566a","F":"#f08a3a","f":"#e04a3a","Y":"#ffe58a"},"frames":[["...F..Y..F......","..FfF.F.FfF.....","..SSSSSSSSSS....","..SFSFSFSFSS....","..SSSSSSSSSS....","..SSYESSYESS....","..SSSSSSSSSS....","..SFSFSFSFSS....","..SSSSSSSSSS....","...ss....ss....."],["..F..Y..F..F....","...FfF.FfF.F....","..SSSSSSSSSS....","..SFSFSFSFSS....","..SSSSSSSSSS....","..SSYESSYESS....","..SSSSSSSSSS....","..SFSFSFSFSS....","..SSSSSSSSSS....","...ss....ss....."]]},
+    mechpup: {"pal":{"B":"#c8ccd8","b":"#8a90a0","R":"#e04a3a","C":"#4ac0f0","K":"#2a2230","Y":"#f2c14e"},"frames":[["...........R....","..........BBB...",".........BBBBBB.",".........BCeBBBK","R........BBBBBBK",".R.......BBBBB..",".BBBBBBBBBBBB...",".BBYBBYBBYBBB...","..BBBBBBBBBBB...","..BK.BK..BK.BK..","..KK.KK..KK.KK.."]]},
+    windmouse: {"pal":{"B":"#a8a8b8","b":"#6e6e80","P":"#f4a0a8","N":"#e07a8a","K":"#c8a04a","Y":"#ffe58a"},"frames":[[".........PP.....","...K.....PBB....","..KKK..BBBBBB...","...K..BBBBBEeB..","...KBBBBBBBBBBN.","....BBBBBBBBBB..","P...BBBBBBBBB...",".PPP.Y.Y..Y.Y..."],[".........PP.....","...K.....PBB....","...K...BBBBBB...","..KKK.BBBBBEeB..","...KBBBBBBBBBBN.","....BBBBBBBBBB..",".P..BBBBBBBBB...","P.PP..Y.Y.Y.Y..."]]},
+    rocketbot: {"pal":{"B":"#e8ecf4","b":"#a8b0c4","R":"#e04a3a","r":"#a02a22","C":"#4ac0f0","F":"#f2a040","Y":"#ffe58a"},"frames":[[".......R........","......RRR.......",".....BBBBB......",".....BCCCB......",".....BCEeB......",".....BBBBB......","....RBBBBBR.....","...RRBBBBBRR....","...R.BBBBB.R....",".....rr.rr......",".....F..F.......","......YY........"],[".......R........","......RRR.......",".....BBBBB......",".....BCCCB......",".....BCEeB......",".....BBBBB......","....RBBBBBR.....","...RRBBBBBRR....","...R.BBBBB.R....",".....rr.rr......","....F....F......",".....Y..Y......."]]},
+    synthbot: {"pal":{"B":"#3a3a5a","b":"#24243e","P":"#f05ac8","C":"#3ae8e0","W":"#e8ecf4","K":"#1d1a2b"},"frames":[["..P..........P..","..PBBBBBBBBBBP..","...BCCCCCCCCB...","...BCKCCCCKCB...","...BCCCPPCCCB...","...BBBBBBBBBB...","..BWKWKWWKWKWB..","..BWKWKWWKWKWB..","..BWWWWWWWWWWB..","...BB......BB..."]]},
+    shielddrone: {"float":true,"pal":{"S":"#4a7ac8","s":"#2a4e8a","C":"#a8e0ff","Y":"#f2c14e","K":"#2a2230"},"frames":[[".....SSSSS......","...SSCCCCCSS....","..SCCSSSSSCCS...","..SCSSYYYSSCS...","..SCSYEYeYSCS...","..SCSSYYYSSCS...","...SCSSSSSCS....","....SCCCCCS.....",".....SSSSS......","......K.K......."]]},
+    butlerbot: {"pal":{"B":"#d8dce8","b":"#9aa0b4","K":"#2a2230","W":"#ffffff","R":"#c83a4a","C":"#4ac0f0"},"frames":[[".....KKKKK......",".....KKKKK......","....KKKKKKK.....","....BBBBBBB.....","....BCCBCCB.....","....BBBBBBB.....","......RRR.......","....KKWWWKK.....","...KKKWWWKKK....","...B.KWWWK.B....",".....KKKKK......",".....BB.BB......"]]},
+    livingarmor: {"pal":{"S":"#a8b0c4","s":"#6e7488","K":"#1d1a2b","Y":"#9ae0ff","R":"#c83a4a"},"frames":[["......RR........",".....SRS........","....SSSSS.......","....SKKKS.......","....SKYKY.......","....SSSSS.......","..SSSSSSSSS.....",".SS.SSSSS.SS....",".S..SSRSS..S....","....SSSSS.......","....SS.SS.......","...SSS.SSS......"]]},
+    anvilgolem: {"pal":{"B":"#5a5e6e","b":"#363a48","O":"#f08a3a","Y":"#ffe58a"},"frames":[["..BBBBBBBBBBBB..","...BBBBBBBBBB...",".....BBBBBB.....","....BBBBBBBB....","...BBOEBBOEBB...","...BBBBBBBBBB...","...BBBOOOOBBB...","..BB.BBBBBB.BB..","..B..BBBBBB..B..","....BBB..BBB....","....bbb..bbb...."]]},
+    claygolem: {"pal":{"B":"#c87a4a","b":"#8a4e2a","L":"#e8a070","K":"#5a2e14"},"frames":[[".....BBBBB......","....BBBBBBB.....","....BKEBKEB.....","....BBBBBBB.....","....BBKKKBB.....","..BBBBBBBBBBB...",".BB.BBBLBBB.BB..",".BB.BBBBBBB.BB..","....BBBBBBB.....","....BB...BB.....","...bbb...bbb...."]]},
+    toysoldier: {"pal":{"R":"#d83a4a","r":"#9a2232","K":"#2a2230","S":"#f4d0b0","Y":"#f2c14e","B":"#3a4ab8","W":"#ffffff"},"frames":[[".....KKK........",".....KKK........",".....KKK........",".....SSS........",".....SES........","....RRRRR.......","...SRYRYRS......","...SRRRRRS......","....RWWWR.......","....BBBBB.......","....BB.BB.......","....KK.KK......."]]},
+    rubberduck: {"pal":{"Y":"#ffd23a","y":"#d8a018","O":"#f08a3a","W":"#bfe8ff"},"frames":[["........YYY.....",".......YYYYY....",".......YYEeYOO..","Y......YYYYYOO..","YY......YYYY....","YYYYYYYYYYYYY...",".YYYYYYYYYYYY...","..YYYYYYYYYY....","WWWWWWWWWWWWWWW."],["........YYY.....",".......YYYYY....",".......YYEeYOO..",".Y.....YYYYYOO..","YY......YYYY....","YYYYYYYYYYYYY...",".YYYYYYYYYYYY...","..YYYYYYYYYY....",".WWWWWWWWWWWWWW."]]},
+    halosprite: {"float":true,"pal":{"Y":"#ffe58a","y":"#f2c14e","W":"#fffaf0","w":"#e8dcc0","B":"#f4e8c8"},"frames":[["....YYYYYY......","...Y......Y.....","....YYYYYY......",".....WWWW.......","WW..WWWWWW..WW..","WWW.WEeWEeW.WWW.",".WWWWWWWWWWWWW..","..WW.WWRRW.WW...",".....WWWWW......","......WWW......."]]},
+    dreamjelly: {"float":true,"pal":{"P":"#c8a0f0","p":"#9a6ad0","L":"#ecdcff","S":"#ffe58a"},"frames":[["....PPPPPP......","...PLLPPPPP.....","..PLPPPPPPPP....","..PPPEePEePP....","..PPPPPRPPPP....","..pPpPpPpPpP....","...P.P.P.P......","..P.P.P.P.......","...P...P........"],["....PPPPPP......","...PLLPPPPP.....","..PLPPPPPPPP....","..PPPEePEePP....","..PPPPPRPPPP....","..pPpPpPpPpP....","..P.P.P.P.......","...P.P.P.P......","....P...P......."]]},
+    prism: {"float":true,"pal":{"W":"#f0f8ff","C":"#9ae0ff","R":"#ff6a6a","O":"#ffb84a","Y":"#ffe58a","G":"#7ae07a","B":"#6a9aff","V":"#c86aff"},"frames":[["......W.........",".....WCW........","....WCCCW.......","...WCEeCEW......","..WCCCCCCCW.....",".WCCCCCCCCCW....","WWWWWWWWWWWWRR..",".........ROYGBV.","..........OYGBV.","...........YGBV."]]},
+    kitespirit: {"float":true,"pal":{"R":"#e05a5a","Y":"#ffe58a","B":"#5a9ad8","W":"#ffffff","K":"#c8a04a"},"frames":[["......RRR.......",".....RRRRR......","....RRYYYRR.....","...RREeYEeRR....","....RRYYYRR.....",".....RRRRR......","......RRR.......",".......K........","......K.B.......",".....K.B.Y......","....K....B......"]]},
+    echospirit: {"float":true,"pal":{"T":"#7ae0d0","t":"#3aa898","L":"#c8fff4"},"frames":[[".....TTTTT......","...TTLLLTTTT....","..TTLTTTTTTTT...","..TTTEeTTEeTT...","..TTTTTRTTTTT...","..TTTTTTTTTTT...","...TTTTTTTTT....","....T.TT.TT.....","..T..T..T..T....","T..T....T....T.."]]},
+    totemspirit: {"pal":{"B":"#a86a3a","b":"#6e4220","R":"#d84a3a","G":"#3aa87a","Y":"#f2c14e","W":"#fffaf0"},"frames":[["....GG..GG......","...GGBBBBGG.....","....BWEBWEB.....","....BBBBBBB.....","....BRRRRRB.....","....BBBBBBB.....","...YBYBYBYBY....","....BBBBBBB.....","....BWKBWKB.....","....BBYYYBB.....","....BBBBBBB.....","....bbbbbbb....."]]},
+    lotus: {"float":true,"pal":{"P":"#f4a0c8","p":"#d86aa0","L":"#ffe0ee","G":"#4aa86a","g":"#2a7a4a","Y":"#ffe58a"},"frames":[[".......P........","......PLP.......","...P..PLP..P....","..PLP.PEP.PLP...","..PLPPeYEPPLP...",".PPLPPYYYPPLPP..",".pPPPPPPPPPPPp..","..GGGGGGGGGGG...","...ggggggggg...."]]},
+    notesprite: {"float":true,"pal":{"B":"#3a3a6a","Y":"#ffe58a","y":"#f2c14e"},"frames":[["......BBBBB.....","......B...BB....","......B....B....","......B.........","......B.........","..YYYYB.........",".YYYYYY.........",".YEeYEe.........",".YYYYYY.........","..YYYY.........."]]},
+    spiritwolf: {"float":true,"pal":{"B":"#a8d8ff","b":"#6aa0d8","L":"#e8f6ff","N":"#3a5a8a"},"frames":[["...........B..B.","..........BBbBB.","..........BBBBBB","B.........BEeBLLN","BB.......BBBBLLL",".BBBBBBBBBBBLLL.",".BBBBBBBBBBBBL..","..BBBBBBBBBBB...","..B.B.....B.B...",".B...B...B...B.."]]},
+    embersprite: {"float":true,"pal":{"R":"#e04a2a","O":"#f08a3a","Y":"#ffe58a"},"frames":[["......R.........",".....RR..R......","....RORR.RR.....","...RROORRORR....","...ROOYOOOOR....","..ROOEeYOEeOR...","..ROOYYYYYOOR...","..RROOYYYOORR...","...RROOOOORR....",".....RRRRR......"],["......R...R.....",".....RR..RR.....","....RORR.RR.....","...RROORROR.....","...ROOYOOOOR....","..ROOEeYOEeOR...","..ROOYYYYYOOR...","..RROOYYYOORR...","...RROOOOORR....",".....RRRRR......"]]},
+    magmapup: {"pal":{"B":"#4a3a3a","b":"#2e2222","O":"#f08a3a","Y":"#ffe58a","N":"#1d1a2b"},"frames":[["...........B..B.","..........BBOBB.","..........BBBBBB","O.........BYeBBBN","OY.......BBBBBOO",".BBBBBBBBBBBBO..",".BOBBBOOBBBOBB..","..BBOBBBBOBBB...","..BBBOOBBBBBB...","..BB.BB..BB.BB..","..OO.OO..OO.OO.."]]},
+    watersprite: {"float":true,"pal":{"B":"#3ac0c8","b":"#1e8a94","L":"#c8fff8","W":"#ffffff"},"frames":[["......B.........",".....BBB........","....BBLBB.......","...BBLBBBB......","..BBLBBBBBB.....","..BBBEeBEeB.....","..BBBBBRBBB.....","..BBBBBBBBB.....","...BBBBBBB......","....BBBBB......."]]},
+    pebble: {"pal":{"B":"#a8a8a0","b":"#76766e","L":"#d0d0c8","G":"#6ab84a"},"frames":[[".......GG.......","......G.........","....BBBBBB......","...BBLLBBBB.....","..BBLBBBBBBB....","..BBBEeBEeBB....","..BBBBBRBBBB....","...BBBBBBBB.....","....bbbbbb......"]]},
+    dumpling: {"pal":{"W":"#f8f0e0","w":"#d8c8a8","P":"#f4a0a8","G":"#6ab84a"},"frames":[["......W.W.W.....",".....WWWWWWW....","....WWWWWWWWW...","...WWWWWWWWWWW..","...WWEeWWWEeWW..","..WWWWPWRWPWWWW.","..WWWWWWWWWWWWW.","...wwwwwwwwwww.."]]},
+    pudding: {"pal":{"Y":"#ffd86a","y":"#d8a83a","C":"#7a4a22","c":"#5a3214","W":"#fff6e8"},"frames":[[".....CCCCC......","....CCcCCCC.....","...YCCCCCCCY....","...YYYYYYYYY....","..YYYEeYEeYYY...","..YYYYYRYYYYY...","..YYYYYYYYYYY...",".WWWWWWWWWWWWW.."],["......CCCC......","....CCCcCCC.....","....YCCCCCY.....","...YYYYYYYYY....","...YYEeYEeYYY...","..YYYYYRYYYYY...","..YYYYYYYYYYY...",".WWWWWWWWWWWWW.."]]},
+    dustbunny: {"pal":{"G":"#a8a4b8","g":"#76728a","L":"#d0ccdc"},"frames":[["......G..G......",".....GG.GG......","....GGGGGGGG....","..G.GGLGGGGGG.G.","...GGEeGGEeGGG..",".G.GGGGGRGGGG...","..GGGGGGGGGGGGG.","...G.GG.GG.GG..."]]},
+    gargoyle: {"pal":{"S":"#7a7a8a","s":"#4e4e5e","W":"#5e5e6e","Y":"#ffd23a"},"frames":[["...S.......S....","...SS.....SS....","W..SSSSSSSSS..W.","WW.SSYSSSYSS.WW.","WWWSSSSSSSSSWWW.","WWWSSSKKKSSSWWW.",".WWSSSSSSSSSWW..","...SSSSSSSSS....","...SS.SSS.SS....","..sss.....sss..."]]},
+    luckycat: {"pal":{"W":"#fffaf0","w":"#d8d0c0","R":"#d83a4a","Y":"#f2c14e","K":"#2a2230","P":"#f4a0a8"},"frames":[["..W..W.....W....","..WWWW....WWW...",".WWWWWW...WWW...",".WKWWKW...WW....",".WWPWWW..WW.....",".WWWWWWWWW......","..RYRRR.W.......","..WWWWWWW.......","..WWYYWWW.......","..WWYYWWW.......","..WWWWWWW.......","..ww.ww.ww......"],["..W..W..........","..WWWW....WWW...",".WWWWWW...WWW...",".WKWWKW..WWW....",".WWPWWW.WW......",".WWWWWWWW.......","..RYRRR.........","..WWWWWWW.......","..WWYYWWW.......","..WWYYWWW.......","..WWWWWWW.......","..ww.ww.ww......"]]},
+    goldtoad: {"pal":{"Y":"#f2c14e","y":"#b8862a","L":"#ffe58a","K":"#2a2230","R":"#d83a4a"},"frames":[["...........Y.Y..","..........YYYYY.","....YYYYYYYEeYEe","...YYLYYYYYYYYYY","..YYYYYYYYYYRRR.",".YYYLYYYYLYYYY..",".YYYYYYYYYYYYY..","YY.YY.....YY.YY.","yy.yy.....yy.yy."]]},
+    hourglass: {"float":true,"pal":{"W":"#a8742a","w":"#6e4a18","G":"#d8f0ff","Y":"#f2d08a","y":"#d8a84a"},"frames":[["..WWWWWWWWW.....","...GYYYYYG......","...GYEYEYG......","....GYYYG.......",".....GYG........","......Y.........",".....GYG........","....GGYGG.......","...GGYYYGG......","...GYYYYYG......","..WWWWWWWWW....."],["..WWWWWWWWW.....","...GYYYYYG......","...GYEYEYG......","....GYYYG.......",".....GGG........","......G.........",".....GYG........","....GGYGG.......","...GGYYYGG......","...GYYYYYG......","..WWWWWWWWW....."]]},
+    filmreel: {"pal":{"B":"#3a3a4a","b":"#24242e","W":"#d8dce8","K":"#1d1a2b","F":"#5a5a6a"},"frames":[["....BBBBBB......","...BWWBBWWB.....","..BBWWBBWWBB....","..BBBEeBEeBB....","..BWWBBBBWWB....","..BBWWBBWWBB....","...BBBBBBBB.....","....BBBBBB......","FFFFFFFFFFFFFFF.","FWFWFWFWFWFWFWF.","FFFFFFFFFFFFFFF."]]},
+    chessknight: {"pal":{"W":"#f4f0e4","w":"#c8c0ac","K":"#2a2230"},"frames":[["........WW......",".......WWWW.....","......WWWWWWW...",".....WWWWKWWWW..",".....WWWWWWWWWW.","....WWWWWW.WWW..","....WWWWWW......","...WWWWWWW......","....WWWWW.......","...WWWWWWW......","..WWWWWWWWW.....","..wwwwwwwww....."]]},
+    alien: {"float":true,"pal":{"G":"#7ae07a","g":"#4aa84a","K":"#1d1a2b","S":"#c8d0e0","s":"#8a94a8","Y":"#ffe58a"},"frames":[["....G.....G.....",".....G...G......","....GGGGGGG.....","...GGGGGGGGG....","...GKKGGGKKG....","...GKeGGGKeG....","....GGGGGGG.....",".....GGGGG......","..SSSSSSSSSSS...","SSSYSSSYSSSYSSS.","..sssssssssss...","......Y.Y......."]]},
+    gingerbread: {"pal":{"B":"#c07a3a","b":"#8a4e1e","W":"#fffaf0","R":"#e04a5a","G":"#4aa86a"},"frames":[[".....BBBB.......","....BBBBBB......","....BWBBWB......","....BBBBBB......","....BWWWWB......","..BBBBBBBBBB....",".BBWBBRBBWBB....","....BBGBBB......","....BBRBBB......","...BBB..BBB.....","...BW....WB....."]]},
     tome: { manual: true, float: true, pal: { P: "#7a46b8", p: "#4e2a82", q: "#a274e4", w: "#f8f1de", v: "#d8cba8", l: "#a08f72", Y: "#f2c14e", y: "#b8862a", R: "#d94a3a", E: "#2a1c40" }, frames: [[
       "....................",
       "....................",
@@ -4550,9 +4836,12 @@ details.cg-set > summary { cursor: pointer; }
     if (frame % 2) rows = rows.map((r, y) => y < 5 ? "." + r.slice(0, -1) : r);     // wobble
     return rows;
   }
-  function famGrid(key, frame = 0) {
+  function famGrid(key, frame = 0, wear) {
     const ep = typeof eggProgress === "function" && FAMILIARS[key] && FAMILIARS[key].egg ? eggProgress(key) : null;
-    const A = FAM_ART[key] || FAM_ART.slime, src = ep !== null ? eggRows(ep, frame) : A.frames[frame % A.frames.length];
+    const A = FAM_ART[key] || FAM_ART.slime;
+    let src = ep !== null ? eggRows(ep, frame) : A.frames[frame % A.frames.length];
+    // v0.26: one-frame ground pets breathe: on odd frames everything above the feet sinks a pixel
+    if (ep === null && A.frames.length === 1 && !A.float && frame % 2 && src.length > 4) { const r = src.length - 3; src = [".".repeat(src[0].length), ...src.slice(0, r), ...src.slice(r + 1)]; }
     const W = Math.max(...src.map(r => r.length)), at = (x, y) => (src[y] && src[y][x]) || ".";
     const flat = new Set(["E", "e", "K", "R", "Q"]);
     const cells = [];
@@ -4563,10 +4852,13 @@ details.cg-set > summary { cursor: pointer; }
         if (at(x, y - 1) === ".") col = tone(col, 0.18);
         else if (at(x, y + 1) === ".") col = tone(col, -0.14);
       }
-      cells.push([x, y, col]);
+      cells.push([x, y, col, ch]);
     }));
-    const lift = A.float ? (frame % 2 ? 3 : 4) : 0, H = src.length;
-    const gw = W + 2, gh = H + 2 + lift;
+    if (wear && ep === null) petWearCells(cells, wear, frame, src);   // v0.26: pet gear on any pet
+    const minX = Math.min(0, ...cells.map(c => c[0])), minY = Math.min(0, ...cells.map(c => c[1]));
+    if (minX < 0 || minY < 0) cells.forEach(c => { c[0] -= minX; c[1] -= minY; });
+    const lift = A.float ? (frame % 2 ? 3 : 4) : 0, H = Math.max(src.length - minY, ...cells.map(c => c[1] + 1));
+    const gw = Math.max(W - minX, ...cells.map(c => c[0] + 1)) + 2, gh = H + 2 + lift;
     const g = Array.from({ length: gh }, () => new Array(gw).fill(null));
     const own = new Map(cells.map(c => [(c[0] + 1) + "," + (c[1] + 1), c[2]]));
     own.forEach((col, k) => { const [x, y] = k.split(",").map(Number); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([ox, oy]) => { const nx = x + ox, ny = y + oy; if (!own.has(nx + "," + ny) && ny >= 0 && ny < gh && nx >= 0 && nx < gw && !g[ny][nx]) g[ny][nx] = deepen(col); }); });
@@ -4594,7 +4886,7 @@ details.cg-set > summary { cursor: pointer; }
   }
   // Returns a padded color grid (with a 1px selective outline), plus where the hat sits.
   function petGrid(p, frame = 0, pose = "idle") {
-    if (p && p.fam) return famGrid(p.fam, frame);
+    if (p && p.fam) return famGrid(p.fam, frame, famWear(p.fam));
     const k = PET_KINDS[p.kind] || PET_KINDS.dog;
     const rows = petRows(p.kind in PET_KINDS ? p.kind : "dog", p.size || 0, pose, frame);
     const [, base, shade] = k.pal[p.coat] || k.pal[k.col], acc = (k.pal[p.accent] || k.pal[5] || k.pal[0])[1];
@@ -4645,6 +4937,7 @@ details.cg-set > summary { cursor: pointer; }
       const ls = cells.filter(c => c[3] === "L"); if (ls.length) { const lx = ls[ls.length - 1][0], ly = ls[0][1]; [[lx - 1, ly + 1], [lx, ly + 1], [lx - 1, ly + 2]].forEach(([x, y]) => cells.push([x, y, tone(neck.col, -0.2), "L"])); }
     }
     if (neck && neck.tag) { const ls = cells.filter(c => c[3] === "L"); if (ls.length) { const m = ls[Math.floor(ls.length / 2)]; cells.push([m[0], m[1] + 1, neck.tag, "K"]); } }
+    const charm = PET_GEAR.find(g => g.id === (p.wear || {}).charm); if (charm) petCharmCells(cells, charm, frame);
     // hat sits on top of the head, centered on the anchor
     const top = head && hat ? PET_HATS[head.id] : null;
     let oy = 0;
@@ -4736,13 +5029,26 @@ details.cg-set > summary { cursor: pointer; }
         <div class="field"><span class="lbl">${d.kind === "bird" ? "Feathers" : d.kind === "reptile" ? "Scales" : "Coat"} · ${esc(k.pal[d.coat][0])}</span><div class="swatches">${k.pal.map((c, i) => sw("coat", i, c)).join("")}</div></div>
         <div class="field"><span class="lbl">Markings</span><div class="chips">${k.marks.map((n, i) => chip("pet-mark", i, d.mark === i, n)).join("")}</div></div>
         ${d.mark ? `<div class="field"><span class="lbl">Markings color · ${esc(k.pal[d.accent][0])}</span><div class="swatches">${k.pal.map((c, i) => sw("accent", i, c)).join("")}</div></div>` : ""}
-        ${wearSel("neck", "Neck")}${wearSel("head", "Hat")}
+        ${wearSel("neck", "Neck")}${wearSel("head", "Hat")}${wearSel("charm", "Charm")}
         <div class="pet-err" id="pet-err" role="alert"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="pet-save">${isNew ? "Create pet" : "Save changes"}</button><button class="btn ghost" data-act="pet-cancel">Cancel</button></div>
       </div>
     </div>`;
   }
   let petPreviewPose = "idle";
+  // v0.26: dress up the pet in your slot with gear you own (hats and charms fit every pet).
+  function petDressHTML(p) {
+    const own = PET_GEAR.filter(g => petGear()[g.id]); if (!own.length) return "";
+    const cur = p.fam ? famWear(p.fam) || {} : p.wear || {}, slots = p.fam ? ["head", "charm"] : ["neck", "head", "charm"];
+    const sel = slot => { const list = own.filter(g => g.slot === slot); if (!list.length) return "";
+      return `<label class="pet-dress"><span class="lbl">${PET_SLOT_NAME[slot]}</span><select class="input" data-act-change="pet-dress" data-slot="${slot}" data-id="${esc(p.id)}"><option value="">None</option>${list.map(g => `<option value="${g.id}" ${cur[slot] === g.id ? "selected" : ""}>${esc(g.name)}</option>`).join("")}</select></label>`; };
+    const html = slots.map(sel).join(""); return html ? `<div class="pet-dress-row">${html}</div>` : "";
+  }
+  function petSetWear(p, slot, id) {
+    const g = PET_GEAR.find(x => x.id === id && x.slot === slot && petGear()[x.id]);
+    if (p.fam) { const w = famWears()[p.fam] = Object.assign({}, famWear(p.fam)); if (g) w[slot] = g.id; else delete w[slot]; }
+    else { p.wear = p.wear || {}; if (g) p.wear[slot] = g.id; else delete p.wear[slot]; }
+  }
 
   function renderPetsPanel() {
     const list = pets(), an = animalSkills(), act = petActive();
@@ -4751,7 +5057,8 @@ details.cg-set > summary { cursor: pointer; }
     const slotCard = act ? `<div class="comp-now">
         <canvas class="px" data-pet="${esc(act.id)}" data-scale="3" data-w="26" data-h="20" aria-hidden="true"></canvas>
         <div class="pet-info"><span class="muted" style="font-size:12px;font-weight:600">PET SLOT · ${esc(petCat(act).toUpperCase())}</span><b>${esc(act.name || "Your pet")}</b>${compInfoHTML(act)}${compSkillHTML(act)}
-          <span class="pet-status">Its hits and skill grow with your hero's stats. Tap its skill in battle like your own.${petFull() ? " Your class makes it fight at full strength." : ""}</span></div>
+          <span class="pet-status">Its hits and skill grow with your hero's stats. Tap its skill in battle like your own.${petFull() ? " Your class makes it fight at full strength." : ""}</span>
+          ${petDressHTML(act)}</div>
       </div>` : `<p class="hint" style="margin:0">Your Pet slot is empty. Equip any pet you have below.</p>`;
     // designing your own beast: link it to an Animals skill (time with your animal)
     const design = !an.length && !list.length ? `<p class="hint" style="margin:0">Design a beast that looks like an animal in your life: add an Animals skill (like <b>Pet care</b> or <b>Dog walking</b> under Explore the outdoors) and log time with them. Your beast unlocks when that skill reaches Lv ${PET_UNLOCK} (54 minutes).</p>
@@ -4761,8 +5068,8 @@ details.cg-set > summary { cursor: pointer; }
     const body = petDraft ? petEditorHTML() : `${slotCard}
       ${petGroupsHTML(design)}
       <h3 style="margin:6px 0 0">Pet gear</h3>
-      <p class="hint" style="margin:0">Cosmetic only. Equip while customizing a beast you designed.</p>
-      <div class="pet-shop">${PET_GEAR.map(g => { const own = petGear()[g.id]; return `<div class="pet-item"><canvas class="px" data-pet-gear="${g.id}" aria-hidden="true"></canvas><span><b>${esc(g.name)}</b><small>${g.slot === "head" ? "Hat" : "Neck"}</small></span>${own ? `<span class="muted" style="font-size:13px">Owned</span>` : `<button class="btn small" data-act="pet-buy" data-id="${g.id}" ${state.gold < g.price ? "disabled" : ""}>${g.price}g</button>`}</div>`; }).join("")}</div>`;
+      <p class="hint" style="margin:0">Just for looks. Hats and charms fit every pet; neckwear fits the beasts you design. Dress up the pet in your slot above.</p>
+      <div class="pet-shop">${PET_GEAR.map(g => { const own = petGear()[g.id]; return `<div class="pet-item"><canvas class="px" data-pet-gear="${g.id}" aria-hidden="true"></canvas><span><b>${esc(g.name)}</b><small>${PET_SLOT_NAME[g.slot]}</small></span>${own ? `<span class="muted" style="font-size:13px">Owned</span>` : `<button class="btn small" data-act="pet-buy" data-id="${g.id}" ${state.gold < g.price ? "disabled" : ""}>${g.price}g</button>`}</div>`; }).join("")}</div>`;
     return `<article class="panel set-card pets-panel">
       <div class="train-row"><h3>Pets</h3><span class="muted" style="font-size:13px">${have} of ${all.length} unlocked</span></div>
       <p class="hint" style="margin:0">Your Pet slot holds one pet. Every pet boosts one stat, has a passive and a battle skill, and grows stronger as you do. Pets never get hungry, sad or sick if you skip days.</p>
@@ -4824,8 +5131,9 @@ details.cg-set > summary { cursor: pointer; }
         const g = PET_GEAR.find(x => x.id === id); if (!g || petGear()[g.id]) break;
         if (state.gold < g.price) { toast(`You need ${g.price - state.gold} more gold. Run a dungeon to earn it.`); break; }
         state.gold -= g.price; petGear()[g.id] = true; Sound.play("buy");
-        const p = petActive() || pets()[0]; if (p && !(p.wear || {})[g.slot]) { p.wear = p.wear || {}; p.wear[g.slot] = g.id; }
-        toast(`Bought ${esc(g.name)}${p && p.wear[g.slot] === g.id ? ` for ${esc(p.name)}` : ""}. Just for looks.`);
+        const p = petActive() || pets()[0], fits = p && (!p.fam || g.slot !== "neck"), cur = p ? (p.fam ? famWear(p.fam) || {} : p.wear || {}) : {};
+        const put = fits && !cur[g.slot]; if (put) petSetWear(p, g.slot, g.id);
+        toast(`Bought ${esc(g.name)}${put ? ` for ${esc(p.name || "your pet")}` : ""}. Just for looks.`);
         persist(); render(); break;
       }
     }
@@ -4835,9 +5143,12 @@ details.cg-set > summary { cursor: pointer; }
     const el = e.target; if (!el.dataset || !petDraft) return;
     const keepName = () => { const n = document.getElementById("pet-name"); if (n) petDraft.name = n.value; };
     if (el.dataset.actChange === "pet-skill") { keepName(); petDraft.skillId = el.value; render(); }
+    if (el.dataset.actChange === "pet-dress") return;
     if (el.dataset.actChange === "pet-wear") { keepName(); const g = PET_GEAR.find(x => x.id === el.value); if (g) petDraft.wear[el.dataset.slot] = g.id; else delete petDraft.wear[el.dataset.slot]; render(); }
   });
   document.addEventListener("input", e => { if (e.target && e.target.id === "pet-name" && petDraft) petDraft.name = e.target.value; });
+  document.addEventListener("change", e => { const el = e.target; if (!el || !el.dataset || el.dataset.actChange !== "pet-dress") return;
+    const p = petById(el.dataset.id); if (!p) return; petSetWear(p, el.dataset.slot, el.value); persist(); render(); });
   document.addEventListener("keydown", e => { if (e.target && e.target.id === "pet-name" && e.key === "Enter") { e.preventDefault(); petSave(); } });
 
   // ---------- Overworld: the pet trots one tile behind ----------
