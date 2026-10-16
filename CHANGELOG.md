@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.28.0 — 2026-10-16 (build 2026-10-16.1)
+
+The World: a second map to explore with the hero you've trained.
+
+- **New World tab:** the Crystal Isles, six regions around a safe hub. Crystal Plaza holds the Crystal shop, the Challenge board and the way down to the Crystal Depths. Around it are Sunny Meadow (suggested power 5), Whispering Forest (25), Frostfang Pass (70), Ashen Badlands (130) and Starfall Crater (220).
+- **Roaming monsters:** 10 new monsters wander their regions and come at you when you get close. Walk into one to fight it with the same battle system, skills, pets and potions as dungeons. World fights cost no keys, and losing costs nothing: you wake up in the Plaza.
+- **Champions:** each region has a glowing, crowned champion with more HP that pays 5× Crystals, and double the first time you beat it.
+- **Crystals:** the World's own currency, earned only in the World and spent only in the Crystal shop. They buy looks, never power.
+- **Crystal shop:** five trails that follow you around the World (Sparkle, Heart, Leaf, Ember, Rainbow), three portrait frames (Crystal, Aurora, Prism) and three pieces of pet gear (Crystal tiara, Comet and Snowflake charms).
+- **Crystal Depths:** an endless tower that scales with your power. Each floor is a little tougher, deeper floors pay more, and losing keeps your floor.
+- **Challenge board:** nine challenges with no timers. They unlock the Starlight and Comet trails, the Champion's Laurel and Hunter's Mark frames, the Crystal heart pet charm, and four titles: Isle Walker, Monster Hunter, Depth Diver and Legend of the Isles.
+- **Online-ready:** with a Supabase project connected, players can opt in to see other heroes walking the same region, say preset phrases, tap a hero to see their card, add friends by code, and climb leaderboards ranked by real hours practiced, Depths floor or monsters defeated. Setup is in ONLINE-SETUP.md; until the keys are added, the World runs offline.
+- The tab bar wraps on wide screens so all seven tabs show.
+
 ## v0.27.0 — 2026-10-15 (build 2026-10-15.5)
 
 Linked apps and history import. **Reinstall the Android app once** (Settings → Android app download): this version adds native code.

@@ -39,19 +39,17 @@ Design rules that every feature follows:
 | v0.25 | 16 new path skills (2 more per path, at path Lv 25 and 50); pick which one each path brings |
 | v0.26 | Pet roster: 79 new pets with pixel art (class pets from unlocked classes, skill pets at skill Lv 15); hats and charms fit every pet, 8 new pieces of pet gear |
 | v0.27 | Linked apps on Android (Usage access, "Found 15 min in Duolingo, log it?", auto-approve per app, on-device only); CSV history import as veteran hours |
+| v0.28 | The World: the Crystal Isles with 6 regions, roaming monsters and champions, Crystals (cosmetic-only currency), Crystal shop, Crystal Depths endless tower, Challenge board; online play built for Supabase (presence, phrases, friends, leaderboards), on once keys are added |
 
 ## Next up
 
-### 1. Online world (MMO-style)
+### 1. Online World, part 2
 
-Needs decisions first: where accounts and data live (a hosted backend such as Supabase or Firebase), sign-in method, and cost.
-
-- Start with accounts and a small backend, so heroes live online and sync across devices.
-- See other players' heroes, titles and achievements.
-- Shared "meet" maps and exploration areas where players see each other walking around.
-- Leaderboards rank by real logged hours, not XP.
+- Turn on Supabase (ONLINE-SETUP.md): anonymous accounts, presence, phrases, friends and leaderboards are built.
+- Parties and group Depths runs and co-op champions.
+- Cloud save so a hero syncs across devices (sign-in with Google or email to keep it).
 - Player votes on Suggest a class ideas.
-- Later: parties for group adventures and co-op bosses.
+- Moderation: report a hero name; a word filter before free-text chat (preset phrases only for now).
 
 ### 2. Verified practice and Health Connect
 
