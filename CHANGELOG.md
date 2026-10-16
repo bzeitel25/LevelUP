@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.25.0 — 2026-10-15 (build 2026-10-15.3)
+
+More battle skills for every path.
+
+- **16 new path skills:** each path now teaches three skills, at path Lv 5, 25 (Adept) and 50 (Master) combined.
+  - Body: Whirlwind (three 0.7× hits), Crushing Blow (2.5× and a 1 s stun).
+  - Art: Harmony (+20% damage and 15% faster attacks for 4 s), Crescendo (+5% damage per skill used this fight, up to +35%).
+  - Mind: Arcane Bolt (1.6× and the monster deals 20% less for 4 s), Mind Lock (the monster skips an attack and your next skill deals +30%).
+  - Craft: Reinforce (blocks the next 2 hits), Forge Barrier (soaks up 20% of your max HP).
+  - Tech: Auto Turret (0.35× zaps for 6 s), EMP (1.2× and a 2 s stun).
+  - Spirit: Inner Calm (8% heal and 20% less damage for 4 s), Spirit Palm (2× that heals 8%).
+  - Life: Bargain (+2% gold a hit for 5 s, up to +10%), Windfall (1.4× and +8% gold, once per fight).
+  - Nature: Snare (the monster attacks 35% slower for 5 s), Hunter's Volley (four 0.6× arrows).
+- **Pick your skill per path:** the skill book shows all three for every path. Tap "Use this one" to choose which one that path brings into fights. You still bring up to 3 paths (4 for Adventurers and Polymaths), class path first.
+- New path skills announce themselves when you unlock them, like gear and classes.
+- They grow with your path level the same way the basic skills do, and they work with Odd Job, Learned Trick and Renaissance.
+
 ## v0.24.0 — 2026-10-15 (build 2026-10-15.2)
 
 Ascended classes, the last tier of the Class Compendium. 98 classes in all.

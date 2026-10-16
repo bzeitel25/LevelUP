@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-15.2",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-15.3",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -708,6 +708,8 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .cls-on { font-size: 12.5px; font-weight: 700; color: var(--xp); }
 .cls-card.open { border-color: color-mix(in srgb, var(--xp-fill) 55%, var(--line)); }
 .cls-card.locked { border-style: dashed; }
+.sb-paths { display: grid; gap: 12px; }
+.sb-ph { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; font-size: 13px; }
 .cls-card.asc { border-color: color-mix(in srgb, #b9a6ff 70%, var(--line)); background: linear-gradient(160deg, color-mix(in srgb, #b9a6ff 12%, var(--panel)), var(--panel) 60%); }
 .cls-card.asc:not(.locked) { box-shadow: 0 0 0 1px color-mix(in srgb, #b9a6ff 45%, transparent), 0 0 12px color-mix(in srgb, #b9a6ff 35%, transparent); }
 .cls-asc .cls-gh { color: color-mix(in srgb, #7b62e0 80%, var(--ink)); }
@@ -2018,7 +2020,7 @@ details.cg-set > summary { cursor: pointer; }
     if (sk.immune) { b.immT = Math.max(b.immT, btBuff(sk.immune)); btPop("Let go", 14, 4, "#ffe58a", true); }
     if (sk.wolf) { b.wolfT = Math.round(sk.wolf[0] * 10); b.wolfDmg = b.baseDmg * sk.wolf[1] * Q * b.skillMult; b.wolfH = sk.wolf[2]; btPop("Spirit wolf!", 14, 6, "#bfe3ff"); b.fx.push({ k: "notes", ttl: 6 }); }
     if (sk.oddJob || sk.trick) {
-      const keys = Object.values(COMBAT_SKILLS).map(x => x.key), own = b.skills.filter(s => keys.includes(s.key));
+      const keys = PATH_SKILL_KEYS, own = b.skills.filter(s => keys.includes(s.key));
       const pool = own.length ? own : Object.entries(COMBAT_SKILLS).sort((x, y) => pathLevel(y[0]) - pathLevel(x[0])).map(([p, x]) => Object.assign({ path: p, power: 1 }, x));
       if (sk.oddJob) { const pk = pool[Math.floor(Math.random() * pool.length)]; btPop(pk.name, 40, 2, "#ffe58a"); castSkill(b, pk, sk.key); }
       else { const best = pool.slice().sort((x, y) => y.power - x.power)[0]; btPop(best.name + " ×2", 40, 2, "#ffe58a"); castSkill(b, best, sk.key); castSkill(b, best, sk.key); }
@@ -2922,8 +2924,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-15.2";
-  const APP_VERSION = "0.24.0";
+  const BUILD = "2026-10-15.3";
+  const APP_VERSION = "0.25.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -5098,6 +5100,43 @@ details.cg-set > summary { cursor: pointer; }
     nature: { key: "mark",   name: "Tracker's Mark", cd: 9, desc: "Your next 3 hits deal +40%", icon: "arrow" }
   };
   const SKILL_UNLOCK = 5;
+  // v0.25: each path teaches two more skills, at path Lv 25 (Adept) and Lv 50 (Master), combined like the first.
+  // You bring one skill per path and pick which in the skill book. They run on the recipe branch (keys "x-").
+  const PATH_SKILL_TIERS = [{ lv: SKILL_UNLOCK, name: "Basic" }, { lv: 25, name: "Adept" }, { lv: 50, name: "Master" }];
+  const PATH_SKILLS_MORE = {
+    body:   [{ key: "x-whirl", name: "Whirlwind", cd: 9, desc: "Three 0.7× hits", icon: "sword", hits: [3, 0.7] },
+             { key: "x-crush", name: "Crushing Blow", cd: 12, desc: "A 2.5× hit that stuns for 1 second", icon: "sword", mult: 2.5, stun: 1 }],
+    music:  [{ key: "x-harmony", name: "Harmony", cd: 11, desc: "+20% damage and attack 15% faster for 4 seconds", icon: "note", buff: [20, 4], haste: [15, 4] },
+             { key: "x-crescendo", name: "Crescendo", cd: 13, desc: "+5% damage for each skill used this fight, up to +35%, for 6 seconds", icon: "note", tale: [5, 35, 6] }],
+    mind:   [{ key: "x-bolt", name: "Arcane Bolt", cd: 10, desc: "A 1.6× hit, and the monster deals 20% less for 4 seconds", icon: "rune", mult: 1.6, weak: [20, 4] },
+             { key: "x-lock", name: "Mind Lock", cd: 13, desc: "The monster skips its next attack, and your next skill deals +30%", icon: "rune", skipC: 1, empower: 30 }],
+    craft:  [{ key: "x-reinforce", name: "Reinforce", cd: 12, desc: "Blocks the next 2 hits", icon: "gear", shieldHits: 2 },
+             { key: "x-barrier", name: "Forge Barrier", cd: 14, desc: "A barrier that soaks up 20% of your max HP", icon: "gear", absorb: 0.2 }],
+    tech:   [{ key: "x-turret", name: "Auto Turret", cd: 13, desc: "Zaps for 0.35× every second for 6 seconds", icon: "gear", turret: [0.35, 6] },
+             { key: "x-emp", name: "EMP", cd: 14, desc: "A 1.2× zap and a 2-second stun", icon: "gear", mult: 1.2, stun: 2 }],
+    spirit: [{ key: "x-calm", name: "Inner Calm", cd: 12, desc: "Heal 8% and take 20% less damage for 4 seconds", icon: "eye", heal: 0.08, guard: [20, 4] },
+             { key: "x-palm", name: "Spirit Palm", cd: 11, desc: "A 2× strike that heals you 8%", icon: "eye", mult: 2, heal: 0.08 }],
+    life:   [{ key: "x-bargain", name: "Bargain", cd: 14, desc: "For 5 seconds, each hit adds +2% gold, up to +10%", icon: "coin", haggle: [2, 10, 5] },
+             { key: "x-windfall", name: "Windfall", cd: 16, desc: "A 1.4× hit and +8% gold from this fight, once per fight", icon: "coin", once: true, goldPct: 8, mult: 1.4 }],
+    nature: [{ key: "x-snare", name: "Snare", cd: 12, desc: "The monster attacks 35% slower for 5 seconds", icon: "arrow", slow: [35, 5] },
+             { key: "x-volley", name: "Hunter's Volley", cd: 10, desc: "Four 0.6× arrows", icon: "arrow", hits: [4, 0.6] }]
+  };
+  const pathSkillList = p => [COMBAT_SKILLS[p], ...(PATH_SKILLS_MORE[p] || [])].map((sk, i) => Object.assign({ ptier: i }, sk));
+  const PATH_SKILL_KEYS = Object.keys(COMBAT_SKILLS).flatMap(p => pathSkillList(p).map(x => x.key));
+  const pathSkillOpen = (p, i) => pathLevel(p) >= PATH_SKILL_TIERS[i].lv;
+  // The skill a path brings: your pick if it's unlocked, else the basic one.
+  function pathSkillPick(p) {
+    const list = pathSkillList(p), k = state.pathSkill && state.pathSkill[p], i = list.findIndex(x => x.key === k);
+    return i > 0 && pathSkillOpen(p, i) ? list[i] : list[0];
+  }
+  function pickPathSkill(key) {
+    const p = Object.keys(COMBAT_SKILLS).find(q => pathSkillList(q).some(x => x.key === key)); if (!p) return;
+    const list = pathSkillList(p), i = list.findIndex(x => x.key === key);
+    if (!pathSkillOpen(p, i)) return;
+    if (!state.pathSkill || typeof state.pathSkill !== "object" || Array.isArray(state.pathSkill)) state.pathSkill = {};
+    state.pathSkill[p] = key; persist(); render();
+    toast(`${esc(PATHS[p].label)} path now brings <b>${esc(list[i].name)}</b>.`);
+  }
   // 7x7 pixel icons with a full outline on every side, so nothing looks clipped.
   const SKILL_ICONS = {
     sword: [".....KK", "....KWK", "...KWK.", "K.KWK..", ".KKK...", ".KK....", "K.K...."],
@@ -5135,7 +5174,7 @@ details.cg-set > summary { cursor: pointer; }
   function battleSkills() {
     const cls = heroClass().paths, out = [];
     const order = Object.keys(COMBAT_SKILLS).sort((a, b) => (cls.includes(b) - cls.includes(a)) || (pathLevel(b) - pathLevel(a)));
-    order.forEach(p => { if (out.length < classPathSlots() && pathLevel(p) >= SKILL_UNLOCK) out.push(Object.assign({ path: p, power: 1 + Math.min(0.25, pathLevel(p) / 400) }, COMBAT_SKILLS[p])); });
+    order.forEach(p => { if (out.length < classPathSlots() && pathLevel(p) >= SKILL_UNLOCK) out.push(Object.assign({ path: p, power: 1 + Math.min(0.25, pathLevel(p) / 400) }, pathSkillPick(p))); });
     out.push(classSignature());                       // CLASSES (v0.15): your class's signature skill
     talentLoadout().forEach(k => out.push(Object.assign({}, k)));
     return out.map(classSkillDesc);                     // CLASSES (v0.15): perk-lengthened skills say so
@@ -5252,7 +5291,7 @@ details.cg-set > summary { cursor: pointer; }
     if (key === "trap") { btStun(b, 1.5 * P); btPop("Trapped!", 44, 8, "#9aa0ae"); Sound.play("buy"); }
     if (key === "focus") { btPop(hit(1.5) + "", 44, 9, "#ffe58a", true); btHeal(b, 0.03 * P); b.fx.push({ k: "flash", ttl: 2 }); Sound.play("win"); }
     if (key === "lucky") { hit(0.6); if (b.lucky < 3) b.lucky++; btPop("+5% gold", 44, 8, "#f2c14e"); b.fx.push({ k: "coins", ttl: 6 }); Sound.play("coin"); }
-    if (key.indexOf("t-") === 0 || key.indexOf("c-") === 0) {   // talent and class skills, built from their recipe
+    if (key.indexOf("t-") === 0 || key.indexOf("c-") === 0 || key.indexOf("x-") === 0) {   // talent, class and higher path skills, built from their recipe
       if (classRecipe(b, sk, hit, caster) === false) return classCastEnd(b, sk);   // CLASSES (v0.15): new recipe fields
       let mult = sk.mult || 0;
       if (sk.rand) mult = sk.rand[0] + Math.random() * (sk.rand[1] - sk.rand[0]);
@@ -5358,15 +5397,19 @@ details.cg-set > summary { cursor: pointer; }
     const have = battleSkills(), cls = heroClass().paths;
     return `<article class="panel set-card skillbook">
       <h3>Battle skills</h3>
-      <div class="sb-grid">${Object.entries(COMBAT_SKILLS).map(([p, sk]) => {
-        const on = have.some(h => h.key === sk.key), lv = pathLevel(p), unlocked = lv >= SKILL_UNLOCK;
-        return `<div class="sb ${on ? "on" : unlocked ? "spare" : "locked"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on ? (cls.includes(p) ? "Equipped · your class path" : "Equipped") : unlocked ? `Unlocked · ${classPathSlots()} skills max, class path first` : `${PATHS[p].label} path Lv ${SKILL_UNLOCK} combined (now ${lv})`}</small></div></div>`;
+      <div class="sb-paths">${Object.keys(COMBAT_SKILLS).map(p => {
+        const lv = pathLevel(p), pick = pathSkillPick(p), brought = have.some(h => h.key === pick.key);
+        return `<div class="sb-path"><div class="sb-ph"><b>${esc(PATHS[p].label)}</b><span class="muted">Lv ${lv} combined${lv >= SKILL_UNLOCK ? brought ? (cls.includes(p) ? " · in your fights, class path" : " · in your fights") : ` · not brought (${classPathSlots()} paths max, class path first)` : ""}</span></div>
+          <div class="sb-grid">${pathSkillList(p).map((sk, i) => {
+            const open = pathSkillOpen(p, i), on = open && pick.key === sk.key;
+            return `<div class="sb ${on ? "on" : open ? "spare" : "locked"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on ? "Picked" : open ? `<button class="linkbtn" data-act="path-skill" data-id="${sk.key}">Use this one</button>` : `${PATH_SKILL_TIERS[i].name} · ${esc(PATHS[p].label)} path Lv ${PATH_SKILL_TIERS[i].lv} combined (now ${lv})`}</small></div></div>`;
+          }).join("")}</div></div>`;
       }).join("")}</div>
       ${classSkillBook()}
       ${compBookHTML()}
       ${(() => { const pool = talentFx().skills, on = talentLoadout().map(x => x.key); if (!pool.length) return "";
         return `<h3 style="margin-top:4px">Talent skills</h3><div class="sb-grid">${pool.map(sk => `<div class="sb ${on.includes(sk.key) ? "on" : "spare"}"><span class="bt-ic">${skillIcon(sk.icon)}</span><div><b>${esc(sk.name)}</b><small>${esc(classSkillDesc(sk).desc)} · ${cdText(sk.cd)}</small><small class="sb-req">${on.includes(sk.key) ? "Equipped" : "Benched"}${pool.length > maxTalSkills() ? ` · <button class="linkbtn" data-act="tal-skill" data-id="${sk.key}">${on.includes(sk.key) ? "Bench" : "Equip"}</button>` : ""}</small></div></div>`).join("")}</div>${pool.length > maxTalSkills() ? `<p class="hint" style="margin:0">You know ${pool.length} talent skills. Bring any ${maxTalSkills()} into a fight.</p>` : ""}`; })()}
-      <p class="hint" style="margin:0">Your hero auto-attacks. Tap skills (or press number keys) in battle. Each path gives one skill, your class path first, plus your class's signature. Some talent capstones teach a skill; bring up to 2.</p>
+      <p class="hint" style="margin:0">Your hero auto-attacks. Tap skills (or press number keys) in battle. Each path teaches three skills (at path Lv ${SKILL_UNLOCK}, 25 and 50 combined) and brings the one you pick, your class path first, plus your class's signature. Some talent capstones teach a skill; bring up to 2.</p>
     </article>`;
   }
   function updateBattleUI() {
@@ -10682,7 +10725,8 @@ details.cg-set > summary { cursor: pointer; }
     famClsAt = 0;
     const gear = {}; state.skills.forEach(s => gearFor(s).forEach(it => { if (earnedLv(s) >= it.lv) gear[it.id] = it.name; }));
     const tp = {}; CATEGORIES.forEach(c => { tp[c.id] = talentPts(c.id); });
-    return { bd: unlockedBackdrops(), themes: unlockedThemes(), gear, tp, frames: unlockedFrames(), cls: clsUnlockedIds(), fam: famOwnedIds(), egg: famEggIds() };
+    return { bd: unlockedBackdrops(), themes: unlockedThemes(), gear, tp, frames: unlockedFrames(), cls: clsUnlockedIds(), fam: famOwnedIds(), egg: famEggIds(),
+      psk: Object.keys(COMBAT_SKILLS).flatMap(p => pathSkillList(p).filter((x, i) => i > 0 && pathSkillOpen(p, i)).map(x => x.key)) };
   }
   function unlockDiff(before) {
     const after = unlockSnapshot(), out = [];
@@ -10693,6 +10737,7 @@ details.cg-set > summary { cursor: pointer; }
     (after.fam || []).filter(k => before.fam && !before.fam.includes(k)).forEach(k => out.unshift({ kind: FAMILIARS[k].egg ? "Hatched" : "Pet", name: FAMILIARS[k].name }));
     (after.egg || []).filter(k => before.egg && !before.egg.includes(k)).forEach(k => out.unshift({ kind: "Dragon egg found", name: FAMILIARS[k].name + " (hatches as you practice)" }));   // PETS (v0.22)
     Object.keys(after.gear).filter(k => !before.gear[k]).forEach(k => out.push({ kind: "Gear to buy", name: after.gear[k] }));
+    after.psk.filter(k => before.psk && !before.psk.includes(k)).forEach(k => { const p = Object.keys(COMBAT_SKILLS).find(q => pathSkillList(q).some(x => x.key === k)); out.unshift({ kind: "Battle skill", name: `${pathSkillList(p).find(x => x.key === k).name} (${PATHS[p].label}). Pick it in the skill book` }); });   // v0.25
     Object.keys(after.tp).filter(k => before.tp && after.tp[k] > (before.tp[k] || 0) && TALENT_TREES[k]).forEach(k => out.unshift({ kind: "Talent point", name: `${TALENT_TREES[k].short} tree`, cat: k }));
     return out;
   }
@@ -11771,6 +11816,7 @@ details.cg-set > summary { cursor: pointer; }
       case "close-run": runView = null; render(); break;
       case "bt-skill": useSkill(id); break;
       case "tal-skill": toggleTalSkill(id); break;
+      case "path-skill": pickPathSkill(id); break;
       case "drink": drinkElixir(id); break;
       case "drink-replace": drinkElixir(id, true); break;
       case "buy-elixir": buyElixir(id); break;
