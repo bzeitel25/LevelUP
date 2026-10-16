@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.23.0 — 2026-10-15 (build 2026-10-15.1)
+
+Veteran Reserve follow-ups.
+
+- **406 new veteran-level tips:** every skill gets 2 more tips at Expert, Master and Grandmaster, the tiers veteran hours unlock. Category tip sets get one more at Master and Grandmaster. Safety tips come first for trades and sports, as always.
+- **"Still practicing?" per skill:** pick when a skill's timer checks in (1, 2, 3, 4, 6 or 8 hours) in its details. Long outings default longer: 6 hours for hiking, fishing, foraging, cycling and riding, 4 hours for walking, gardening, cooking, baking, woodworking, repairs, painting, pottery, sewing, welding, coding, game dev, 3D and video editing. Everything else stays at 3 hours. Changing it applies to a running timer too.
+- **Boost ceiling:** lessons, rested XP, elixirs and the Veteran Reserve together never pay more than 5× XP for a minute of practice. Today's boosts top out just under that, so nothing changes now; it's a guardrail before new boost sources arrive. If it ever applies, the Veteran Reserve gives way first and keeps what it couldn't pay.
+- **Class unlocks stay on real hours:** decided that classes keep counting real minutes you log, so boosts never speed them up. The class panel now says so.
+
 ## v0.22.0 — 2026-10-14 (build 2026-10-14.1)
 
 Pets join the fight.
