@@ -44,6 +44,24 @@ $1`);
   writeFileSync(manPath, man);
 }
 
+// 2b. Linked apps (v0.27): Usage access (the player turns it on in system settings) and visibility of
+// launchable apps, so their names can be shown. No QUERY_ALL_PACKAGES.
+man = readFileSync(manPath, "utf8");
+if (!man.includes("PACKAGE_USAGE_STATS")) {
+  if (!man.includes("xmlns:tools=")) man = man.replace("<manifest ", '<manifest xmlns:tools="http://schemas.android.com/tools" ');
+  man = man.replace(/(<application[\s>])/, `<uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    $1`);
+  if (!man.includes("PACKAGE_USAGE_STATS") || !man.includes("xmlns:tools=")) { console.error("Could not add Usage access to AndroidManifest.xml"); process.exit(1); }
+  writeFileSync(manPath, man);
+}
+
 // 3. Version number from the web app, build number from CI, and the fixed signing key
 const gradlePath = new URL("build.gradle", app);
 let gradle = readFileSync(gradlePath, "utf8");
@@ -61,4 +79,4 @@ android.signingConfigs.debug.keyPassword = "android"
 `;
 }
 writeFileSync(gradlePath, gradle);
-console.log(`Patched Android project: widgets, links, signing, version ${version} (${code})`);
+console.log(`Patched Android project: widgets, links, usage access, signing, version ${version} (${code})`);

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.27.0 — 2026-10-15 (build 2026-10-15.5)
+
+Linked apps and history import. **Reinstall the Android app once** (Settings → Android app download): this version adds native code.
+
+- **Linked apps (Android):** turn on Usage access for Level UP, then link apps you learn with to a skill, like Duolingo to Spanish or Yousician to Guitar. Settings lists the apps you used this week, and suggests a skill for well-known learning apps.
+- **"Found 17m in Duolingo today. Log it to Spanish?"** When you open Level UP, time in linked apps (5 minutes or more, over the last 3 days) shows at the top of Training. Log it, or tap Not practice and it's never offered again. Approved time is logged as solo practice on the day it happened, so it counts as real hours, keys and quests.
+- **Auto-approve** per app logs found time without asking.
+- **Private by design:** nothing runs in the background. Level UP only reads how long the apps you linked were open, only when you open it, and nothing leaves your phone. It can't see what you do inside an app.
+- **Import history (every platform):** paste or choose a CSV export from another tracker (date, activity, minutes or hours; h:mm works too). Match each activity to a skill and the time is added as veteran hours, filling the Veteran Reserve. It never counts as logged practice.
+- Health Connect (Strava, Garmin, Fitbit) and iPhone support come later.
+
 ## v0.26.0 — 2026-10-15 (build 2026-10-15.4)
 
 The pet roster: 79 new pets, and gear any pet can wear.

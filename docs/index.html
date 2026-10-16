@@ -15,7 +15,7 @@
 <script>/* lvup-loader: in the Android app, start the newest downloaded version of Level UP if it's newer than the one built into the app. A version that fails to start is dropped and the built-in one is used. */
 (function(){try{
 if(window.__lvupShell)return;var C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
-var B="2026-10-15.4",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
+var B="2026-10-15.5",ls=localStorage,sb=ls.getItem("levelup.shell.build");if(!sb)return;
 var cmp=function(a,b){a=a.split(".");b=b.split(".");if(a[0]!==b[0])return a[0]<b[0]?-1:1;return(parseInt(a[1],10)||0)-(parseInt(b[1],10)||0);};
 if(cmp(sb,B)<=0){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");return;}
 if(ls.getItem("levelup.shell.trying")===sb){ls.removeItem("levelup.shell");ls.removeItem("levelup.shell.build");ls.removeItem("levelup.shell.trying");return;}
@@ -709,6 +709,12 @@ a.btn { text-decoration: none; justify-content: center; color: var(--ink); }
 .cls-card.open { border-color: color-mix(in srgb, var(--xp-fill) 55%, var(--line)); }
 .cls-card.locked { border-style: dashed; }
 .sb-paths { display: grid; gap: 12px; }
+.link-offers { display: grid; gap: 8px; padding: 10px 12px; margin-bottom: 12px; border-color: var(--rest); }
+.link-offer { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.link-list { display: grid; gap: 6px; }
+.link-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 180px) auto; gap: 8px; align-items: center; }
+.link-row small { display: block; }
+@media (max-width: 520px) { .link-row { grid-template-columns: minmax(0, 1fr) minmax(110px, 1fr); } .link-row > :last-child { grid-column: 1 / -1; } }
 .pet-dress-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .pet-dress { display: grid; gap: 2px; min-width: 120px; flex: 1 1 120px; }
 .sb-ph { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; font-size: 13px; }
@@ -2857,6 +2863,7 @@ details.cg-set > summary { cursor: pointer; }
     app.innerHTML = `
       ${sample ? `<div class="banner"><span>Example hero, not your data. Changes here aren't saved.</span><button class="btn small" data-act="leave-sample">Create my own hero</button></div>` : ""}
       ${renderTraining()}
+      ${linkOffersHTML()}
       <div class="grid">
         <aside class="panel sheet" aria-label="Character sheet">
           <div class="who">
@@ -2926,8 +2933,8 @@ details.cg-set > summary { cursor: pointer; }
   }
 
   // ---------- Build, install and self-update (same approach as Pocket Fertilizer) ----------
-  const BUILD = "2026-10-15.4";
-  const APP_VERSION = "0.26.0";
+  const BUILD = "2026-10-15.5";
+  const APP_VERSION = "0.27.0";
   const inClaude = !!(window.claude && window.claude.use);
   const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
   const onWeb = location.protocol.indexOf("http") === 0 && !inClaude && !isNative;
@@ -3101,6 +3108,7 @@ details.cg-set > summary { cursor: pointer; }
       <div class="section-head" style="margin:0"><h2>Settings</h2></div>
       ${isNative ? "" : renderInstall()}
       ${renderWidgetCard()}
+      ${renderLinkedCard()}
       <article class="panel set-card">
         <h3>App version</h3>
         <div class="train-row"><span><b>v${APP_VERSION}</b> <span class="muted">· build ${esc(BUILD)}</span></span><span class="muted" style="font-size:13px">${where}</span></div>
@@ -12280,6 +12288,171 @@ details.cg-set > summary { cursor: pointer; }
   function commitName(v) { editingName = false; v = v.trim(); if (v !== state.heroName) { state.heroName = v; persist(); } render(); }
 
   setInterval(liveTick, 1000);
+
+  // ===== LINKED APPS (v0.27) =====
+  // Android only: with Usage access turned on, Level UP reads how long the apps you link were open and offers that time
+  // as practice: "Found 15 min in Duolingo, log it?". Nothing runs in the background and nothing leaves the phone: it
+  // checks when the app opens or comes back to the front, for the apps you linked, over the last 3 days.
+  // Approved time is logged as solo practice on its day, so it counts as real hours. Dismissed time is never offered again.
+  // History import (every platform): a CSV from another tracker adds veteran hours, never logged time.
+  const LINK_MIN = 5, LINK_DAYS = 3;
+  const LINK_HINTS = {   // a suggested skill for well-known learning apps (names only; any app can be linked)
+    "com.duolingo": "Spanish", "com.babbel.mobile.android.en": "Spanish", "com.memrise.android.memrisecompanion": "Spanish", "com.busuu.android.enc": "Spanish",
+    "com.yousician.yousician": "Guitar", "com.ultimateguitar.tabs": "Guitar", "com.joytunes.simplypiano": "Piano", "com.joytunes.simplyguitar": "Guitar",
+    "com.chess": "Chess", "org.lichess.mobileapp": "Chess", "com.getsomeheadspace.android": "Meditation", "com.calm.android": "Meditation",
+    "com.spotlightsix.zentimerlite2": "Meditation", "org.wakingup.android": "Meditation", "com.downdogapp": "Yoga", "com.getmimo": "Coding",
+    "com.sololearn": "Coding", "org.brilliant.android": "Math", "org.khanacademy.android": "Math", "com.ichi2.anki": "Study",
+    "com.amazon.kindle": "Reading", "com.overdrive.mobile.android.libby": "Reading", "com.nike.ntc": "Strength training", "com.fitbod.fitbod": "Strength training",
+    "jp.ne.ibis.ibispaintx.app": "Drawing", "com.medibang.android.paint.tablet": "Drawing"
+  };
+  const links = () => { if (!state.links || typeof state.links !== "object") state.links = {}; const L = state.links;
+    if (!L.apps || typeof L.apps !== "object") L.apps = {}; if (!L.done || typeof L.done !== "object") L.done = {}; if (!Array.isArray(L.found)) L.found = []; return L; };
+  const UsageNative = () => isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.LevelUpUsage || null;
+  let linkStatus = { granted: null, apps: null, busy: false, msg: "" };
+  async function linkRefresh(listApps) {
+    const U = UsageNative(); if (!U) return;
+    try { linkStatus.granted = !!(await U.status()).granted; } catch (e) { linkStatus.granted = false; }
+    if (linkStatus.granted && listApps) { try { linkStatus.apps = (await U.apps()).apps || []; } catch (e) { linkStatus.apps = []; } }
+    if (tab === "settings") render();
+  }
+  // Read the last few days for linked apps and turn new time into offers (or log it, for apps set to auto-approve).
+  async function linkScan(manual) {
+    const U = UsageNative(), L = links(), pk = Object.keys(L.apps).filter(k => skillById(L.apps[k].skillId));
+    if (!U || !pk.length || sample || linkStatus.busy) { if (manual) toast(!U ? "Linked apps work in the Android app." : "Link an app to a skill first."); return; }
+    linkStatus.busy = true;
+    try {
+      const r = await U.usage({ days: LINK_DAYS, packages: pk }), days = (r && r.days) || {};
+      let auto = 0, offers = 0;
+      Object.entries(days).forEach(([day, per]) => Object.entries(per || {}).forEach(([p, m]) => {
+        const a = L.apps[p]; if (!a || !skillById(a.skillId) || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+        const key = day + "|" + p, fresh = Math.floor(m) - (L.done[key] || 0) - L.found.filter(f => f.key === key).reduce((n, f) => n + f.min, 0);
+        if (fresh < LINK_MIN) return;
+        if (a.auto) { const min = Math.min(fresh, MAX_ENTRY); L.done[key] = (L.done[key] || 0) + fresh; logMinutes(a.skillId, min, day, `Found in ${a.name}`, "solo"); auto += min; }
+        else { L.found.push({ id: uid(), key, day, pkg: p, min: fresh }); offers++; }
+      }));
+      // forget bookkeeping older than two weeks
+      const old = daysAgo(14); Object.keys(L.done).forEach(k => { if (k.slice(0, 10) < old) delete L.done[k]; });
+      L.found = L.found.filter(f => f.day >= old && L.apps[f.pkg]);
+      persist(); render();
+      if (manual) toast(offers || auto ? `Found ${offers ? offers + " new stretch" + (offers > 1 ? "es" : "") + " to check" : ""}${offers && auto ? ", and " : ""}${auto ? fmt(auto) + " logged automatically" : ""}.` : "Nothing new yet.");
+    } catch (e) { if (manual) toast("Couldn't read app time. Check that Usage access is on for Level UP."); linkStatus.granted = false; }
+    linkStatus.busy = false;
+  }
+  function linkResolve(id, log) {
+    const L = links(), f = L.found.find(x => x.id === id); if (!f) return;
+    L.found = L.found.filter(x => x.id !== id);
+    L.done[f.key] = (L.done[f.key] || 0) + f.min;
+    const a = L.apps[f.pkg];
+    if (log && a && skillById(a.skillId)) logMinutes(a.skillId, Math.min(f.min, MAX_ENTRY), f.day, `Found in ${a.name}`, "solo");
+    else { toast("Skipped. That time won't be offered again."); persist(); render(); }
+  }
+  // Offers sit at the top of the Training tab until you answer them.
+  function linkOffersHTML() {
+    const L = state.links; if (!L || !Array.isArray(L.found) || !L.found.length || sample) return "";
+    const rows = L.found.slice(0, 4).map(f => { const a = L.apps[f.pkg] || { name: f.pkg }, s = skillById(a.skillId);
+      const when = f.day === dayKey() ? "today" : f.day === daysAgo(1) ? "yesterday" : f.day;
+      return `<div class="link-offer"><span>Found <b>${fmt(f.min)}</b> in ${esc(a.name)} ${esc(when)}. Log it to <b>${esc(s ? s.name : "a skill")}</b>?</span>
+        <span class="row"><button class="btn small primary" data-act="link-yes" data-id="${f.id}">Log it</button><button class="btn small ghost" data-act="link-no" data-id="${f.id}">Not practice</button></span></div>`; }).join("");
+    return `<section class="panel link-offers" aria-label="Time found in linked apps">${rows}${L.found.length > 4 ? `<div class="hint" style="margin:0">${L.found.length - 4} more after these.</div>` : ""}</section>`;
+  }
+  function linkSkillOpts(sel, hint) {
+    const guess = !sel && hint ? (state.skills.find(s => s.name.toLowerCase() === hint.toLowerCase()) || {}).id : null;
+    return `<option value="">Not linked</option>${state.skills.map(s => `<option value="${s.id}" ${(sel || guess) === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}`;
+  }
+  function renderLinkedCard() {
+    const L = links(), U = UsageNative();
+    let body;
+    if (!U && isNative) body = `<p class="hint" style="margin:0">Linked apps need the newest Android app. Download it once and install it over this one; your hero stays.</p><div class="row"><a class="btn small primary" href="${ANDROID_APK}" target="_blank" rel="noopener">Android app download</a></div>`;
+    else if (!U) body = `<p class="hint" style="margin:0">In the Android app, Level UP can notice time you spend in other apps, like Duolingo or Yousician, and offer it as practice. It's not available in the browser or on iPhone yet.</p>`;
+    else if (linkStatus.granted === null) { linkRefresh(true); body = `<p class="hint" style="margin:0">Checking…</p>`; }
+    else if (!linkStatus.granted) body = `<p class="hint" style="margin:0"><b>How it works:</b> turn on Usage access for Level UP in your phone's settings. Level UP then reads how long the apps you link were open, only when you open Level UP, and offers that time for you to approve. It never sees what you do inside an app, and nothing leaves your phone.</p>
+      <div class="row"><button class="btn small primary" data-act="link-settings">Turn on Usage access</button><button class="btn small ghost" data-act="link-recheck">I turned it on</button></div>`;
+    else {
+      const seen = linkStatus.apps || [], linked = Object.keys(L.apps);
+      const list = [...linked.filter(p => !seen.some(a => a.pkg === p)).map(p => ({ pkg: p, name: L.apps[p].name, min: 0 })), ...seen].slice(0, 25);
+      body = `<p class="hint" style="margin:0">Link an app to a skill. When you open Level UP, time in linked apps (${LINK_MIN} minutes or more) shows up for you to approve. Auto-approve logs it without asking.</p>
+        ${list.length ? `<div class="link-list">${list.map(a => { const cur = L.apps[a.pkg];
+          return `<div class="link-row"><div><b>${esc(a.name)}</b><small class="muted">${a.min ? fmt(a.min) + " this week" : "Linked"}</small></div>
+            <select class="input" data-act-change="link-skill" data-pkg="${esc(a.pkg)}" data-name="${esc(a.name)}" aria-label="Skill for ${esc(a.name)}">${linkSkillOpts(cur && cur.skillId, cur ? "" : LINK_HINTS[a.pkg])}</select>
+            ${cur ? `<label class="vet-check"><input type="checkbox" data-act-change="link-auto" data-pkg="${esc(a.pkg)}" ${cur.auto ? "checked" : ""}> Auto-approve</label>` : "<span></span>"}</div>`; }).join("")}</div>`
+          : `<p class="hint" style="margin:0">No app time in the last week yet.</p>`}
+        <div class="row"><button class="btn small" data-act="link-scan">Check now</button><button class="btn small ghost" data-act="link-recheck">Refresh list</button></div>`;
+    }
+    return `<article class="panel set-card">
+      <h3>Linked apps</h3>${body}
+      <h3 style="margin-top:6px">Import history</h3>
+      <p class="hint" style="margin:0">Moving from another tracker? Paste a CSV export (date, activity, minutes or hours). It adds <b>veteran hours</b> to matching skills, filling their Veteran Reserve. Imported time never counts as logged practice.</p>
+      ${linkImport ? linkImportHTML() : `<div class="row"><button class="btn small ghost" data-act="imp-open">Import a CSV</button></div>`}
+    </article>`;
+  }
+  // --- History import ---
+  let linkImport = null;   // { text, rows: [{ name, min }], map: { name: skillId } }
+  function parseDuration(v, hoursCol) {
+    v = String(v || "").trim().toLowerCase(); if (!v) return 0;
+    let m = v.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/); if (m) return +m[1] * 60 + +m[2] + (m[3] ? +m[3] / 60 : 0);   // h:mm or h:mm:ss
+    m = v.match(/^(\d+(?:\.\d+)?)\s*(h|hr|hrs|hours?)$/); if (m) return +m[1] * 60;
+    m = v.match(/^(\d+(?:\.\d+)?)\s*(m|min|mins|minutes?)$/); if (m) return +m[1];
+    m = v.match(/^(\d+)\s*h\s*(\d+)\s*m/); if (m) return +m[1] * 60 + +m[2];
+    const n = parseFloat(v.replace(",", ".")); return isFinite(n) ? (hoursCol ? n * 60 : n) : 0;
+  }
+  function parseHistoryCSV(text) {
+    const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean); if (!lines.length) return [];
+    const delim = [",", ";", "\t"].sort((a, b) => lines[0].split(b).length - lines[0].split(a).length)[0];
+    const split = l => { const out = []; let cur = "", q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === delim && !q) { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out.map(x => x.trim()); };
+    const head = split(lines[0]).map(h => h.toLowerCase());
+    const find = re => head.findIndex(h => re.test(h));
+    let nameI = find(/activity|skill|name|title|project|task|category|habit/), durI = find(/duration|minutes|mins|hours|hrs|time spent|^time$|length/);
+    const hasHead = nameI >= 0 && durI >= 0, hoursCol = hasHead && /hour|hrs/.test(head[durI]);
+    if (!hasHead) { nameI = 1; durI = 2; }
+    const tot = {};
+    lines.slice(hasHead ? 1 : 0).forEach(l => { const c = split(l), nm = (c[nameI] || "").trim(), min = parseDuration(c[durI], hoursCol);
+      if (nm && min > 0 && min <= 24 * 60) { const k = nm.toLowerCase(); tot[k] = tot[k] || { name: nm, min: 0 }; tot[k].min += min; } });
+    return Object.values(tot).map(({ name, min }) => ({ name, min: Math.round(min) })).sort((a, b) => b.min - a.min).slice(0, 40);
+  }
+  function linkImportHTML() {
+    const I = linkImport;
+    if (!I.rows) return `<div class="field"><label for="imp-text">CSV export</label><textarea class="input backup-box" id="imp-text" rows="5" placeholder="date,activity,minutes&#10;2025-03-02,Guitar,45">${esc(I.text || "")}</textarea></div>
+      <div class="row"><label class="btn small ghost" style="cursor:pointer">Choose file<input type="file" accept=".csv,.txt,text/csv" id="imp-file" hidden></label><button class="btn small primary" data-act="imp-read">Read it</button><button class="btn small ghost" data-act="imp-cancel">Cancel</button></div><div class="err" id="imp-err"></div>`;
+    return `<div class="link-list">${I.rows.map((r, i) => `<div class="link-row"><div><b>${esc(r.name)}</b><small class="muted">${fmtH(r.min)}</small></div>
+        <select class="input" data-act-change="imp-map" data-i="${i}" aria-label="Skill for ${esc(r.name)}"><option value="">Skip</option>${state.skills.map(s => `<option value="${s.id}" ${I.map[i] === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select><span></span></div>`).join("")}</div>
+      <div class="row"><button class="btn small primary" data-act="imp-apply">Add as veteran hours</button><button class="btn small ghost" data-act="imp-cancel">Cancel</button></div>`;
+  }
+  function linkImportApply() {
+    const I = linkImport; if (!I || !I.rows) return;
+    const per = {}; I.rows.forEach((r, i) => { const id = I.map[i]; if (id && skillById(id)) per[id] = (per[id] || 0) + r.min; });
+    const ids = Object.keys(per); if (!ids.length) { toast("Pick a skill for at least one row."); return; }
+    ids.forEach(id => { const s = skillById(id); setDeclared(s, (s.importedMin || 0) + per[id]); });
+    linkImport = null; persist(); render();
+    toast(`Added ${fmtH(ids.reduce((n, id) => n + per[id], 0))} of veteran hours to ${ids.length} skill${ids.length > 1 ? "s" : ""}.`, "", 4500);
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest("[data-act^='link-'], [data-act^='imp-']"); if (!b) return;
+    try {
+      const act = b.dataset.act, U = UsageNative();
+      if (act === "link-yes" || act === "link-no") linkResolve(b.dataset.id, act === "link-yes");
+      if (act === "link-settings" && U) U.openSettings().catch(() => {});
+      if (act === "link-recheck") { linkStatus.granted = null; linkRefresh(true); }
+      if (act === "link-scan") linkScan(true);
+      if (act === "imp-open") { linkImport = { text: "" }; render(); }
+      if (act === "imp-cancel") { linkImport = null; render(); }
+      if (act === "imp-read") { const t = document.getElementById("imp-text"), rows = parseHistoryCSV(t ? t.value : "");
+        if (!rows.length) { const er = document.getElementById("imp-err"); if (er) er.textContent = "Couldn't find activity names and durations. Use columns like date, activity, minutes."; return; }
+        const map = {}; rows.forEach((r, i) => { const s = state.skills.find(k => k.name.toLowerCase() === r.name.toLowerCase()); if (s) map[i] = s.id; });
+        linkImport = { rows, map }; render(); }
+      if (act === "imp-apply") linkImportApply();
+    } catch (err) { reportError(err); }
+  });
+  document.addEventListener("change", e => {
+    const el = e.target; if (!el || !el.dataset) return; const L = () => links();
+    if (el.dataset.actChange === "link-skill") { const p = el.dataset.pkg; if (el.value && skillById(el.value)) L().apps[p] = Object.assign({ auto: false }, L().apps[p], { name: el.dataset.name, skillId: el.value }); else { delete L().apps[p]; L().found = L().found.filter(f => f.pkg !== p); } persist(); render(); }
+    if (el.dataset.actChange === "link-auto") { const a = L().apps[el.dataset.pkg]; if (a) { a.auto = !!el.checked; persist(); } }
+    if (el.dataset.actChange === "imp-map" && linkImport && linkImport.rows) { linkImport.map[+el.dataset.i] = el.value; }
+    if (el.id === "imp-file" && el.files && el.files[0]) { const f = el.files[0]; if (f.size > 2e6) { toast("That file is too big (2 MB max)."); return; } f.text().then(t => { linkImport = { text: t }; render(); }).catch(() => toast("Couldn't read that file.")); }
+  });
+  if (isNative) {
+    setTimeout(() => { linkRefresh(false).then(() => linkScan(false)); }, 3000);
+    try { window.Capacitor.Plugins.App && window.Capacitor.Plugins.App.addListener("appStateChange", st => { if (st && st.isActive) setTimeout(() => linkScan(false), 800); }); } catch (e) {}
+  }
 
   // ---------- Mobile app bridge ----------
   // A native shell (Capacitor, React Native WebView, or a Swift/Kotlin WebView) hosts this UI and
